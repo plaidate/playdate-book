@@ -1,0 +1,6 @@
+name=Soundboard
+author=Simon Frost
+description=Chapter 12 example: a synth soundboard with envelopes.
+bundleID=com.sdwfrost.book.12sfx
+version=1.0
+buildNumber=1

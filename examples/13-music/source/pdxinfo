@@ -1,0 +1,6 @@
+name=TwoEngines
+author=Simon Frost
+description=Chapter 13 example: one chiptune loop, two engines.
+bundleID=com.sdwfrost.book.13music
+version=1.0
+buildNumber=1
