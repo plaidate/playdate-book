@@ -1,0 +1,6 @@
+name=Input
+author=Simon Frost
+description=Chapter 9 example: a live button visualizer with edge blips, a level-vs-edge trace, and a buffered-jump runner.
+bundleID=com.sdwfrost.book.09input
+version=1.0
+buildNumber=1

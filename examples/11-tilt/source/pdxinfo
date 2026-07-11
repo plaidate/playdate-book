@@ -1,0 +1,6 @@
+name=Tilt
+author=Simon Frost
+description=Chapter 11 example: a tilt-rolled marble tray with System Menu items, a procedural pause card, and a gridview scoreboard.
+bundleID=com.sdwfrost.book.11tilt
+version=1.0
+buildNumber=1

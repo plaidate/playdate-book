@@ -1,0 +1,6 @@
+name=Crank
+author=Simon Frost
+description=Chapter 10 example: three crank mappings on one crank - a detented selector, a 1:1 aim turret, and a wind-and-release lob.
+bundleID=com.sdwfrost.book.10crank
+version=1.0
+buildNumber=1
