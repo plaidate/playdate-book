@@ -1,0 +1,7 @@
+name=Crankshot
+author=Simon Frost
+description=Aim with the crank, hold the line. The book's finished game.
+bundleID=com.sdwfrost.book.20ship
+version=1.0
+buildNumber=1
+imagePath=launcher

@@ -1,0 +1,6 @@
+name=Harness
+author=Simon Frost
+description=Chapter 18: a platformer that plays and tests itself.
+bundleID=com.sdwfrost.book.18harness
+version=1.0
+buildNumber=1

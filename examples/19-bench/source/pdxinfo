@@ -1,0 +1,6 @@
+name=Bench
+author=Simon Frost
+description=Chapter 19: live draw-cost microbenchmarks.
+bundleID=com.sdwfrost.book.19bench
+version=1.0
+buildNumber=1
