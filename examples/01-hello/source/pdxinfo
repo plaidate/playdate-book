@@ -1,0 +1,6 @@
+name=Hello
+author=Simon Frost
+description=Chapter 1 example: a bouncing greeting and a button counter.
+bundleID=com.sdwfrost.book.01hello
+version=1.0
+buildNumber=1

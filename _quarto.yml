@@ -1,0 +1,73 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Playdate Game Development in Lua"
+  subtitle: "Building 1-Bit Games for the World's Crankiest Console"
+  author: "Simon D.W. Frost"
+  date: last-modified
+  search: true
+  chapters:
+    - index.qmd
+    - part: "Getting Started"
+      chapters:
+        - chapters/01-hello.qmd
+        - chapters/02-lua-lab.qmd
+        - chapters/03-modes.qmd
+    - part: "Graphics"
+      chapters:
+        - chapters/04-dither.qmd
+        - chapters/05-images.qmd
+        - chapters/06-sprites.qmd
+        - chapters/07-camera.qmd
+        - chapters/08-wireframe.qmd
+    - part: "Input"
+      chapters:
+        - chapters/09-input.qmd
+        - chapters/10-crank.qmd
+        - chapters/11-tilt.qmd
+    - part: "Sound"
+      chapters:
+        - chapters/12-sfx.qmd
+        - chapters/13-music.qmd
+    - part: "Building Games"
+      chapters:
+        - chapters/14-platformer.qmd
+        - chapters/15-juice.qmd
+        - chapters/16-maze.qmd
+        - chapters/17-save.qmd
+    - part: "Shipping"
+      chapters:
+        - chapters/18-harness.qmd
+        - chapters/19-perf.qmd
+        - chapters/20-ship.qmd
+  appendices:
+    - chapters/appendix-a-lua.qmd
+    - chapters/appendix-b-sdk-map.qmd
+    - chapters/appendix-c-setup.qmd
+    - chapters/appendix-d-harness.qmd
+    - chapters/appendix-e-games.qmd
+
+crossref:
+  chapters: true
+
+filters:
+  - snip
+
+format:
+  html:
+    theme:
+      - cosmo
+      - assets/book.scss
+    code-copy: true
+    fig-align: center
+    toc: true
+  typst:
+    papersize: us-letter
+    margin:
+      x: 1.25in
+      y: 1in
+    fontsize: 10.5pt
+    toc: true
+    number-depth: 2

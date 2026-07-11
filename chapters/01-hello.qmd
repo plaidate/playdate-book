@@ -1,0 +1,15 @@
+# Hello, Playdate {#sec-hello}
+
+*(Pipeline proof stub — full chapter to come.)*
+
+The state our first program needs:
+
+{{< snip 01-hello/source/main.lua setup >}}
+
+And its update loop:
+
+{{< snip 01-hello/source/main.lua update >}}
+
+![The greeting, twenty frames in.](../figures/01-hello/hello-early.png){#fig-hello-early}
+
+![Two hundred frames later the bot has pressed A seven times.](../figures/01-hello/hello-later.png){#fig-hello-later}

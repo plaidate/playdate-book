@@ -1,0 +1,9 @@
+build/
+out/
+_book/
+*.pdx
+.DS_Store
+/.quarto/
+figures/*/raw/
+
+**/*.quarto_ipynb

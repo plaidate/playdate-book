@@ -1,0 +1,20 @@
+/*-- scss:rules --*/
+
+// Simulator captures are pixel art: keep them crisp at any scale.
+figure img,
+.quarto-figure img {
+  image-rendering: pixelated;
+}
+
+// Captures are committed pre-upscaled to 800x480; cap them there but let
+// them shrink on narrow viewports.
+img[src*="figures/"] {
+  width: min(800px, 100%);
+  border: 1px solid #ddd;
+}
+
+// Code blocks: Lua listings from the examples carry a filename attribute.
+.code-with-filename .code-with-filename-file {
+  font-family: var(--bs-font-monospace);
+  font-size: 0.8em;
+}

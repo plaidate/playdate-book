@@ -1,0 +1,12 @@
+# Preface {.unnumbered}
+
+This book teaches you to build games for the [Playdate](https://play.date) —
+Panic's pocket-sized console with a 400x240 1-bit screen, a d-pad, two buttons,
+and a crank — using the Lua SDK.
+
+Every example in this book is a real, runnable Playdate project you can build
+and play. Every screenshot was captured automatically from the very example it
+illustrates, by the test harness you will meet in Chapter 18. The patterns come
+from sixty shipped Playdate games.
+
+*(Full preface to come.)*

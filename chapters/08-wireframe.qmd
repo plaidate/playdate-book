@@ -1,0 +1,3 @@
+# Vector Graphics and Faking 3D
+
+*(Chapter to come.)*
