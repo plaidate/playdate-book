@@ -1,0 +1,13 @@
+# Playdate palette (from play.date's colors.css and plaidate.github.io):
+# brand yellow #ffc833, darkest gray #1d1c18, warm white #fffdf5.
+color:
+  palette:
+    yellow: "#ffc833"
+    ink: "#1d1c18"
+    paper: "#fffdf5"
+    cream: "#f3ecdb"
+    amber: "#8a5d00"
+  primary: yellow
+  foreground: ink
+  background: paper
+  link: amber

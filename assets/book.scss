@@ -1,19 +1,108 @@
+/*-- scss:defaults --*/
+
+// Playdate palette (play.date colors.css / plaidate.github.io)
+$pd-yellow: #ffc833;
+$pd-ink: #1d1c18;
+$pd-paper: #fffdf5;
+$pd-cream: #f3ecdb;
+$pd-amber: #8a5d00;    // yellow darkened for readable links on paper
+
+$body-bg: $pd-paper;
+$body-color: $pd-ink;
+$link-color: $pd-amber;
+$code-block-bg: $pd-cream;
+$code-bg: $pd-cream;
+$code-color: $pd-ink;
+
 /*-- scss:rules --*/
 
-// Simulator captures are pixel art: keep them crisp at any scale.
+// ---- Playdate chrome: yellow title plate, ink sidebar ----
+
+.quarto-title h1.title,
+#title-block-header h1.title {
+  background: $pd-yellow;
+  color: $pd-ink;
+  padding: 0.35em 0.5em;
+  border: 3px solid $pd-ink;
+  display: inline-block;
+}
+
+#quarto-sidebar,
+.sidebar.sidebar-navigation {
+  background: $pd-ink;
+}
+
+.sidebar-navigation .sidebar-item a,
+.sidebar-navigation .sidebar-item-text,
+#quarto-sidebar .sidebar-title,
+#quarto-sidebar .sidebar-title a {
+  color: $pd-paper;
+}
+
+.sidebar-navigation .sidebar-item a:hover,
+.sidebar-navigation .sidebar-item a.active {
+  color: $pd-yellow;
+}
+
+.sidebar-navigation .sidebar-item-section .sidebar-item-text {
+  color: $pd-yellow;   // part titles
+}
+
+#quarto-sidebar .sidebar-search,
+#quarto-sidebar .form-control {
+  background: $pd-paper;
+}
+
+// Chapter headings: ink with a yellow keel
+h1, h2 {
+  border-bottom: 3px solid $pd-yellow;
+  padding-bottom: 0.15em;
+}
+
+.header-section-number,
+.chapter-number {
+  color: $pd-amber;
+}
+
+// TOC-on-the-right accents
+#TOC .active,
+.toc-actions a:hover,
+nav[role="doc-toc"] a.active {
+  border-left: 3px solid $pd-yellow;
+  color: $pd-ink;
+  font-weight: 600;
+}
+
+// Callouts in house colors
+.callout.callout-style-default {
+  border-left-color: $pd-yellow;
+}
+.callout-warning .callout-header {
+  background: rgba(255, 200, 51, 0.35);
+}
+
+// Code blocks: cream cards with an ink edge
+div.sourceCode {
+  background: $pd-cream;
+  border: 1px solid $pd-ink;
+  border-radius: 4px;
+}
+.code-with-filename .code-with-filename-file {
+  background: $pd-ink;
+  color: $pd-yellow;
+  font-family: var(--bs-font-monospace);
+  font-size: 0.8em;
+  pre { color: $pd-yellow; background: $pd-ink; margin: 0; }
+}
+
+// ---- Figures: pixel-crisp simulator captures ----
 figure img,
 .quarto-figure img {
   image-rendering: pixelated;
 }
-
-// Captures are committed pre-upscaled to 800x480; cap them there but let
-// them shrink on narrow viewports.
 img[src*="figures/"] {
   width: min(804px, 100%);
 }
-
-// Code blocks: Lua listings from the examples carry a filename attribute.
-.code-with-filename .code-with-filename-file {
-  font-family: var(--bs-font-monospace);
-  font-size: 0.8em;
+figcaption {
+  color: lighten($pd-ink, 25%);
 }
