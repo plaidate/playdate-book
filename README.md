@@ -36,3 +36,10 @@ prerequisites.
 All code listings shown in the book compile and run; the figure pipeline
 doubles as a smoke test (any runtime error in any example fails
 `make figures`).
+
+## License
+
+The book's text and figures are [CC BY 4.0](LICENSE-CC-BY-4.0); all code
+(the examples, tools, the snip extension, and the listings in the text)
+is [MIT](LICENSE). Playdate is a registered trademark of Panic Inc.;
+this book is not affiliated with or endorsed by Panic.

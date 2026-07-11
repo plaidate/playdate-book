@@ -163,3 +163,12 @@ pleasure to read, and this book leans on it throughout. Thanks also to
 the Playdate community, whose collective curiosity about what a crank
 is for keeps this platform delightful — and to Archer, the whippet on
 the cover, who insisted.
+
+## License {.unnumbered}
+
+The text and figures of this book are licensed under [Creative Commons
+Attribution 4.0](https://creativecommons.org/licenses/by/4.0/) (CC BY
+4.0); the example projects, tooling, and every code listing are under
+the [MIT License](https://github.com/plaidate/playdate-book/blob/main/LICENSE).
+Playdate is a registered trademark of [Panic Inc.](https://panic.com);
+this book is not affiliated with or endorsed by Panic.
