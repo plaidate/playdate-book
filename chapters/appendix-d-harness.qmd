@@ -1,3 +1,250 @@
-# The Book Harness Reference
+# The Book Harness Reference {#sec-appendix-harness}
 
-*(Chapter to come.)*
+Every figure in this book was captured by a small pipeline that builds
+an instrumented copy of a chapter's example, runs it headless in the
+Simulator under scripted input, photographs named frames, and fails the
+whole build if the example crashes or stalls. @sec-hello introduced the
+two files that ride along in every example; @sec-harness taught the
+testing philosophy they implement. This appendix is the third pass: the
+complete reference — every function, file, Makefile target, and
+protocol step — written so you can lift the pipeline into your own
+project. None of it is book-specific; it is the shipped games'
+smoke-test harness with a camera attached.
+
+The pipeline has four parts, and they meet at two seams:
+
+1. **`shots.lua`** — per-example: a declarative script of *what to do
+   and what to photograph*.
+2. **`bookharness.lua`** — shared: the runtime that executes that
+   script inside the game.
+3. **`example.mk`** — shared Makefile rules that stage and build two
+   flavors of the same source.
+4. **`tools/shoot.sh`** — the orchestrator that runs one example end
+   to end and collects the pictures.
+
+The seams: a generated file (`bookflag.lua`) carries build-time
+configuration into the Lua world, and the game's data directory
+(`Disk/Data/<bundleID>/`) carries results back out. Nothing else
+crosses the boundary — no sockets, no IPC, no Simulator plugins —
+which is why the whole thing is portable to any project that can run
+`make` and `pkill`.
+
+## The Shots table
+
+Each example's `source/shots.lua` defines one global table. Here is a
+complete, annotated example — the schema is four keys, all optional,
+though a Shots table with no `shots` and no `script` is just an
+expensive way to do nothing:
+
+```lua
+Shots = {
+    -- RNG seed. The harness calls math.randomseed(seed) at load
+    -- time, so every run of this script is bit-identical. Omit it
+    -- and figures stop being reproducible on the first math.random.
+    seed = 1,
+
+    -- How many frames to run before reporting done. The harness
+    -- actually runs to max(last, every frame named in shots), so
+    -- this is a floor, not a hard cut.
+    last = 390,
+
+    -- The photographs: figure-name -> frame number. The frame is
+    -- captured AFTER that frame's update has drawn, and lands in
+    -- figures/<example>/<name>.png. Names here and figure
+    -- references in the chapter must match exactly.
+    shots = {
+        ["modes-title"] = 30,
+        ["modes-play"]  = 150,
+        ["modes-pause"] = 200,
+    },
+
+    -- Synthetic input, called once per frame. Whatever table this
+    -- returns is handed to the game as this frame's bot input; nil
+    -- means "no scripted input this frame". Key names are YOURS --
+    -- they mean whatever your Input.gather consumes.
+    script = function(frame)
+        if frame == 60 then return { confirm = true } end
+        if frame > 60 then return Bot.dodge() end   -- read G, decide
+    end,
+}
+```
+
+Two design points carry most of the value. The script speaks the
+*game's* input language — the table it returns is the same shape as
+the snapshot `Input.gather()` builds from real buttons (@sec-modes), so
+the game cannot tell a bot from a thumb. And because everything is
+keyed by frame number under a fixed seed and fixed timestep, a shot
+frame is a *coordinate*: "frame 200 shows the pause panel" stays true
+run after run, which is what lets a book commit its screenshots and
+regenerate them only when the code changes.
+
+## bookharness.lua
+
+The shared runtime is 90 lines, printed here in full:
+
+{{< snip _shared/bookharness.lua >}}
+
+The public API is four functions and a flag:
+
+| Member | Role |
+|---|---|
+| `Harness.enabled` | `SMOKE_BUILD` from the generated `bookflag.lua`. False in release builds, making every other member a no-op. |
+| `Harness.input(frame)` | The bot seam. Returns `Shots.script(frame)` in instrumented builds, `nil` otherwise — call it first in your input gathering and fall back to real buttons on `nil`. |
+| `Harness.frame(frame, updateFn)` | The wrapper. Runs one frame of the real game inside `pcall`, captures any shots due this frame, and emits heartbeats. Called from `playdate.update`. |
+| `Harness.count(key, n)` | Increment a named counter (default 1). Counters ride along in every heartbeat — "count everything" is the telemetry habit of @sec-harness. |
+| `Harness.set(key, val)` | Set a counter to an absolute value — for gauges (mode name, boss HP) rather than tallies. |
+
+Reading the listing top to bottom, the load-time block seeds the RNG
+and computes `lastNeeded` — the run length — as the larger of
+`Shots.last` and the latest named shot, so a typo'd shot frame extends
+the run instead of silently never firing. `Harness.frame` then does the
+per-frame work, and its details are the accumulated lessons of the
+shipped games' harnesses:
+
+- **Unthrottled refresh.** On frame 1 it calls
+  `playdate.display.setRefreshRate(0)` — run as fast as the host CPU
+  allows. Because all logic is frame-indexed with a fixed `DT`
+  (@sec-modes), the run is identical to a 30 fps run, just faster in
+  wall-clock: a 390-frame script finishes in a couple of seconds.
+- **First error wins.** The update runs inside `pcall`; on failure the
+  error is written to the `err` datastore *once* (`errWritten`).
+  Later frames usually repeat the same symptom — the first traceback
+  is the one that names the cause.
+- **Capture after draw.** Shots are taken after `updateFn` returns, so
+  the PNG shows exactly what that frame put on screen.
+  `playdate.simulator.writeToFile` writes a real host-side PNG (unlike
+  `datastore.writeImage`, which writes the device `.pdi` format
+  regardless of the extension you ask for).
+- **Heartbeats, then done.** Every 90 frames the counters are written
+  to the `smoke` datastore with the current frame number; at
+  `lastNeeded` the same table goes out with `done = true`. A watching
+  script can distinguish "healthy but running," "crashed" (`err.json`
+  exists), and "hung" (heartbeat frame stopped advancing).
+
+The wrapper in each example's `main.lua` is the standard two-liner —
+and note the import order above it: `import "shots"` must precede
+`import "bookharness"`, because the harness reads `Shots` at load time
+to seed the RNG before any game code runs:
+
+```lua
+local realUpdate = playdate.update
+function playdate.update()
+    frame = frame + 1
+    Harness.frame(frame, realUpdate)
+end
+```
+
+## example.mk: one source, two builds
+
+Each example's Makefile is two lines — `NAME := Modes` and `include
+../../example.mk` — and the shared rules produce two flavors of pdx
+from the same source:
+
+| Target | What it builds |
+|---|---|
+| `make book` | Instrumented build in `build/<slug>/book/`: source staged, `bookharness.lua` copied in, and a **generated** `bookflag.lua` containing `SMOKE_BUILD = true` and `SHOT_PREFIX = "<abs path to figures/<slug>/raw>/"`. This is what `shoot.sh` runs. |
+| `make release` | Clean build in `out/<NAME>.pdx` with a generated `SMOKE_BUILD = false` flag — the harness compiles in but does nothing. What a player would get. |
+| `make run` | `release`, then opens the pdx in the Simulator (using the 3.0.6-safe launch form of @sec-appendix-setup). |
+
+The generated-file trick is the point to steal. `bookflag.lua` does not
+exist in anyone's `source/` directory; the Makefile writes it into the
+*staged copy* at build time. That gives the Lua side compile-time
+configuration — a boolean and an absolute host path — without a
+config file to forget to edit, and it guarantees a release build cannot
+accidentally ship with the harness armed, because the release rule
+generates the `false` flag unconditionally. The same mechanism carries
+the shot directory: `SHOT_PREFIX` bakes the *host* filesystem path for
+`playdate.simulator.writeToFile` into the build, which is how shots
+land directly in the book's `figures/` tree.
+
+Staging itself is one `cp -r source/* …` — and the `-r` is a scar,
+not a habit:
+
+```makefile
+# Staging always uses `cp -r`: a bare `cp source/*` silently skips
+# subdirectories and pdc will happily build the incomplete bundle.
+```
+
+A bare `cp` copies the top-level files, *warns on stderr nobody
+reads*, and skips `images/` and `sounds/` — and `pdc` then compiles
+the incomplete bundle without complaint, producing a pdx whose failures
+(missing images, silent nil sounds) point everywhere except at the
+copy. Every staged pipeline in the shipped games hit some version of
+this before standardizing on `cp -r`.
+
+## tools/shoot.sh: the protocol
+
+`tools/shoot.sh <example-slug>` runs one example end to end. It is
+~60 lines of bash; the steps, in order, with the reasoning:
+
+1. **Derive the coordinates.** From the slug: the bundle ID
+   (`com.sdwfrost.book.` + slug with dashes removed), and from it the
+   data directory `Disk/Data/<bundleID>/`; the pdx path from `NAME` in
+   the example's Makefile; the figure directory `figures/<slug>/`.
+   Everything else is mechanical once these are right — and a typo'd
+   bundle ID means polling an empty directory forever, the trap
+   flagged back in @sec-hello.
+2. **Build.** `make book`. A compile error stops the run here, with
+   `pdc`'s message.
+3. **Kill the Simulator.** `pkill -9 -f "Playdate Simulator"` — it is
+   single-instance, and a survivor from the last run would swallow the
+   launch.
+4. **Wipe state.** Delete the example's data directory and the raw
+   figure directory. Stale `smoke.json` or leftover PNGs from a
+   previous run would satisfy every check below and lie.
+5. **Launch.** `open "$SIM" --args "$PDX"` — explicit app path, no
+   `-g`, absolute pdx path: the 3.0.6-safe form
+   (@sec-appendix-setup).
+6. **Poll.** Every 2 seconds, up to 90: if `err.json` exists, print it
+   and **fail** — the game crashed, and the first error is already in
+   the file. If `smoke.json` contains `"done":true`, succeed. If the
+   loop expires, print the last heartbeat (which says how far the run
+   got) and fail as a hang.
+7. **Kill again.** Success or failure, no Simulator outlives the run.
+8. **Wipe the datastore.** Test data must not leak into real saves
+   (@sec-appendix-setup).
+9. **Verify the shots.** Every run must produce at least one PNG;
+   `shoot.sh` fails loudly if the raw directory is empty — the
+   defense against a `Shots.shots` table that quietly stopped matching
+   any frame.
+10. **Upscale and stamp.** Each raw 400x240 capture is doubled to
+    800x480 with `magick -filter point -resize 200%` — nearest
+    neighbor, so every screen pixel becomes a crisp 2x2 block, no
+    smoothing — then the raw directory is removed and a `.stamp` file
+    records success.
+
+The stamp is what the book's top-level `make figures` keys on: an
+example is re-shot only if its sources (or the shared harness, or
+`shoot.sh` itself) are newer than its stamp, and the whole figures
+target runs `.NOTPARALLEL` because the Simulator is single-instance.
+Shooting is therefore also the book's continuous smoke test — a
+chapter whose example crashes cannot render with stale figures;
+the build stops at step 6 instead.
+
+## Adapting it to your project
+
+The pipeline assumes almost nothing. To reuse it:
+
+1. **Route your input through one snapshot function** with the bot
+   consulted first (@sec-modes, @sec-input). This is the only change
+   to game code, and it is the same seam an autopilot needs
+   (@sec-harness) — the camera is a free rider on your test rig.
+2. **Copy `bookharness.lua`** (rename freely). If you do not need
+   figures, delete the shot block and `SHOT_PREFIX` and you have the
+   shipped games' pure smoke harness.
+3. **Reproduce the two-build staging** in your build system: stage
+   source with `cp -r`, generate the flag file into the staged copy,
+   `pdc` from there. Any build tool can do this; the load-bearing part
+   is that the flag is *generated*, never hand-edited.
+4. **Copy `shoot.sh`** and change three variables at the top — bundle
+   ID prefix, SDK path, output directory. Keep the kill/wipe/poll
+   ceremony intact; every line of it is a failure mode someone paid
+   for.
+5. **Write a `Shots` script per thing you want tested or
+   photographed.** Start with `last = 300` and no shots: that alone —
+   run for ten seconds under a seeded bot without crashing — catches
+   a remarkable fraction of regressions.
+
+What you get for the effort is the meta-payoff this book has been
+demonstrating on itself: documentation whose screenshots cannot lie,
+and a test that plays your game every time you type `make`.

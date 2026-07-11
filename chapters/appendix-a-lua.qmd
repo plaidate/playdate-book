@@ -1,3 +1,196 @@
-# Playdate Lua vs. Standard Lua
+# Playdate Lua vs. Standard Lua {#sec-appendix-lua}
 
-*(Chapter to come.)*
+Playdate Lua is Lua 5.4 — same syntax, same semantics, same reference
+manual — built into a runtime that removes the parts of the standard
+library that assume a host operating system and adds a handful of
+conveniences of its own. This appendix is the reference version of the
+ground @sec-lua-lab covers by demonstration: if you arrive from desktop
+Lua, this is the diff; if a listing in this book uses something your Lua
+does not have, this is where it is accounted for. Everything here is
+verified against the SDK 3.0.6 reference (*Inside Playdate*, §5
+"Developing in Lua" and §7.1 "Playdate SDK Lua enhancements") and, where
+the reference is silent, against the live runtime via the
+`02-lua-lab` example, which prints the answers on screen.
+
+## The base language
+
+The dialect is Lua 5.4. Everything structural — integer/float
+distinction, `goto`, bitwise operators, metatables, coroutines,
+variable attributes — is present and behaves per the Lua 5.4 manual,
+with one configuration difference that matters:
+
+**Numbers are 32-bit.** The SDK reference states it in one line: the
+runtime is configured to use 32-bit numbers, where desktop Lua defaults
+to 64. Both number subtypes shrink: integers run from
+-2,147,483,648 to 2,147,483,647 (and wrap around on overflow, as Lua
+integers always do), and floats are single-precision, good for roughly
+seven significant decimal digits. In practice this bites in two places.
+Counters that grow forever are safe as integers (a frame counter at 30
+fps takes over two years to exhaust 31 bits) but *not* as floats: a
+single-precision float loses the ability to represent every integer
+beyond 2^24^, so `t += 1` on a float silently stops counting at
+16,777,216. And accumulated float arithmetic — adding `1/30` to a clock
+thousands of times — drifts sooner than 64-bit habits expect, which is
+one more reason the book's skeleton (@sec-modes) treats frame numbers,
+not float seconds, as the authoritative clock. Printed floats also show
+fewer digits than desktop Lua's, which is cosmetic, but can startle
+when a debug print shows `0.3333333` where you expected fourteen 3s.
+
+Variable attributes deserve a note because the book uses one of them
+constantly:
+
+- **`<const>`** works exactly as in standard 5.4 and the SDK's own
+  documentation recommends it for the `local gfx <const> =
+  playdate.graphics` idiom — the binding cannot be reassigned and the
+  compiler may treat it as a constant (@sec-lua-lab).
+- **`<close>`** (to-be-closed variables) compiles under `pdc` and
+  carries standard 5.4 semantics. You will almost never want it: its
+  natural use is deterministic cleanup of OS resources, and the
+  resources it was designed around (`io` file handles) do not exist
+  here. None of the sixty games behind this book use it.
+
+## What is missing
+
+The sandbox removes the standard libraries that reach outside the
+program, and the loader machinery that assumes a filesystem full of
+`.lua` files. @fig-lab-sandbox in @sec-lua-lab shows the runtime
+confirming this live.
+
+| Standard Lua | Playdate status | What to use instead |
+|---|---|---|
+| `require`, `package.*` | Absent | `import` (see below) |
+| `dofile`, `loadfile` | No role — all code is precompiled into the pdx by `pdc`; there are no loose `.lua` files at runtime | `import` |
+| `os.*` (time, exit, env, process) | Absent | `playdate.getTime()`, `playdate.getSecondsSinceEpoch()`, `playdate.getCurrentTimeMilliseconds()` |
+| `io.*` (files, stdin/stdout) | Absent | `playdate.file.*` for files; `playdate.datastore.*` for save data (@sec-save); `print` still works and goes to the Simulator console |
+| `print` | **Present** | — (but see @sec-harness on why per-frame printing distorts timings) |
+
+: The removed standard libraries and their Playdate replacements. {#tbl-lua-missing}
+
+What survives of the standard library: `coroutine`, `math`, `string`,
+`table`, and `utf8`, plus base functions like `pairs`, `ipairs`,
+`pcall`, `select`, `tostring`, `tonumber`, `assert`, and
+`setmetatable`. That set is your standard library; if a desktop Lua
+snippet uses anything else, that is the porting work. When bringing
+code in from elsewhere, grep it for `os%.` and `io%.` first — those two
+prefixes account for nearly all of it.
+
+## `import` is not `require`
+
+Files join a Playdate game through `import "name"`, and it differs from
+`require` in every way that matters (@sec-lua-lab demonstrates each):
+
+- **One shared global environment.** There is no per-module scope.
+  A global assigned in any file is visible to every file. Module
+  structure is therefore a *convention* — this book's is
+  module-per-concern: one file, one global table (`Game`, `Draw`,
+  `Input`…), everything else `local`.
+- **Each file runs exactly once.** A second `import` of the same file,
+  from anywhere, does nothing. You never guard against double-loading.
+- **Return values are discarded.** The desktop `local M = require
+  "mod"` idiom has no equivalent; a file that ends in `return M`
+  silently exports nothing.
+- **It is resolved at compile time.** `pdc` walks the import graph and
+  compiles everything reachable from `main.lua` into a single
+  `main.pdz`. You cannot compute a filename and import it at runtime.
+- **Import order is the dependency mechanism.** Files execute in
+  import order; a file may read any global defined by files imported
+  before it, including at load time.
+
+The SDK also ships `import "CoreLibs/strict"`, which turns undeclared
+global reads and writes inside functions into immediate errors — a
+useful development-time antidote to the one-namespace spelling problem
+(@sec-lua-lab).
+
+## What is added
+
+### Compound assignment operators
+
+`pdc` extends the grammar with the assignment operators standard Lua
+famously lacks (*Inside Playdate* §7.1):
+
+| Operator | Meaning |
+|---|---|
+| `+=` `-=` `*=` `/=` | add, subtract, multiply, divide |
+| `//=` `%=` | integer-divide, modulo |
+| `<<=` `>>=` | shift left, shift right |
+| `&=` `\|=` | bitwise AND, bitwise OR |
+| `^=` | exponent (**not** bitwise XOR — Lua's `^` is power) |
+
+: Compound assignment operators accepted by `pdc`. {#tbl-lua-ops}
+
+They are pure syntactic convenience with one operational caveat: source
+that uses them no longer parses in desktop Lua tools — linters,
+formatters, test runners. The shipped games use them freely; code
+meant to be shared with non-Playdate Lua should not.
+
+### Table additions
+
+The SDK extends the `table` library (§7.1):
+
+| Function | What it does |
+|---|---|
+| `table.create(arrayCount, hashCount)` | New table with array and hash parts preallocated. The performance tool of the set: growing a table element-by-element in a hot loop is a GC tax you can pay once, up front (@sec-perf). |
+| `table.indexOfElement(t, element)` | First index of `element` in an array-style table, or `nil`. Linear search — fine for menus, wrong for hot loops. |
+| `table.getsize(t)` | Returns `arrayCount, hashCount` — the two parts of the table, sized separately. |
+| `table.shallowcopy(source, [destination])` | Copy one level; nested tables are shared by reference. |
+| `table.deepcopy(source)` | Recursive copy, including nested tables. |
+
+: SDK additions to the `table` library. {#tbl-lua-table}
+
+### The `json` global
+
+A `json` table is available everywhere, no import required:
+`json.decode(string)`, `json.decodeFile(path)`, `json.encode(table)`,
+`json.encodePretty(table)`, and `json.encodeToFile(...)`. In this book
+it appears mostly by implication — `playdate.datastore` (@sec-save)
+speaks JSON on disk, which is why the harness heartbeat of @sec-harness
+can be read by a shell script polling with `grep`.
+
+### `class()` and Object, from CoreLibs
+
+Not a language extension but easy to mistake for one: `import
+"CoreLibs/object"` defines a global `class()` function implementing a
+single-inheritance object system in plain Lua.
+
+```lua
+class("Oak", { rings = 0 }).extends(Tree)  -- properties optional
+
+function Oak:init(age)
+    Oak.super.init(self, age)   -- chain to parent; note .init(self, ...)
+end
+
+local oak = Oak(12)             -- instances: call the class
+oak:isa(Tree)                   -- true
+oak.className                   -- "Oak"
+```
+
+Every class inherits from `Object`; `ClassName.super` names the parent.
+The one syntactic trap is documented by the SDK itself: chain to the
+parent initializer as `Oak.super.init(self, ...)` — the colon form
+`Oak.super:init(...)` passes the *class* as `self` and misbehaves.
+@sec-lua-lab weighs when `class()` earns its keep against plain
+tables; the SDK's sprite system (@sec-sprites) is the one place this
+book *requires* it, because sprite subclasses extend
+`playdate.graphics.sprite`.
+
+## Runtime conventions worth internalizing
+
+Three habits of the platform, all from the SDK's own conventions
+section, that read as style but function as law:
+
+- **Arrays are 1-indexed**, here as everywhere in Lua, and the entire
+  `playdate.*` API agrees.
+- **Dot calls tables, colon calls instances.** `playdate.graphics`
+  functions are called with `.`; object methods with `:`. Confusing
+  them produces the platform's signature hard-to-track bug
+  (@sec-lua-lab).
+- **Some APIs return objects, others return value lists** — e.g.
+  `playdate.geometry.rect.new(...)` returns a rect object while
+  `rect.fast_intersection(...)` returns four numbers. Check the
+  reference before destructuring.
+
+And one habit of this book that is *not* SDK law but follows from the
+32-bit, GC-taxed runtime: cache `playdate.graphics` (and any other
+namespace you touch per-frame) in a file-local `<const>`, keep per-frame
+allocation near zero, and let @sec-perf show you what those two rules
+are worth in milliseconds.

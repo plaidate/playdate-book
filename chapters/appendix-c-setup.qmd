@@ -1,3 +1,217 @@
-# Environment Setup
+# Environment Setup {#sec-appendix-setup}
 
-*(Chapter to come.)*
+This appendix takes a fresh machine to a working Playdate development
+environment: SDK installed, `pdc` on your PATH, Simulator behaving, a
+device accepting uploads — and, for readers who want to run this book's
+figure pipeline or adopt its testing style (@sec-harness,
+@sec-appendix-harness), the extra configuration that lets the Simulator
+run *unattended*. That last part is where the hard-won details live;
+everything before it is fifteen minutes of ordinary setup.
+
+## Installing the SDK
+
+Download the SDK for your platform from
+[play.date/dev](https://play.date/dev/) — it is free, and includes the
+compiler, the Simulator, CoreLibs, fonts, example projects, and the
+API reference.
+
+- **macOS** — run the SDK installer. It installs to
+  `~/Developer/PlaydateSDK`, the path assumed by every script and
+  Makefile in this book.
+- **Windows** — extract the archive and run the SDK installer
+  application inside it.
+- **Linux** — extract the archive, move the SDK folder somewhere
+  user-writable, and run the `setup.sh` script inside it.
+
+Two pieces of shell configuration make everything downstream nicer, and
+some of it possible. In your shell startup file (`~/.zprofile` for zsh,
+`~/.bash_profile` or `~/.bashrc` for bash):
+
+```bash
+export PLAYDATE_SDK_PATH="$HOME/Developer/PlaydateSDK"
+export PATH="$PLAYDATE_SDK_PATH/bin:$PATH"
+```
+
+`PLAYDATE_SDK_PATH` tells `pdc` (and third-party tooling) where the SDK
+lives; per the SDK docs it is recommended on macOS and effectively
+required on Linux and Windows for anything Make- or CMake-shaped.
+Adding `bin/` to your PATH lets you run `pdc` and `pdutil` from
+anywhere. Verify with:
+
+```bash
+pdc --version
+```
+
+## The Simulator, briefly
+
+The Simulator (`bin/Playdate Simulator.app` on macOS) runs `.pdx`
+bundles and emulates the whole console: keyboard keys map to the d-pad
+and buttons, the on-screen crank can be dragged (or scrolled), and the
+`Playdate` and `Device` menus hold the development tools. The three
+things to find on day one:
+
+- **The console window** — `print()` output and Lua error tracebacks
+  land here, not in your terminal.
+- **The Disk folder** — the SDK's `Disk/` directory stands in for the
+  device's storage. Your game's data directory appears under
+  `Disk/Data/<bundleID>/` (more below).
+- **Performance honesty** — the Simulator runs your Lua on a desktop
+  CPU enormously faster than the device's Cortex-M7. It is the right
+  place to develop and the wrong place to conclude your game is fast
+  (@sec-perf).
+
+One behavior shapes all tooling: **the Simulator is single-instance.**
+Launching a second copy does not open a second window; it hands the pdx
+to the running instance and exits. Scripted workflows therefore always
+kill the Simulator before launching (`pkill -9 -f "Playdate
+Simulator"` on macOS) rather than trusting process handles.
+
+## Onto the device
+
+For your own device over USB, development is pleasantly manual:
+
+1. Connect the Playdate via USB and wake it — press the metal lock
+   button on the top edge.
+2. Run your game in the Simulator.
+3. Choose **Upload Game to Device** from the Simulator's **Device**
+   menu. The game uploads, installs, and launches on the hardware.
+
+If there is no **Device** menu, the device is locked, asleep, or not
+actually connected — the menu exists only while the Simulator can see
+an unlocked Playdate. The same connection also enables **Use Device as
+Controller**, which drives the Simulator from the physical crank and
+buttons — the cheapest way to feel your crank mapping (@sec-crank)
+before committing to hardware builds. For command-line workflows,
+`pdutil` speaks to a connected device directly.
+
+For *distribution* — your game on someone else's Playdate — the free
+path is **sideloading**: zip the pdx, upload it to a Playdate account
+at [play.date/account/sideload](https://play.date/account/sideload),
+and the device downloads and installs it over Wi-Fi like any store
+purchase. Two rules from @sec-ship bear repeating because they fail
+silently: the pdxinfo `bundleID` must be unique (it keys the game's
+identity and save directory), and `buildNumber` must strictly increase
+— a sideload update with an unchanged buildNumber is not recognized as
+an update.
+
+## Running the Simulator unattended
+
+Everything above suffices for interactive development. This book's
+figure pipeline — and the smoke-testing discipline of @sec-harness —
+asks for more: launch the Simulator from a script, let a scripted run
+play the game with no human attached, read the results off disk, and
+repeat, dozens of times in a row. Three macOS-specific obstacles stand
+between you and that, and each produces a distinctive failure.
+
+### App Nap and auto-pause
+
+macOS throttles background applications ("App Nap"), and the Simulator
+additionally pauses itself when its window is not active. Both are
+correct defaults for a human and fatal for a headless run: the
+symptom is a game that starts, then *freezes for minutes at a time* the
+moment the Simulator is covered by another window — heartbeats stop,
+timeouts fire, and nothing is wrong with your game. Fix both once, per
+machine:
+
+```bash
+defaults write com.panic.PlaydateSimulator NSAppSleepDisabled -bool YES
+defaults write com.panic.PlaydateSimulator autoPause -bool NO
+```
+
+The first exempts the Simulator from App Nap; the second stops it
+pausing when unfocused or occluded. Diagnosis, if you ever suspect a
+recurrence: a napping Simulator shows ~0.1% CPU in `ps -o %cpu` while
+your script's polls time out.
+
+### The SDK 3.0.6 launch form
+
+On SDK 3.0.6, how you launch the Simulator from a script determines
+whether your game actually *runs*:
+
+```bash
+open "$HOME/Developer/PlaydateSDK/bin/Playdate Simulator.app" \
+    --args "/absolute/path/to/Game.pdx"
+```
+
+Three properties of that line are load-bearing, and all three were paid
+for (an entire fleet of smoke-test scripts went quietly dead after an
+SDK update before the pattern was found):
+
+- **Explicit path to the app**, not `open -a "Playdate Simulator"`.
+  By-name launches load the pdx but never start the game.
+- **No `-g`** (background) flag — same silent non-start.
+- **Absolute path to the pdx** in `--args`. The Simulator's working
+  directory is not your shell's.
+
+A window appears in all cases, which is what makes the broken forms so
+misleading: the failure looks like a hang in *your* code. It is not;
+it is the launch form.
+
+### The kill/launch/poll cycle
+
+Because the Simulator is single-instance, and because a previous run
+may have left one alive, scripted runs follow a fixed ceremony — kill,
+launch fresh, poll for results, kill again:
+
+```bash
+pkill -9 -f "Playdate Simulator" 2>/dev/null
+open "$SIM" --args "$PDX"
+# ... poll the game's data directory for output (below) ...
+pkill -9 -f "Playdate Simulator" 2>/dev/null
+```
+
+`tools/shoot.sh` in the book's repository is the full worked example,
+documented step by step in @sec-appendix-harness.
+
+## The data directory, and keeping it clean
+
+Everything a game writes — `playdate.datastore` saves, harness
+heartbeats, error reports — lands in a per-game directory named by the
+pdxinfo `bundleID`:
+
+```
+~/Developer/PlaydateSDK/Disk/Data/<bundleID>/
+```
+
+For this book's examples that means
+`Disk/Data/com.sdwfrost.book.03modes/` and so on, one directory per
+chapter, which is how the figure pipeline reads each example's
+heartbeat (`smoke.json`) and error report (`err.json`) from a shell
+script while the game runs.
+
+Two hygiene rules keep this arrangement honest:
+
+- **Wipe before scripted runs.** A leftover `smoke.json` from a
+  previous run satisfies "done" checks instantly and lies to you.
+  `tools/shoot.sh` deletes the example's data directory before every
+  launch.
+- **Wipe after scripted runs.** Test data must not leak into real
+  saves: an autopilot that beats your game in thirty seconds will
+  happily plant a high score no human can match, and it will still be
+  there when you play for pleasure. Delete the directory when the run
+  is over — and during development generally, remember this directory
+  *is* your save-file state: deleting it is the "fresh install" test
+  for the load-path defaults of @sec-save.
+
+::: {.callout-note}
+## Windows and Linux
+The unattended-Simulator recipe above is macOS-specific because that is
+where this book's pipeline ran; the `defaults` commands and `open`
+semantics have no direct equivalents elsewhere. The underlying
+principles port cleanly, though: launch the Simulator binary directly
+with the pdx path as an argument, keep one instance alive at a time,
+and read results from `Disk/Data/<bundleID>/` under the SDK directory,
+which behaves identically on all three platforms.
+:::
+
+## The checklist
+
+For a machine ready to work through this book:
+
+1. Install the SDK; set `PLAYDATE_SDK_PATH`; put `bin/` on PATH.
+2. `pdc --version` works in a fresh terminal.
+3. Build and run any example: `make -C examples/01-hello run`.
+4. (For unattended runs) `defaults write com.panic.PlaydateSimulator
+   NSAppSleepDisabled -bool YES` and `... autoPause -bool NO`.
+5. (With hardware) device unlocked + USB → **Device ▸ Upload Game to
+   Device** works.

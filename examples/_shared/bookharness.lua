@@ -41,6 +41,7 @@ function Harness.set(key, val)
     Harness.counters[key] = val
 end
 
+-- snip: seam
 -- Synthetic input for this frame, or nil when a human is playing.
 -- Examples consult this at the top of their input gathering, exactly like
 -- the autopilot seam in the shipped games.
@@ -48,7 +49,9 @@ function Harness.input(frame)
     if not Harness.enabled or not Shots or not Shots.script then return nil end
     return Shots.script(frame)
 end
+-- endsnip
 
+-- snip: frame
 local function heartbeat(frame, done)
     local t = {}
     for k, v in pairs(Harness.counters) do t[k] = v end
@@ -88,3 +91,4 @@ function Harness.frame(frame, updateFn)
         heartbeat(frame, false)
     end
 end
+-- endsnip
