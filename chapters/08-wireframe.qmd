@@ -1,3 +1,283 @@
-# Vector Graphics and Faking 3D
+# Vector Graphics and Faking 3D {#sec-wireframe}
 
-*(Chapter to come.)*
+A 1-bit screen is a terrible place for textured polygons and a
+wonderful place for *lines*. Hairline strokes on black are this
+hardware's native glamour — they alias crisply, cost almost
+nothing, and carry an arcade-cabinet pedigree that 1-bit dither
+flatters instead of fighting. This chapter builds up the whole
+stack of line-based illusion: the SDK's `playdate.geometry`
+toolkit, rotation matrices, perspective projection (one divide),
+wireframe models as vertex-and-edge lists, parallax starfields —
+and the judgment call about when any of this is worth doing.
+
+The example, `08-wireframe`, is the classic demo done properly:
+a cube, a square pyramid, and an icosahedron spinning over a
+three-layer starfield, with the crank as the rotation control —
+turn the crank, turn the solid, and the sky pans with you. The
+figure script cranks three degrees a frame, which is how the
+figures in this chapter caught the same cube at two different
+attitudes. Twelve of the case-study games — the entire
+*Phosphor* package — live on this stack, and their engine files
+(`vec/mat.lua`, `vec/proj.lua`, `vec/shapes.lua`) are quoted
+throughout.
+
+## playdate.geometry: the SDK's vector toolkit
+
+The SDK ships a full 2D geometry library under
+`playdate.geometry`: `point.new(x, y)`,
+`vector2D.new(dx, dy)` (with `vector2D.newPolar(len, angle)`,
+dot products via `v:dotProduct`, `:magnitude`, `:normalized`,
+`:leftNormal`…), `lineSegment`, `rect`, `arc`, `polygon`, and
+`affineTransform.new()` — a 2D matrix you build up with
+`:rotate(deg)`, `:scale(s)`, `:translate(dx, dy)` and apply with
+`:transformPoint(p)` (or its non-mutating sibling
+`:transformedPoint`). Objects support operators — a transform
+times a point works — and several drawing calls accept geometry
+objects directly (`gfx.drawCircleAtPoint(p, r)`,
+`gfx.fillPolygon(polygon)`).
+
+It is good code, and this chapter mostly doesn't use it. Two
+reasons, both instructive. First, every `point.new` in a per
+frame loop allocates a table, and a wireframe scene transforms
+hundreds of vertices a frame — plain number pairs and flat
+arrays generate zero garbage (a theme the performance chapter
+returns to).
+Second, `affineTransform` is 2D-only; rotation *in depth* needs
+the 3×3 matrices we are about to write anyway. Reach for
+`playdate.geometry` when you hold a handful of long-lived shapes
+— collision polygons, level geometry, a `lineSegment` you
+intersect against — and stay with flat arrays when you transform
+in bulk.
+
+## Rotation is a matrix
+
+To spin a 3D model you rotate its vertices. A rotation about one
+axis is high-school trig; the standard packaging is a 3×3
+matrix, and the example stores one as a flat, row-major
+9-element array — no classes, no allocation churn:
+
+{{< snip 08-wireframe/source/wire.lua mat >}}
+
+`Mat.rx(t)` and `Mat.ry(t)` build single-axis rotations;
+`Mat.mul(a, b)` composes them (apply `b`, then `a` — order
+matters, as it always does with matrices); `Mat.apply(m, x, y,
+z)` transforms one vertex for the cost of nine multiplies. The
+example composes crank-yaw with a slow automatic pitch each
+frame:
+
+```lua
+local m = Mat.mul(Mat.rx(pitch), Mat.ry(yaw))
+```
+
+This is the same design as *Phosphor*'s `vec/mat.lua`, which
+adds the one refinement a long-running game needs — matrices
+that are *spun incrementally* every frame accumulate floating
+point drift until the model shears, so it re-orthonormalizes,
+a trick it credits to Elite:
+
+```lua
+-- phosphor/vec/mat.lua:66
+-- Re-orthonormalize to shed the rounding drift that accumulates
+-- when a matrix is spun every frame (Elite's TIDY).
+-- Gram-Schmidt anchored on column 3 (nose).
+function Mat.tidy(m)
+```
+
+Our example rebuilds its matrix from angles every frame instead
+— drift-free by construction, and the right call when your state
+*is* two angles. Keep a persistent orientation matrix only when
+objects tumble freely (a ship rolling about its own nose), and
+then `tidy` it now and again.
+
+## Perspective is a divide
+
+All of 3D projection, in one sentence: things twice as far away
+look half as big. The code is barely longer:
+
+{{< snip 08-wireframe/source/wire.lua proj >}}
+
+Divide x and y by depth, scale by a focal length, offset to the
+screen center, flip y (screens grow downward, worlds grow
+upward). The focal length sets the field of view — 210 gives
+roughly 60° across a 400-pixel screen; bigger is a telephoto,
+smaller a fisheye. That is the entire mathematical content of
+"3D on the Playdate". Everything else is bookkeeping.
+
+The `near` guard matters more than it looks. As z approaches
+zero the divide blows up; at z ≤ 0 the point is *behind* you and
+the math cheerfully projects it anyway, mirrored, producing the
+classic inside-out flicker. The example refuses to project
+anything closer than `near` and drops edges with an unprojected
+endpoint — honest and crude. *Phosphor*'s first-person games
+cannot drop those edges (walls legitimately pass the camera), so
+`vec/proj.lua` *clips* each line to the near plane by
+interpolation instead — this is the projection core the whole
+package rides on:
+
+```lua
+-- phosphor/vec/proj.lua:47
+-- draw a world-space line with near-plane clipping
+function Proj.line(x1, y1, z1, x2, y2, z2)
+    local ax, ay, az = toCam(x1, y1, z1)
+    local bx, by, bz = toCam(x2, y2, z2)
+    local n = Proj.near
+    if az < n and bz < n then return end
+    if az < n then
+        local t = (n - az) / (bz - az)
+        ax, ay, az = ax + (bx - ax) * t, ay + (by - ay) * t, n
+    elseif bz < n then
+        local t = (n - bz) / (az - bz)
+        bx, by, bz = bx + (ax - bx) * t, by + (ay - by) * t, n
+    end
+    local ka, kb = Proj.focal / az, Proj.focal / bz
+    gfx.drawLine(Proj.cx + ax * ka, Proj.cy - ay * ka,
+                 Proj.cx + bx * kb, Proj.cy - by * kb)
+end
+```
+
+## A model is vertices plus edges
+
+A wireframe model needs no meshes, no normals, no UVs: a flat
+array of vertex coordinates and a flat array of index pairs
+saying which vertices to connect:
+
+{{< snip 08-wireframe/source/wire.lua models >}}
+
+The cube is typed by hand; the icosahedron is *derived* — its
+twelve vertices are three golden-ratio rectangles, and rather
+than hand-enter thirty edges, the code finds every vertex pair
+at the known edge length. Deriving beats transcribing whenever a
+shape has structure: it cannot contain a typo'd index, and it
+documents the geometry. (For 2D outlines the same philosophy
+appears in *Phosphor*'s `vec/shapes.lua`, where asteroids are
+`Shapes.blob` — polylines with randomly jittered radii — and
+every ship is a list of hand-typed polylines.)
+
+Drawing is: rotate every vertex, push it out to viewing depth,
+project it, then connect the dots:
+
+{{< snip 08-wireframe/source/wire.lua draw-model >}}
+
+Note the scratch arrays `sx, sy` reused across calls — with 12
+vertices nobody cares, but the habit (project each vertex
+*once*, allocate *nothing* per frame) is what lets *Phosphor*'s
+`Proj.mesh` — the same function shape — draw fleets of ships at
+30 fps.
+
+![The cube at crank 117°, pitched slightly, over the
+starfield.](../figures/08-wireframe/wf-cube-a.png){#fig-wf-cube-a}
+
+![The same cube 35 frames later, crank 222° — the sky has panned
+with the crank and the silhouette has
+turned.](../figures/08-wireframe/wf-cube-b.png){#fig-wf-cube-b}
+
+Culling, briefly. This example draws every edge, spin regardless
+— for a single convex solid, the "wrong" edges read as the
+object's far side and the effect is the point. Solid-looking 3D
+adds **backface culling**: give the model faces (vertex triples),
+compute each face's winding after projection (the 2D cross
+product of two edges), and skip faces — or edges belonging only
+to faces — that wind clockwise. **Near-plane culling** you have
+already met; it is the `near` guard, upgraded to clipping when
+things may pass the camera. That, plus painter's-sorting objects
+by depth, is as far as wireframe 3D ever needs to go.
+
+## The starfield: depth for three multiplies
+
+Nothing sells rotation like a background that answers it. The
+example's sky is ninety stars in three parallax layers; when the
+crank turns the view, each layer pans at its own rate — near
+stars (drawn heavier) sweep fastest, far ones barely creep:
+
+{{< snip 08-wireframe/source/wire.lua stars >}}
+
+No projection at all — just `x = (x0 - yaw * speed) % 400` — yet
+the eye reads layered depth immediately. This is the cheapest
+3D effect in the book and the first one to reach for: the
+*Phosphor* space games run the same trick with drift instead of
+crank.
+
+The update that ties crank to matrix to model to sky, through
+the same bot-first input seam as every example (the script
+supplies `crank`; on hardware it is `playdate.getCrankPosition()`,
+absolute degrees, 0 = crank up):
+
+{{< snip 08-wireframe/source/main.lua update >}}
+
+![The pyramid, mid-run: five vertices, eight edges — the
+cheapest convincing solid there
+is.](../figures/08-wireframe/wf-pyramid.png){#fig-wf-pyramid}
+
+![The icosahedron at crank 297°: thirty edges derived from three
+golden rectangles, and the practical upper end of single-object
+wireframe complexity at this
+scale.](../figures/08-wireframe/wf-icosa.png){#fig-wf-icosa}
+
+## The voxel 3/4 projection, and earning your engine
+
+Perspective is not the only projection worth faking. The *Voxel*
+package renders Voxatron-style rooms with a fixed *3/4 view* —
+a projection with no divide at all:
+
+```lua
+-- voxel/core/vox.lua:1
+-- Voxel core: the room engine. A Voxatron-style fixed room -- a
+-- W x D x H grid of shaded voxels in a 3/4 projection on the
+-- 1-bit screen.
+--
+--   world x -> screen x (S px per voxel)
+--   world y (depth, 0 = back) -> screen y down (TY px per step)
+--   world z (height, 0 = floor) -> screen y up (TZ px per step)
+```
+
+Depth steps the pixel down, height steps it up, done. Each voxel
+is a dither-shaded top face and front face; static terrain
+pre-renders to a background image exactly as in @sec-camera. The
+lesson is that "3D" is a menu, not a destination: perspective
+wireframe, 3/4 voxel, flat parallax — each buys a different
+illusion at a different price.
+
+::: {.callout-warning}
+## A projection must earn its engine
+
+The voxel package came with a design rule, learned by shipping
+the counterexamples: *a voxel game must use height and volume —
+dig, lob, climb, flood, fall — to earn the engine.* Bomberman
+and a flat tower defense were built in voxel paint, judged
+unreadable and pointless, and cut. The rule generalizes to every
+projection in this chapter. If your gameplay is 2D, a 3D
+projection adds cost (every vertex, every frame), subtracts
+clarity (1-bit pixels are scarce; spend them on information),
+and adds nothing the design uses. Spin the icosahedron because
+rotation *is* the mechanic — the crank made it one — not
+because it demos well. Before adopting any projection, name the
+mechanic that needs it. No mechanic, no engine.
+:::
+
+## What you know now
+
+- `playdate.geometry` covers 2D points, vectors, transforms,
+  and shapes — use it for long-lived geometry, but transform
+  bulk vertices with flat arrays and plain numbers to avoid
+  per-frame allocation.
+- Rotation is a 3×3 matrix: build per-axis with sin/cos, compose
+  with multiplication (order matters), rebuild from angles when
+  you can, re-orthonormalize (`Mat.tidy`) when you must
+  accumulate.
+- Perspective projection is `screen = center + focal * xy / z`,
+  a y-flip, and a near-plane guard — upgraded to interpolated
+  clipping when geometry passes the camera.
+- A wireframe model is a flat vertex array plus edge index
+  pairs; derive structured shapes (the icosahedron) instead of
+  transcribing them; project each vertex once into reused
+  scratch arrays.
+- Parallax starfields fake depth with one multiply per layer;
+  the voxel 3/4 view fakes it with two adds; both are legitimate
+  projections on the same menu as perspective.
+- And the rule that governs the whole chapter: **a projection
+  must earn its engine** — no mechanic, no engine.
+
+That closes the graphics part of the book. Next, Part III turns
+to input, starting with the button layer — edges versus levels,
+input snapshots, and the seam that let every figure in these
+five chapters script itself.

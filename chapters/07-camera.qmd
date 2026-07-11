@@ -1,3 +1,267 @@
-# Cameras and Big Worlds
+# Cameras and Big Worlds {#sec-camera}
 
-*(Chapter to come.)*
+Four hundred by two hundred forty pixels is a porthole. The
+moment your game world outgrows it, every drawing call faces the
+same question: *where on screen* does this world position land
+right now? Answer it per-call and your code silts up with
+`x - camX` arithmetic and off-by-one seams. The Playdate's
+answer is `playdate.graphics.setDrawOffset`: tell the graphics
+system once, per frame, how the world is shifted, and every
+subsequent drawing call is automatically translated. Entities
+keep drawing at their world coordinates, unaware a camera
+exists.
+
+This chapter builds `07-camera`: a rover driving across a
+1600×480 procedurally generated landscape, chased by a camera
+with the three behaviors that make scrolling feel professional —
+smoothing (lerp), a deadzone, and hard clamping at the map edge
+— plus a HUD that ignores the camera entirely, and a screen
+shake that costs three lines because it rides the same offset.
+Along the way it settles the big-world rendering question:
+per-frame tile drawing versus one pre-rendered background image,
+and why the case-study games chose the image.
+
+## World space, screen space, and the draw offset
+
+Keep two coordinate systems distinct in your head, and name
+variables accordingly:
+
+- **World coordinates**: where things *are*. The rover at
+  x = 812 of 1600. Physics, AI, and game logic live here.
+- **Screen coordinates**: where things *land* this frame,
+  0–399 × 0–239. Only drawing cares.
+
+`gfx.setDrawOffset(dx, dy)` maps between them: with the camera's
+top-left at world (`camX`, `camY`), set the offset to
+(`-camX`, `-camY`) and a thing drawn at world (812, 300) lands
+at screen (812 − camX, 300 − camY). The offset applies to
+every draw call until changed — primitives, images, text — and
+resets each frame before `playdate.update` (a detail worth
+knowing: you set it *every frame*, not once). `getDrawOffset()`
+reads it back.
+
+The frame's shape, then, is a sandwich:
+
+1. `Cam.apply()` — set the offset; draw the *world* (terrain,
+   rover) in world coordinates.
+2. `Cam.done()` — reset the offset to (0, 0); draw the *HUD* in
+   screen coordinates.
+
+The shared camera in the *Tiles* engine — which scrolled four
+shipped games — is exactly this sandwich plus clamping and lerp,
+in under twenty lines:
+
+```lua
+-- tiles/core/tcam.lua:33
+-- smooth-follow a world point; call once per frame
+function Cam.follow(wx, wy, dt, rate)
+    local k = math.min(1, (rate or 6) * dt)
+    Cam.x = Cam.x + (clampX(wx - 200) - Cam.x) * k
+    Cam.y = Cam.y + (clampY(wy - 128) - Cam.y) * k
+end
+
+-- start drawing the world (includes Kit's screen shake)
+function Cam.apply()
+    gfx.setDrawOffset(Kit.sx - math.floor(Cam.x + 0.5),
+                      Kit.sy - math.floor(Cam.y + 0.5))
+end
+
+-- back to screen space (HUD, overlays)
+function Cam.done()
+    gfx.setDrawOffset(0, 0)
+end
+```
+
+Note the `math.floor(x + 0.5)` in `apply`: the camera's position
+is a float (lerp guarantees that), but a fractional draw offset
+makes every tile boundary shimmer as it rounds differently frame
+to frame. Round once, at the boundary between simulation and
+rendering.
+
+## A camera that feels right: lerp, deadzone, clamp
+
+A camera hard-locked to the player is technically correct and
+feels terrible: every step twitches the entire world, and the
+player's own sprite — the thing the eye tracks — never moves on
+screen. Three fixes compose, and the example's camera has all
+three:
+
+{{< snip 07-camera/source/world.lua cam >}}
+
+**Deadzone.** The camera ignores the target while it stays
+inside a center box (here 120×70). Small shuffles, idle bobs,
+and combat jitter don't move the world at all; only when the
+target presses against the box edge does the camera concede. The
+player visibly *walks across the screen* before the world starts
+sliding — that on-screen travel is what makes movement legible.
+
+**Lerp.** When the camera does move, it closes only a fraction
+(0.15) of the remaining gap each frame — exponential smoothing,
+the same `a + (b - a) * k` you will meet again in animation.
+Sharp direction changes become eased curves; the world glides
+rather than snaps. Combined with the deadzone: the box decides
+*whether* to move, the lerp decides *how urgently*.
+
+**Clamp.** Before lerping, the goal is clamped to
+`[0, World.W - 400]` × `[0, World.H - 240]`, so the view never
+slides past the edge of the world into void. Clamp the *goal*,
+not the final position, and the lerp glides to a stop against
+the boundary instead of hitting it like a wall. For worlds no
+bigger than the screen the clamp pins the camera at zero and the
+whole system silently disables itself — the tiles engine relies
+on that for its single-screen rooms.
+
+The rover's driving loop feeds the camera and stays oblivious to
+it — world coordinates only:
+
+{{< snip 07-camera/source/main.lua rover >}}
+
+![Frame 60: the rover approaches marker 2 and the camera trails
+it, rover held right of center by the
+deadzone.](../figures/07-camera/pan-1.png){#fig-pan-1}
+
+![Frame 90: the same shot thirty frames on — the numbered
+markers have slid left while the HUD strip has not moved a
+pixel.](../figures/07-camera/pan-2.png){#fig-pan-2}
+
+![Frame 120: reaching marker 3. Camera x trails rover x in the
+HUD readout: the lerp keeps a constant chase at constant
+speed.](../figures/07-camera/pan-3.png){#fig-pan-3}
+
+The three pan figures are consecutive 30-frame snapshots of one
+run. Read the HUD numbers: the gap between `cam` and `rover`
+settles to a constant — the rover rides the right edge of the
+deadzone box while the lerp holds a fixed lag behind it, the
+signature of this camera at cruising speed.
+
+## The HUD draws after `Cam.done()`
+
+The frame sandwich in full, from the example's update — world
+between `apply` and `done`, HUD after:
+
+{{< snip 07-camera/source/main.lua frame >}}
+
+Draw the HUD while the offset is still applied and it scrolls
+away with the terrain — everyone does it exactly once. The other
+direction also bites: leave the offset set at the end of your
+update (skip `Cam.done()`) and, since the offset is just more
+global draw state (@sec-dither), any menu or overlay another
+module draws afterward inherits your camera. Same discipline,
+same fix: reset at the boundary. For one-off stamps there is
+also `img:drawIgnoringOffset(x, y)` (@sec-images), and
+`setScreenClipRect` for clipping in screen space while an offset
+is live.
+
+## Big terrain: one blit beats a thousand draws
+
+How should the *terrain itself* be drawn? The obvious answer —
+loop over map cells each frame, draw the visible tiles — works,
+and @sec-images's tilemap object packages it. But every one of
+those draws happens every frame, forever, and the tile count
+scales with world size. The case-study engines take a different
+default, stated in the header comment of the tiles engine:
+
+```lua
+-- tiles/core/tmap.lua:1
+-- Tiles are 16x16, so the 400x240 screen is exactly 25x15
+-- tiles; [...] A tile type is defined ONCE by character
+-- (pattern fill + string-art overlay, rendered to an image at
+-- def time), maps are arrays of strings with one char per
+-- tile, and the whole map renders ONCE into a background
+-- image. Changing a tile repaints just that 16x16 cell --
+-- static terrain costs one blit per frame regardless of
+-- complexity, same performance model as Vox.
+```
+
+That last clause is the cost model to memorize: **static terrain
+costs one blit per frame regardless of complexity.** Render the
+whole map into a big `gfx.image` at load time (@sec-images's
+`pushContext` again, just onto a 1600×480 canvas), and the
+per-frame cost is a single `World.img:draw(0, 0)` — identical
+whether the world contains ten rects or ten thousand trees. The
+example's landscape is exactly that:
+
+{{< snip 07-camera/source/world.lua world-gen >}}
+
+And the per-frame terrain cost, from the update loop above, is
+the one line `World.img:draw(0, 0)`.
+
+::: {.callout-note}
+## When terrain changes: repaint the cell, not the world
+
+"Static" doesn't mean frozen forever. When a game digs, burns,
+or builds, the tiles engine repaints *only the touched cell*
+into the background image and goes back to one-blit-per-frame:
+
+```lua
+-- tiles/core/tmap.lua:118
+function Map.repaint(tx, ty)
+    local S = Tiles.SIZE
+    local d = Tiles.defs[Map.grid[ty][tx]]
+    if not d or not Map.bg then return end
+    gfx.pushContext(Map.bg)
+    d.img:draw((tx - 1) * S, (ty - 1) * S)
+    gfx.popContext()
+end
+```
+
+A 16×16 repaint on the frame a bomb goes off is invisible in
+the budget. The voxel engine scales the same idea up: its
+`Vox.carve` repaints only the dirty column strip of a whole 3D
+room. Reserve per-frame tile drawing for terrain that *animates
+globally* — flowing water everywhere, scrolling parallax layers
+— where every cell genuinely changes.
+:::
+
+Memory is the honest counterweight: a 1600×480 1-bit image is
+about 96 KB, well within budget, but you cannot pre-render a
+boundless world. Past a few screens' radius, games chunk the
+world and pre-render per room or region — *Molt* keeps one
+pre-rendered image per 28 rooms and rebuilds on entry.
+
+## Screen shake: the offset is already there
+
+Once every world draw routes through one `setDrawOffset` call,
+screen shake stops being a feature and becomes an addend. The
+example keeps a 12-frame decaying timer; while it runs,
+`Cam.apply` adds a random jitter scaled by the remaining time
+(see the `cam` listing above — it is the `shakeT` branch, four
+lines). The `tcam.lua` quote does the same via its `Kit.sx`
+term.
+
+![The scripted shake, two frames after impact: the whole world
+is displaced down-left — compare the marker posts against the
+screen edge in @fig-pan-3 — while the HUD strip stays
+bolted.](../figures/07-camera/cam-shake.png){#fig-cam-shake}
+
+Two rules keep shake feeling like impact rather than
+malfunction: *decay it* (the `shakeT / 12` factor — a constant
+shake reads as a broken screen), and *never shake the HUD* —
+which the sandwich gives you for free, since the HUD draws after
+the offset resets. That the shake displaces markers and terrain
+in @fig-cam-shake while the black HUD strip holds still is the
+whole trick, visible in one frame.
+
+## What you know now
+
+- `gfx.setDrawOffset(-camX, -camY)` translates *all* subsequent
+  drawing: entities draw at world coordinates and never learn
+  the camera exists. Reset it every frame; round it before
+  setting it.
+- The frame sandwich: `Cam.apply()` → world → `Cam.done()` →
+  HUD. The HUD scrolls exactly once in every project's life —
+  yours will be because the offset was still set.
+- Camera feel is three composable behaviors: deadzone (ignore
+  small moves), lerp (`cam += (goal - cam) * k`), and clamping
+  the goal to the map bounds.
+- The cost model: static terrain pre-rendered into one image
+  costs **one blit per frame regardless of complexity**; edits
+  repaint one cell (`Map.repaint`); per-frame tile draws are for
+  globally animating terrain only.
+- Screen shake is a decaying random addend inside the same
+  offset call — three lines, HUD immune by construction.
+
+Next, @sec-wireframe bends the same 2D screen into the third
+dimension: rotation matrices, perspective projection, and
+crank-spun wireframes — plus the rule for knowing when a
+projection has earned its keep.

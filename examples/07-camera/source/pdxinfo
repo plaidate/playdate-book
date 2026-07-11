@@ -1,0 +1,6 @@
+name=Camera
+author=Simon Frost
+description=Chapter 7 example: scrolling world with a lerped camera.
+bundleID=com.sdwfrost.book.07camera
+version=1.0
+buildNumber=1

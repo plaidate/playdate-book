@@ -1,3 +1,331 @@
-# Drawing in One Bit
+# Drawing in One Bit {#sec-dither}
 
-*(Chapter to come.)*
+The Playdate's screen has exactly two states per pixel: black and
+white. There is no alpha channel, no gray, no palette to fall back
+on. Everything that reads as shading on this hardware — water,
+shadows, clouds, the soft field behind a menu — is an arrangement
+of black and white pixels doing an impression of gray. This
+chapter is about making that impression convincing, and about the
+drawing primitives you build it from.
+
+The chapter's example, `04-dither`, is four screens you will keep
+returning to for the rest of the book: a *dither ladder* that
+doubles as the book's gray reference chart, a pattern gallery, a
+tour of every drawing primitive, and a small UI kit — panel,
+ribbon, meter — assembled from nothing but those primitives. All
+of it is drawn immediate-mode, every frame, which is how nearly
+all of the case-study games render (@sec-sprites explains the
+alternative). Along the way you will meet the single most
+damaging trap in the whole graphics API — `setDitherPattern`'s
+argument means the opposite of what everyone assumes — and the
+discipline that keeps drawing state from leaking between modules.
+
+## Three colors, one of them strange
+
+Every fill and stroke uses the current color, set with
+`playdate.graphics.setColor`. There are three useful values:
+
+- `gfx.kColorBlack` and `gfx.kColorWhite` are what they say.
+- `gfx.kColorXOR` inverts whatever it draws over: black pixels
+  become white and vice versa. It is the classic trick for a
+  cursor or selection box that stays visible on any background —
+  no need to know what is underneath.
+
+(There is also `kColorClear`, which punches transparent holes
+when you are drawing into an image rather than the screen;
+@sec-images covers drawing into images.)
+
+The example wraps the two common ones in one-line helpers,
+because you will type them hundreds of times:
+
+{{< snip 04-dither/source/draw.lua gray-helper >}}
+
+That third helper, `gray`, is the heart of the chapter, and it
+exists because of a trap. Read on.
+
+## The dither ladder, and THE trap
+
+`gfx.setDitherPattern(alpha, [ditherType])` sets the current
+color to a screened mix of black and white — the 1-bit answer to
+"50% gray". Subsequent fills use it exactly like a color. Here is
+the trap, and it has bitten every project that touched the API:
+
+::: {.callout-warning}
+## `setDitherPattern`'s argument is transparency, not darkness
+
+`setDitherPattern(0.8)` does not give you a dark fill. The
+parameter is *alpha in the transparency sense*: `0` is fully
+opaque **black**, `1` is fully transparent (nothing drawn at
+all). Low values are dark, high values are light — the reverse of
+the mental model almost everyone brings, where a bigger number
+means more ink.
+
+The fix is to never call it directly. Wrap it once, inverted, and
+think in *darkness* forever after.
+:::
+
+This is not a hypothetical. *Blood and Whine*'s renderer — a
+fully procedural 1-bit art pipeline, no bitmap assets at all —
+carries this exact comment at the top of its draw module, written
+after an entire art pass came out inverted:
+
+```lua
+-- whine/source/draw.lua:14
+-- d is DARKNESS (0 white .. 1 black). setDitherPattern's arg is
+-- transparency (low value = darker), so invert d to get the
+-- intuitive scale.
+local function gray(d) gfx.setDitherPattern(1 - d, DTH) end
+```
+
+Our `gray(d)` is the same helper. With it, the example's first
+screen draws the reference chart in a dozen lines:
+
+{{< snip 04-dither/source/draw.lua ladder >}}
+
+![The dither ladder: `gray(d)` for d from 0 to 1 in eighths,
+Bayer 4×4. Bookmark this figure — it is the book's gray swatch
+chart.](../figures/04-dither/dither-ladder.png){#fig-dither-ladder}
+
+@fig-dither-ladder is worth keeping a thumb on. When a later
+chapter says "a 0.25 field" or "0.6 ground", this is what those
+numbers look like. Two practical observations from shipping games
+with these swatches:
+
+- **The middle of the ladder is where texture lives.** 1/2 is
+  the classic checkerboard; 3/8 and 5/8 read as distinct
+  materials at arm's length. The extremes (1/8, 7/8) read as
+  "slightly dirty white/black" and are best for subtle depth
+  cues.
+- **Mid-gray fields make the best backdrops.** The case-study
+  games settled on a palette rule: mid-gray fields, white player,
+  dark enemies. Pure white fields waste the player's own
+  brightness; pure black swallows enemies.
+
+## Patterns: rolling your own gray
+
+`setDitherPattern` is actually a convenience over a lower-level
+tool: `gfx.setPattern(pattern)` takes a table of eight bytes, one
+per row of a repeating 8×8 tile, with each **set bit drawn
+white**. It overrides the current color until the next
+`setColor` call. When you want a *directional* texture — brick
+courses, rain streaks, scanlines — no dither type will give it to
+you, and eight bytes will:
+
+{{< snip 04-dither/source/draw.lua patterns >}}
+
+![Top row: hand-built 8-byte `setPattern` fills. Bottom row: the
+same 50% darkness rendered by six different dither
+types.](../figures/04-dither/dither-patterns.png){#fig-dither-patterns}
+
+The bottom row of @fig-dither-patterns compares dither *types*,
+the optional second argument to `setDitherPattern`:
+
+- **Bayer 2×2 / 4×4 / 8×8** (`kDitherTypeBayer*`) are ordered
+  dithers: stable, perfectly repeating grids. Bigger matrices
+  give more distinct gray levels at the cost of a coarser
+  texture. These are the workhorses — everything static in the
+  case-study games uses Bayer.
+- **Floyd–Steinberg, Burkes, Atkinson**
+  (`kDitherTypeFloydSteinberg`, …) are error-diffusion — "noise"
+  — dithers. They look organic and avoid the grid, but the
+  pattern depends on where the fill starts, so a moving shape
+  filled with them *shimmers* frame to frame. Use them for
+  freeze-frame texture (title cards, photos), not for anything
+  that moves.
+- **Screen and line dithers** (`kDitherTypeScreen`,
+  `kDitherTypeDiagonalLine`, `kDitherTypeVerticalLine`,
+  `kDitherTypeHorizontalLine`) are stylized halftones — good for
+  deliberate print-look effects.
+
+::: {.callout-note}
+## Where the 8-byte tables come from
+
+The shared tile engine behind the *Tiles* games defines its whole
+terrain palette as five named patterns
+(`tiles/core/tmap.lua:19`): `WHITE`, `LIGHT`, `MID` (`0xAA,0x55`
+alternating — the checkerboard), `DARK`, `BLACK`. Five rows of
+texture were enough for four shipped games. Design your patterns
+in a comment as ASCII art first; each byte is one row of that art
+read as binary.
+:::
+
+## The primitive set
+
+Everything the Playdate draws ultimately comes from a short list
+of primitives. The example's third screen draws each one in a
+labelled cell:
+
+{{< snip 04-dither/source/draw.lua primitives >}}
+
+![The primitive set, one cell each: lines and widths, rects,
+circles and ellipses, arcs, triangles, polygons, stroke
+locations, and a clip rect at
+work.](../figures/04-dither/primitives.png){#fig-primitives}
+
+A tour of the API names, with the details that matter:
+
+- `gfx.drawLine(x1, y1, x2, y2)` — respects `setLineWidth(w)`.
+  Line width applies to *strokes* everywhere (rect outlines,
+  arcs, polylines), not to fills.
+- `gfx.drawRect(x, y, w, h)` / `fillRect` — the bread and butter.
+  `drawRoundRect(x, y, w, h, radius)` / `fillRoundRect` add the
+  corner radius; virtually every panel and meter in the
+  case-study games is a round rect.
+- `gfx.drawCircleAtPoint(x, y, r)` / `fillCircleAtPoint`, plus
+  `drawCircleInRect` when you'd rather specify the bounding box.
+  `drawEllipseInRect(x, y, w, h)` / `fillEllipseInRect` are
+  rect-specified only.
+- `gfx.drawArc(x, y, radius, startAngle, endAngle)` — angles are
+  in **degrees, clockwise, with 0 at twelve o'clock**, matching
+  the crank's coordinate system rather than math class. An arc
+  from 0 to 270 sweeps right and around through the bottom.
+- `gfx.drawTriangle` / `fillTriangle` take six coordinates;
+  `drawPolygon` / `fillPolygon` take any even number (or a
+  `geometry.polygon`). For self-intersecting polygons,
+  `setPolygonFillRule(gfx.kPolygonFillEvenOdd)` chooses which
+  regions count as inside.
+- `gfx.drawPixel(x, y)` — for when nothing smaller will do; the
+  string-art tile renderer in `tiles/core/tmap.lua` builds whole
+  tilesets from it.
+
+Two modifiers deserve their own paragraphs.
+
+**Stroke location.** `gfx.setStrokeLocation(loc)` controls where
+a thick outline sits relative to the shape's edge:
+`gfx.kStrokeCentered` (default), `kStrokeInside`,
+`kStrokeOutside`. With 1-pixel lines it is invisible; with a
+5-pixel border it decides whether your outline eats the panel's
+interior or grows the panel. The "stroke loc." cell in
+@fig-primitives shows the same rect drawn inside- and
+outside-stroked. It only affects `drawRect` and friends —
+`drawLine` has no inside.
+
+**Clipping.** `gfx.setClipRect(x, y, w, h)` confines all drawing
+to a rectangle until `gfx.clearClipRect()`. The clip demo cell
+draws a circle deliberately hanging over the cell edge; the clip
+rect amputates it cleanly. Clipping is how you build viewports,
+reveal effects, and meters that fill by clipping a full-width
+texture. Note the example's `cell()` helper wraps *every* demo in
+a clip rect — defensive drawing, so no demo can scribble on its
+neighbours. (`setScreenClipRect` is the variant that ignores the
+draw offset; that distinction matters once cameras enter in
+@sec-camera.)
+
+## Text, and white-on-black knockout
+
+`gfx.drawText(str, x, y)` draws in the system font (bold between
+`*asterisks*`, italic between `_underscores_`);
+`gfx.drawTextAligned(str, x, y, kTextAlignment.center)` handles
+centering, and `gfx.getTextSize(str)` measures. But text has a
+catch: glyphs are images, not fills, so **`setColor` does not
+affect text**. Text draws black, always — until you change the
+*image draw mode*:
+
+```lua
+gfx.setImageDrawMode(gfx.kDrawModeFillWhite)
+gfx.drawTextAligned(text, 200, y, kTextAlignment.center)
+gfx.setImageDrawMode(gfx.kDrawModeCopy)
+```
+
+`kDrawModeFillWhite` re-inks every opaque pixel white — the
+knockout headline on a black ribbon. The full catalog of draw
+modes applies to all images and is covered in @sec-images; for
+now, `FillWhite`-then-back-to-`Copy` is the pattern to memorize,
+*including the reset*. Forget the third line and every subsequent
+text and image in your frame silently draws white.
+
+The example's fourth screen assembles the pieces into the UI kit
+that, in one form or another, ships in every case-study game:
+
+{{< snip 04-dither/source/draw.lua uikit >}}
+
+![The UI kit: a knocked-out ribbon, a white panel on a 0.25
+field, and two meters — panel, ribbon, meter cover most of a
+game's chrome.](../figures/04-dither/ui-kit.png){#fig-ui-kit}
+
+This trio is lifted almost verbatim from *Blood and Whine*
+(`whine/source/draw.lua:22-42`), where it dresses every screen in
+the game. Note the composition rules at work in @fig-ui-kit: the
+panel is *white* so it pops off the gray field; the ribbon is
+*black* so the white knockout text pops off it; the meter is an
+outline with a 2-pixel inset fill so it stays readable at 9
+pixels tall.
+
+## Draw-mode reset discipline
+
+Color, pattern, dither, line width, stroke location, clip rect,
+draw mode, draw offset — all of it is *global state* on one
+shared context. The screen does not belong to any one module, so
+a module that changes state and returns without restoring it has
+just sabotaged whoever draws next. The bug is maddening because
+the culprit looks correct and the *victim* looks broken.
+
+The fighting game *Fightin' Chitin* draws each arena backdrop
+through a per-stage callback — dozens of them, written at
+different times, any of which might leave a dither or a fat line
+width behind. Its stage dispatcher doesn't trust them; it resets
+on the way out, every frame:
+
+```lua
+-- chitin/source/stage.lua:273
+function Stage.draw()
+    T = T + 1
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
+    Stage.def(Stage.current).draw()
+    gfx.setColor(gfx.kColorBlack)
+    gfx.setLineWidth(1)
+    gfx.setDitherPattern(0)   -- reset dither so callers draw solid
+end
+```
+
+The example does the same at the end of its update:
+
+{{< snip 04-dither/source/draw.lua reset >}}
+
+::: {.callout-note}
+## Who resets: the changer, at the boundary
+
+Two workable conventions: *every function restores what it
+changes* (fine-grained, easy to forget), or *the module boundary
+resets everything* (blunt, impossible to forget). The shipped
+games converged on the second — a `reset()` at the end of the
+frame or after any callback dispatch. A handful of redundant
+state calls per frame cost nothing; an evening lost to "why is
+the HUD suddenly dithered" costs an evening. Note the chitin
+quote resets dither with `setDitherPattern(0)` — alpha 0, fully
+opaque — *followed by* `setColor(black)`; either alone would do,
+since `setColor` clears any pattern, but the pairing documents
+intent.
+:::
+
+Finally, the screen dispatch that stitches the example together —
+the same bot-first input seam introduced in @sec-hello, so the
+figure script can page through the screens:
+
+{{< snip 04-dither/source/main.lua dispatch >}}
+
+## What you know now
+
+- The three colors — black, white, and XOR for
+  always-visible-cursor tricks — and that `setPattern`'s eight
+  bytes override color until the next `setColor`.
+- `setDitherPattern`'s argument is **transparency, not
+  darkness**; wrap it as `gray(d) = setDitherPattern(1 - d, …)`
+  once and never call it raw again.
+- The dither ladder (@fig-dither-ladder) as a working gray
+  palette; Bayer for anything that moves, error-diffusion
+  "noise" dithers only for stills.
+- The full primitive set — line, rect, roundRect, circle,
+  ellipse, arc, triangle, polygon — plus `setLineWidth`,
+  `setStrokeLocation`, and `setClipRect` as the modifiers that
+  change how all of them land.
+- Text ignores `setColor`; knockout headlines are
+  `kDrawModeFillWhite` plus a disciplined reset to
+  `kDrawModeCopy`.
+- Drawing state is global: reset color, width, dither, clip, and
+  draw mode at module boundaries, every frame.
+
+Next, @sec-images moves from drawing *on the screen* to drawing
+*into images* — loading them, generating them in code at boot,
+animating them from imagetables, and stamping them scaled and
+rotated.

@@ -1,0 +1,6 @@
+name=Dither
+author=Simon Frost
+description=Chapter 4 example: dither ladder, primitives, and a UI kit.
+bundleID=com.sdwfrost.book.04dither
+version=1.0
+buildNumber=1

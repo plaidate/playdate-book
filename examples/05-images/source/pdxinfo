@@ -1,0 +1,6 @@
+name=Images
+author=Simon Frost
+description=Chapter 5 example: procedural imagetables, stamps, tilemap.
+bundleID=com.sdwfrost.book.05images
+version=1.0
+buildNumber=1

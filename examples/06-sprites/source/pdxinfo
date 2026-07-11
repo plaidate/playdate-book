@@ -1,0 +1,6 @@
+name=Sprites
+author=Simon Frost
+description=Chapter 6 example: a moveWithCollisions playground.
+bundleID=com.sdwfrost.book.06sprites
+version=1.0
+buildNumber=1

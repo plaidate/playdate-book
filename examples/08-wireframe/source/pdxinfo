@@ -1,0 +1,6 @@
+name=Wireframe
+author=Simon Frost
+description=Chapter 8 example: crank-spun wireframe solids in space.
+bundleID=com.sdwfrost.book.08wireframe
+version=1.0
+buildNumber=1

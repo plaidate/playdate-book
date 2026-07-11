@@ -1,3 +1,282 @@
-# The Sprite System
+# The Sprite System {#sec-sprites}
 
-*(Chapter to come.)*
+The last two chapters drew everything by hand, every frame:
+clear, draw world, draw actors, draw HUD. The SDK offers a
+second, *retained-mode* way to put things on screen —
+`playdate.graphics.sprite`. You create sprite objects, give each
+an image and a position, `add()` them to a global display list,
+and call one function per frame; the system tracks what moved,
+redraws only the damaged patches of screen, and — the real prize
+— resolves collisions for you with a purpose-built
+`moveWithCollisions` that never lets fast movers tunnel through
+walls.
+
+This chapter gives the sprite system full, fair coverage, built
+around a collision playground you can steer by hand or let the
+figure script drive: a player square pushed diagonally into
+walls and sensors while the four collision response types —
+slide, freeze, overlap, bounce — take turns deciding what
+contact means. The figures are the trails it leaves. First,
+though, a disclosure.
+
+::: {.callout-note}
+## Why the case-study games don't use sprites
+
+Honesty requires saying it plainly: of the ~60 shipped games this
+book draws on, essentially none use `gfx.sprite`. They are
+immediate-mode renderers — clear, draw in explicit order, repeat
+— for three reasons. First, *dirty-rect bookkeeping stops paying
+when most of the screen changes anyway*: scrolling worlds,
+full-screen procedural art, and starfields damage everything
+every frame, so "redraw only what changed" means "redraw
+everything, plus overhead". Second, *draw order as code* (world,
+then actors, then effects, then HUD, in the order the lines
+appear) turned out easier to reason about than z-indexes spread
+across object constructors. Third, their collision needs were
+grid- or circle-shaped and a dozen lines each.
+
+None of that makes sprites wrong. For a game with dozens of
+mostly-static UI cards, or discrete moving actors on a stable
+background — puzzle boards, tower defense, anything
+Zelda-shaped — the dirty-rect model is a genuine performance
+*win* on this CPU, and `moveWithCollisions` is flatly better
+than a first attempt at AABB physics. Learn both; choose per
+game.
+:::
+
+## The sprite lifecycle
+
+A sprite is created, dressed, placed, and added:
+
+```lua
+import "CoreLibs/sprites"
+
+local s = gfx.sprite.new(image)   -- or sprite.new() + setImage
+s:setZIndex(10)
+s:moveTo(200, 120)
+s:add()                           -- now the system owns drawing it
+```
+
+From then on one call in your update draws *everything*:
+
+```lua
+function playdate.update()
+    gfx.sprite.update()   -- moves, redraws, all sprites
+end
+```
+
+`gfx.sprite.update()` (the class function — do not confuse it
+with the per-sprite `:update()` callback it invokes on each
+sprite) is the engine's heartbeat. Forget it and the screen
+simply never changes; call it twice and you pay double. A
+sprite leaves the screen with `:remove()`, or temporarily with
+`:setVisible(false)`; `:moveTo(x, y)` and `:moveBy(dx, dy)`
+reposition it — positions refer to the sprite's *center* by
+default, adjustable with `:setCenter(ax, ay)` (fractions, so
+`0, 0` means top-left). Stacking order is `:setZIndex(z)`,
+higher in front.
+
+The playground builds its arena — walls, a sensor zone, a ghost
+wall we will get to — entirely from one boxSprite helper that
+draws a rect into an image (@sec-images) and hangs a sprite on
+it:
+
+{{< snip 06-sprites/source/playground.lua setup >}}
+
+## The dirty-rect redraw model
+
+The reason retained mode exists: `gfx.sprite.update()` does
+*not* clear and redraw the screen. It maintains a list of dirty
+rectangles — patches damaged by sprites that moved, changed
+image, or changed z — and repaints only those, compositing the
+sprites that intersect them in z order. A screen of forty static
+sprites costs almost nothing per frame; that is the whole
+pitch.
+
+Two consequences follow. First, the *background* needs to
+participate: when a sprite moves off a patch, something must
+repaint what was under it. That is
+`gfx.sprite.setBackgroundDrawingCallback`:
+
+{{< snip 06-sprites/source/main.lua background >}}
+
+The callback receives the damaged rect; drawing just that region
+is the optimization, drawing the whole background and letting the
+clip rect trim it is the lazy correct version.
+
+Second, anything you draw *outside* the sprite system — our
+debug trail dots, immediate-mode HUD text — is invisible to the
+bookkeeping: sprites repaint over it only where rects happen to
+be dirty, leaving stale smears elsewhere. The playground's
+overlay solves it bluntly by declaring the whole screen dirty
+each frame with `gfx.sprite.addDirtyRect(0, 0, 400, 240)`, which
+is also your escape hatch whenever mixed rendering misbehaves —
+correctness first, then shrink the rect:
+
+{{< snip 06-sprites/source/playground.lua overlay >}}
+
+(Yes: dirtying everything every frame surrenders the dirty-rect
+advantage — see the sidebar above. A shipping sprite game would
+confine the overlay to a HUD strip and dirty only that.)
+
+## Collisions: the rect, the move, the response
+
+Three calls turn sprites into a physics layer. One,
+`:setCollideRect(x, y, w, h)` gives the sprite a collision box
+in *its own* coordinate space (offsets from its top-left — not
+world coordinates). No collide rect, no collisions: sprites
+without one are scenery. Two, instead of `:moveTo`, move with:
+
+```lua
+local ax, ay, cols, n = s:moveWithCollisions(goalX, goalY)
+```
+
+The sprite travels toward the goal but stops, slides, or bounces
+according to what it hits; it lands at (`ax`, `ay`), and `cols`
+is an array of `n` collision records. Each record carries
+`.other` (the sprite hit), `.type` (the response applied),
+`.normal` (the surface normal as a vector — which face you hit),
+`.touch` (the contact point), and more. The sweep is continuous:
+a 20-pixel move into a 2-pixel wall *hits* the wall; it does not
+teleport past it. That freedom from tunneling is the single
+biggest thing you give up by writing naive `x = x + dx` physics.
+
+Three, the **collision response**, decided per pair of sprites
+by overriding `:collisionResponse`:
+
+{{< snip 06-sprites/source/playground.lua player >}}
+
+The function is consulted for each candidate `other`; returning
+one of four constants sets the physics of that contact. The
+playground cycles the constant it returns for walls (that is
+`MODES[Playground.mode]`), which is the whole trick behind the
+four figures below — one code path, four physical worlds. The
+SDK's own arrow-collisions sample is built on exactly the same
+cycling idea:
+
+```lua
+-- PlaydateSDKArrowCollisionsExample/source/main.lua:13
+local arrowResponses = {'freeze', 'slide', 'bounce', 'overlap'}
+```
+
+(Response values may be given as those strings, too; the book
+uses the constants for greppability.)
+
+### The four responses, on the record
+
+The driving code is shared — the script shoves the player
+diagonally (right and slightly down) into the black wall for 75
+frames per phase, leaving a dot every frame:
+
+{{< snip 06-sprites/source/playground.lua move >}}
+
+**Slide** (`gfx.sprite.kCollisionTypeSlide`) — motion along the
+blocked axis stops, the rest continues. The trail hits the wall
+and smears *down* its face: the platformer response, the reason
+walking into a wall while falling still means falling.
+
+![Slide: the diagonal approach becomes a vertical crawl along
+the wall face. The dotted trail is the player's frame-by-frame
+history.](../figures/06-sprites/sprite-slide.png){#fig-sprite-slide}
+
+**Freeze** (`kCollisionTypeFreeze`) — the sprite stops dead at
+first contact, both axes. The trail ends at the wall. Right for
+arrows thunking into targets, pieces snapping against a stack.
+
+![Freeze: same approach, but contact ends the story — the trail
+stops at the wall and the remaining 20 frames go
+nowhere.](../figures/06-sprites/sprite-freeze.png){#fig-sprite-freeze}
+
+**Overlap** (`kCollisionTypeOverlap`) — no physics at all, but
+the contact is still *reported* in `cols`. The trail sails
+through the wall as if it were fog. This is the sensor response:
+pickups, damage zones, goal triggers.
+
+![Overlap: the wall stops being solid but keeps being seen — the
+trail passes clean through it, and every touch was still counted
+by the collision records.](../figures/06-sprites/sprite-overlap.png){#fig-sprite-overlap}
+
+**Bounce** (`kCollisionTypeBounce`) — the movement reflects off
+the surface. One subtlety the figure makes visible: bounce
+reflects *this move*, not your velocity variable. If you keep
+adding `vx` every frame you will drive back into the wall and
+jitter; on each bounce record, flip the velocity component along
+`c.normal`, as the `move` listing above does. The trail shows the
+resulting clean V off the wall (and a second V off the arena
+floor).
+
+![Bounce: the approach reflects off the wall and then off the
+bottom wall — velocity is flipped along each collision's normal
+so the motion continues frame after
+frame.](../figures/06-sprites/sprite-bounce.png){#fig-sprite-bounce}
+
+Notice in *all four* figures: the sensor zone reported the pass
+(the "overlapping" counter ticks while the player crosses it)
+without ever deflecting the player, because
+`collisionResponse` returns `overlap` for anything tagged as a
+sensor before the mode is even consulted. Per-pair responses are
+the norm in real games, and `:setTag(n)` / `:getTag()` (small
+integers you assign) is the cheap way to sort sprites into kinds
+without a class hierarchy.
+
+## Groups and masks: who can touch whom
+
+`collisionResponse` decides *how* contact resolves;
+groups decide whether contact is *considered at all*. Every
+sprite can belong to up to 32 groups (`:setGroups({1, 3})`) and
+declares which groups it collides with
+(`:setCollidesWithGroups({1, 2})`). If the mover's mask and the
+target's groups share no bit, the pair is skipped: no response
+function called, no collision record, no cost. (Power users can
+set the bitmasks directly with `:setGroupMask` /
+`:setCollidesWithGroupsMask`.)
+
+The playground's *ghost wall* demonstrates the null case: it sits
+in group 3, the player's mask covers `{1, 2}` — walls and
+sensors — so in every figure the trail crosses the dithered
+ghost wall without so much as a report. Groups are your tool for
+"enemy bullets ignore enemies", "the ghost walks through walls
+but not the exit door", and — the performance case — keeping a
+hundred particles from being tested against each other.
+
+Beyond the moment of movement, you can ask standing questions:
+`s:overlappingSprites()` returns everything currently overlapping
+`s` (the HUD counter in the figures),
+`gfx.sprite.allOverlappingSprites()` returns every overlapping
+pair on the field, and `s:checkCollisions(x, y)` is a dry run of
+`moveWithCollisions` — same records, no movement — for AI
+lookahead ("would stepping left hit anything?").
+
+Finally, the main loop that drives it all — note the shape:
+resolve input, move sprites, `gfx.sprite.update()`, then overlay.
+Move *before* update, so the frame you draw is the frame you
+computed:
+
+{{< snip 06-sprites/source/main.lua update >}}
+
+## What you know now
+
+- The lifecycle: `sprite.new(image)`, `:moveTo`, `:setZIndex`,
+  `:add`/`:remove`, and exactly one `gfx.sprite.update()` in
+  `playdate.update` that draws the whole display list.
+- Dirty-rect rendering repaints only damaged patches; the
+  background joins in via `setBackgroundDrawingCallback`, and
+  mixed immediate-mode drawing needs `addDirtyRect` (or its own
+  strip of screen).
+- `:setCollideRect` (sprite-local coordinates) arms a sprite;
+  `:moveWithCollisions(goal)` sweeps without tunneling and
+  returns collision records with `.other`, `.normal`, `.touch`.
+- The four responses — slide (platformers), freeze (arrows),
+  overlap (sensors), bounce (reflect, then flip your velocity
+  along the normal yourself) — chosen per pair in
+  `:collisionResponse`.
+- Groups and masks prune pairs before they cost anything; tags
+  sort sprites into kinds; `overlappingSprites` and
+  `checkCollisions` answer questions without moving.
+- And the honest sidebar: immediate mode remains the right call
+  when most of the screen changes every frame — which is why
+  the rest of this book's examples stay immediate-mode.
+
+Next, @sec-camera leaves the single screen behind: draw offsets,
+world-versus-screen coordinates, and cameras that follow the
+player across terrain far bigger than 400×240.
