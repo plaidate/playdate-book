@@ -34,8 +34,11 @@ audio: a `playdate.sound.synth` (this chapter), a
 (sample playback and streaming, covered in @sec-music), or a
 `playdate.sound.instrument` (a bundle of synths that plays under a
 sequencer, also @sec-music). Sources are grouped into channels,
-each with its own volume and pan, and effects can be attached per
-channel.
+each with its own volume and pan. Channels can also host effect
+objects — `playdate.sound` ships a bitcrusher, ring modulator,
+one- and two-pole filters, overdrive, and a delay line — which this
+book leaves to *Inside Playdate* §7.28; nothing in these two
+chapters needs them.
 
 You can ignore almost all of that to get started, because of one
 convenient default: **a source that has not been added to any

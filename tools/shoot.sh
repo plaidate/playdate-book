@@ -59,7 +59,10 @@ if [ ${#raws[@]} -eq 0 ]; then
     exit 1
 fi
 for f in "${raws[@]}"; do
-    magick "$f" -filter point -resize 200% "$FIG/$(basename "$f")"
+    # 2x nearest-neighbor, plus a thin frame so white screens read as
+    # screenshots on the white page of the PDF.
+    magick "$f" -filter point -resize 200% \
+        -bordercolor black -border 2 "$FIG/$(basename "$f")"
 done
 rm -rf "$FIG/raw"
 touch "$FIG/.stamp"

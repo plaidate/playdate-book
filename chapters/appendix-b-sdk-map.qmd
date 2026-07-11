@@ -1,3 +1,204 @@
-# SDK Coverage Map
+# SDK Coverage Map {#sec-appendix-sdk-map}
 
-*(Chapter to come.)*
+This book claims to teach the Playdate Lua SDK, and a claim like that
+deserves an audit. This appendix is the audit: every subsection of the
+API reference in *Inside Playdate* (§7, SDK 3.0.6) appears in the
+tables below, mapped to the chapter — and the chapter section, by its
+heading — where the book covers it, with an honest depth rating. Use it
+in either direction. Coming from the SDK reference ("what does the book
+say about `playdate.pathfinder`?"), scan the leftmost columns for the
+namespace and follow the cross-reference. Coming from a gap in your own
+game ("I need a scrolling list"), the area names are descriptive enough
+to browse.
+
+The depth ratings mean exactly this. **Full**: the book teaches the
+area's working core through the chapter's buildable example, including
+at least one gotcha — the standard set by the authoring rules. **Introduced**:
+the API is explained and situated — what it is, when to reach for it —
+with real calls on the page, but the chapter's example does not lean on
+it or only part of the area appears. **Mentioned**: named with enough
+context to know it exists and where it fits, nothing more. **Not
+covered**: absent from the book; every such area gets a sentence at the
+end of this appendix saying what it is and where to read about it, so
+the map has no blank edges. Ratings describe the area's working core,
+not every last function — the fine print after the tables lists the
+stray functions inside otherwise-covered areas that the book skips.
+
+## System and runtime
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.1 | Lua enhancements (`+=`, `table` additions, `class()`) | @sec-appendix-lua, "What is added"; demonstrated in @sec-lua-lab | Full |
+| 7.2 | System and game metadata (`playdate.metadata`) | @sec-ship, "pdxinfo: the full reference" | Full |
+| 7.3 | Game flow (`playdate.update`, `wait`, `stop`, `start`) | @sec-modes, "The update contract" and "The loop-control APIs the skeleton refuses" | Full |
+| 7.4 | Game lifecycle callbacks | @sec-tilt, "The rest of the lifecycle"; @sec-save, "Last-chance saves: the lifecycle hooks" | Full |
+| 7.5 | System Menu (`getSystemMenu`, menu items, menu image) | @sec-tilt, "The System Menu" | Full |
+| 7.6 | Localization (`getSystemLanguage`) | — | Not covered |
+| 7.7 | Accessibility (`getReduceFlashing`, `getFlipped`) | — (the master-switch pattern in @sec-juice is where they plug in) | Not covered |
+| 7.12 | Device auto lock (`setAutoLockDisabled`) | @sec-tilt, auto-lock warning in "Tying it together" | Full |
+| 7.13 | Date & time | @sec-perf (game-clock timing with `getCurrentTimeMilliseconds`); calendar functions tabulated in @sec-appendix-lua | Introduced |
+| 7.26 | Power (`getBatteryPercentage`, `getPowerStatus`) | @sec-perf, battery logging aside in "The deeper toolbox" | Mentioned |
+| 7.35 | Garbage collection (`setCollectsGarbage`, `setMinimumGCTime`, `setGCScaling`) | @sec-perf, "Garbage: the tax on tables" | Full |
+
+: System and runtime areas. {#tbl-map-system}
+
+## Input
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.8 | Accelerometer | @sec-tilt, "The accelerometer" | Full |
+| 7.9 | Buttons (polling, `getButtonState`, button callbacks) | @sec-input, "Six buttons, two questions" and "Everything at once: getButtonState" | Full |
+| 7.10 | Crank (position, change, ticks, dock callbacks, crank sounds) | @sec-crank, the whole chapter | Full |
+| 7.11 | Input handlers (`inputHandlers.push`/`pop`) | @sec-input, "Polling versus input handlers" | Introduced |
+| 7.22 | Keyboard (`playdate.keyboard`) | @sec-tilt, "The keyboard" | Full |
+
+: Input areas. {#tbl-map-input}
+
+## Display, graphics, and UI
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.16 | Display (`setRefreshRate`, `getFPS`) | @sec-modes, "The update contract"; @sec-perf, "The budget, and the meter"; `setRefreshRate(0)` in @sec-harness | Introduced |
+| 7.17 | Easing functions | @sec-juice, "The easing catalog" | Full |
+| 7.19 | Geometry (point, vector2D, rect, polygon, affineTransform…) | @sec-wireframe, "playdate.geometry: the SDK's vector toolkit" | Introduced |
+| 7.32 | UI: `gridview` | @sec-tilt, "A scoreboard with gridview" | Full |
+| 7.32 | UI: `crankIndicator` | @sec-crank, "Docked, undocked, and the indicator" | Full |
+
+: Display and UI areas. {#tbl-map-display}
+
+The graphics namespace (§7.20) is the SDK's largest, so it gets its
+own table:
+
+| Graphics area | Where in the book | Depth |
+|---|---|---|
+| Color, pattern & dither | @sec-dither, "The dither ladder" and "Patterns: rolling your own gray" | Full |
+| Drawing primitives | @sec-dither, "The primitive set" | Full |
+| Draw modes & modifiers | @sec-dither, "Draw-mode reset discipline"; @sec-images, "Draw modes: one image, many inkings" | Full |
+| `image` (load, draw, flips, scale, rotation) | @sec-images, "Two ways to make an image" and "Stamping: draw, flips, scaled, rotated" | Full |
+| Offscreen drawing (`pushContext`, `lockFocus`) | @sec-images, "Drawing into an image: pushContext"; put to work in @sec-camera | Full |
+| `imagetable` | @sec-images, "Imagetables and the animation loop" | Full |
+| `animation.loop` | @sec-images, "Imagetables and the animation loop" | Full |
+| `animator` | @sec-juice, "playdate.graphics.animator: values with a shape" | Full |
+| `animation.blinker` | @sec-juice, "blinker: the last SDK piece" | Introduced |
+| `sprite` (lifecycle, dirty rects, `moveWithCollisions`, groups) | @sec-sprites, the whole chapter | Full |
+| `tilemap` | @sec-images, "Tilemaps: many stamps, one object" | Full |
+| Text & fonts | @sec-images, "Text as images, and fonts"; @sec-dither, "Text, and white-on-black knockout" | Full |
+| Scrolling (`setDrawOffset`) | @sec-camera, "World space, screen space, and the draw offset" | Full |
+| Frame buffer (`getDisplayImage`) | @sec-harness, screenshots via `getDisplayImage` | Mentioned |
+| `video` | — | Not covered |
+
+: `playdate.graphics` sub-areas (§7.20). {#tbl-map-graphics}
+
+## Sound
+
+The sound namespace (§7.28) is the other giant; the book spends two
+chapters inside it and leaves its studio-grade corners alone:
+
+| Sound area | Where in the book | Depth |
+|---|---|---|
+| `synth` (waveforms, `playNote`) | @sec-sfx, "One synth, one line" onward | Full |
+| Envelopes / ADSR | @sec-sfx, "Shaping a note: ADSR" | Full |
+| `lfo` | @sec-sfx, "Wobble: LFOs and modulation" | Full |
+| `channel` (volume, per-channel routing) | @sec-sfx, "Channels and the volume knob"; @sec-music, "Ducking: the music channel earns its keep" | Full |
+| `sequence` | @sec-music, "Engine one: the SDK sequencer" | Full |
+| `track` | @sec-music, "Engine one: the SDK sequencer" | Full |
+| `instrument` | @sec-music, "Engine one: the SDK sequencer" | Full |
+| `sampleplayer` | @sec-music, "Files: fileplayer and sampleplayer" | Introduced |
+| `fileplayer` (streaming, underruns, loop ranges) | @sec-music, "Files: fileplayer and sampleplayer" | Introduced |
+| `sample` | — | Not covered |
+| `signal` & `controlsignal` | — | Not covered |
+| Effects (bitcrusher, ring mod, filters, overdrive, delay line) | — | Not covered |
+| Mic input | — | Not covered |
+| Audio output & device time | — | Not covered |
+
+: `playdate.sound` sub-areas (§7.28). {#tbl-map-sound}
+
+## Data and files
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.18 | `datastore` | @sec-save, the whole chapter | Full |
+| 7.18 | `playdate.file` (open/read/write, filesystem operations) | @sec-save, "Beyond datastores: `json` and `playdate.file`" | Introduced |
+| 7.21 | JSON (`json.encode`/`decode` and file variants) | @sec-save, "Beyond datastores"; @sec-appendix-lua, "The `json` global" | Introduced |
+| 7.29 | Strings (`CoreLibs/string`: `UUID`, whitespace trims) | — | Not covered |
+
+: Data and file areas. {#tbl-map-data}
+
+## Game-logic helpers
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.23 | Math (`playdate.math.lerp`) | — (@sec-camera hand-rolls `lerp` in one line instead) | Not covered |
+| 7.25 | Pathfinding (`pathfinder.graph`, nodes, A*) | @sec-maze, "The SDK's pathfinder: A* for free" | Full |
+| 7.30 | Timers (`playdate.timer`, value timers, `updateTimers`) | @sec-juice, "`playdate.timer`: the SDK's clock" | Full |
+| 7.31 | Frame timers (`playdate.frameTimer`) | @sec-juice, alongside the timer discussion | Introduced |
+
+: Game-logic helper areas. {#tbl-map-logic}
+
+## Development and tooling
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.14 | Debugging (`drawFPS`, `print`) | @sec-perf, "The budget, and the meter"; @sec-lua-lab, "print still works" | Introduced |
+| 7.15 | Profiling (`sample()`, `getStats`, the Simulator's tools) | @sec-perf, "The deeper toolbox" and "Measuring the drawing API" | Full |
+| 7.27 | Simulator-only (`playdate.simulator.writeToFile` and friends) | @sec-harness, "writeToFile, not datastore.writeImage"; @sec-appendix-harness | Introduced |
+
+: Development and tooling areas. {#tbl-map-tooling}
+
+## Connectivity
+
+| SDK § | Area | Where in the book | Depth |
+|---|---|---|---|
+| 7.24 | Networking (HTTP, TCP) | — | Not covered |
+| 7.33 | Serial communication | — | Not covered |
+| 7.34 | Playdate Mirror | — | Not covered |
+
+: Connectivity areas. {#tbl-map-connectivity}
+
+## The tally
+
+Sixty-four areas: **37 Full, 12 Introduced, 2 Mentioned, 13 Not
+covered.** Everything a single-player game running on the device
+touches — graphics, sound, input, timers, persistence, pathfinding,
+the lifecycle — is taught at Full or Introduced depth. The Not covered
+column clusters at the edges: connectivity, recorded-media plumbing,
+and single-function conveniences. Here is what each one is, so you
+know whether you need it.
+
+**Localization** (§7.6) is one function: `playdate.getSystemLanguage()`
+returns whether the console is set to English or Japanese, so a
+bilingual game can pick its strings. **Accessibility** (§7.7) is two
+reads — `getReduceFlashing()` and `getFlipped()` report the user's
+system settings; a game with flash-heavy effects should check the
+former and route it into a master switch like the one @sec-juice
+builds. **Video** (§7.20) plays pre-rendered `.pdv` files through
+`playdate.graphics.video` — for cutscenes, and rarely worth the
+storage in a 1-bit game. In sound, **`sample`** (§7.28) is the raw
+audio-buffer object beneath `sampleplayer` (slicing, saving, loading);
+**`signal` and `controlsignal`** are modulation sources that automate
+synth parameters from sequencer tracks; the **effects** family
+(bitcrusher, ring modulator, one- and two-pole filters, overdrive,
+delay line) attaches DSP to channels; **mic input** records from the
+built-in or headset microphone; and **audio output** covers headphone
+detection and the audio device clock. **Strings** (§7.29,
+`CoreLibs/string`) adds `UUID()` and three whitespace-trimming
+functions to standard Lua's `string`. **Math** (§7.23) is exactly one
+function, `playdate.math.lerp` — this book writes
+`a + (b - a) * t` where it needs it. **Networking** (§7.24, OS 2.7+)
+brings HTTP and TCP, up to four connections, behind a user-consent
+prompt; **serial communication** (§7.33) lets a game receive `msg`
+commands over USB; and **Playdate Mirror** (§7.34) provides callbacks
+so a game can lighten its load while the Mirror app streams it to a
+computer. For all of these, the numbered section of *Inside Playdate*
+in the left column is the definitive reference — and after eighteen
+chapters of this book's habits, none of them will read as foreign.
+
+Fine print on the partially covered rows: within areas rated Full or
+Introduced, the book does not use `playdate.apiVersion()` (§7.2),
+the calendar half of date & time (`getTime`, `getGMTTime`,
+epoch conversions — tabulated but not exercised in
+@sec-appendix-lua), the display transforms `setScale`, `setInverted`,
+`setMosaic`, `setFlipped`, and `setOffset` (§7.16), or the console
+helpers `printTable` and `where()` (§7.14). Each behaves exactly as
+its reference entry says, and none hides a trap the book's covered
+neighbors have not already taught you to expect.

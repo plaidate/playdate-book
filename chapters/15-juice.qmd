@@ -204,7 +204,10 @@ effect is a function call at the moment of impact**, and the caller
 neither knows nor cares how it renders. `Fx.shake(6, 3)` at the
 bounce; done. And every one of them checks a master switch, which is
 what makes the A/B demo — and per-effect accessibility settings —
-possible.
+possible. (The system exposes one such setting itself:
+`playdate.getReduceFlashing()` reads the player's system-level
+"reduce flashing" preference, and your flash and shake effects
+should respect it.)
 
 **Screen shake** is offset jitter. While the shake counter runs, the
 whole scene draws at a small random offset via `gfx.setDrawOffset`;

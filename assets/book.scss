@@ -9,8 +9,7 @@ figure img,
 // Captures are committed pre-upscaled to 800x480; cap them there but let
 // them shrink on narrow viewports.
 img[src*="figures/"] {
-  width: min(800px, 100%);
-  border: 1px solid #ddd;
+  width: min(804px, 100%);
 }
 
 // Code blocks: Lua listings from the examples carry a filename attribute.
