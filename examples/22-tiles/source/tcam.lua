@@ -1,0 +1,56 @@
+-- vendored from tiles/core/tcam.lua (MIT)
+-- Tiles core: the camera. Maps bigger than the screen scroll by routing
+-- all world drawing through gfx.setDrawOffset — entities keep drawing in
+-- world coordinates, the HUD draws after Cam.done(). The viewport is
+-- clamped so the map always fills the screen (16px HUD row on top); for
+-- screen-sized maps the clamp pins the camera and nothing changes.
+
+local gfx = playdate.graphics
+
+Cam = { x = 0, y = 0 }
+
+-- snip: cam-clamp
+local function clampX(x)
+    local lo = Map.ox
+    local hi = math.max(lo, Map.ox + Map.W * Tiles.SIZE - 400)
+    return Util.clamp(x, lo, hi)
+end
+
+local function clampY(y)
+    local lo = Map.oy - 16
+    local hi = math.max(lo, Map.oy + Map.H * Tiles.SIZE - 240)
+    return Util.clamp(y, lo, hi)
+end
+-- endsnip
+
+function Cam.reset()
+    Cam.x, Cam.y = clampX(0), clampY(0)
+end
+
+-- snap the viewport onto a world point (room entry, respawn)
+function Cam.center(wx, wy)
+    Cam.x = clampX(wx - 200)
+    Cam.y = clampY(wy - 128)
+end
+
+-- smooth-follow a world point; call once per frame
+function Cam.follow(wx, wy, dt, rate)
+    local k = math.min(1, (rate or 6) * dt)
+    Cam.x = Cam.x + (clampX(wx - 200) - Cam.x) * k
+    Cam.y = Cam.y + (clampY(wy - 128) - Cam.y) * k
+end
+
+-- start drawing the world (includes Kit's screen shake)
+function Cam.apply()
+    gfx.setDrawOffset(Kit.sx - math.floor(Cam.x + 0.5), Kit.sy - math.floor(Cam.y + 0.5))
+end
+
+-- back to screen space (HUD, overlays)
+function Cam.done()
+    gfx.setDrawOffset(0, 0)
+end
+
+-- world-space viewport rect, for culling
+function Cam.view()
+    return Cam.x, Cam.y, Cam.x + 400, Cam.y + 240
+end

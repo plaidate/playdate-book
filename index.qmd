@@ -7,7 +7,8 @@ This book teaches you to build games for the [Playdate](https://play.date)
 buttons, and a hand crank — using the Lua SDK. It is a book about a small
 machine, written in the belief that small machines are where game
 programming is most fun: every constraint on this hardware — one bit of
-color, thirty frames a second, a microcontroller's worth of CPU — turns
+color, a screen that tops out at 50 Hz (most games settle on the
+recommended 30), a microcontroller's worth of CPU — turns
 out to be a design prompt rather than a limitation, and the crank alone
 has produced more original input ideas than a decade of extra buttons.
 
@@ -38,7 +39,8 @@ pixel is black or white — grays are an illusion you will learn to
 manufacture from dither patterns in @sec-dither — and art made of two
 colors is fast to produce, readable at arm's length, and impossible to
 over-produce. The machine is honest about its budget (33 milliseconds a
-frame, @sec-perf) and rewards discipline rather than horsepower.
+frame at the recommended 30 fps, @sec-perf) and rewards discipline
+rather than horsepower.
 
 And then there is the crank: a fold-out handle that reports its absolute
 angle, spins freely in both directions, and has no equivalent on any

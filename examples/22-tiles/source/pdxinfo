@@ -1,0 +1,6 @@
+name=Tiles
+author=Simon Frost
+description=Chapter 22 example: a tour of the Tiles engine.
+bundleID=com.sdwfrost.book.22tiles
+version=1.0
+buildNumber=1

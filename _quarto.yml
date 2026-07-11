@@ -42,9 +42,10 @@ book:
         - chapters/18-harness.qmd
         - chapters/19-perf.qmd
         - chapters/20-ship.qmd
-    - part: "The Phosphor Engine"
+    - part: "Inside the Engines"
       chapters:
         - chapters/21-phosphor.qmd
+        - chapters/22-tiles.qmd
   appendices:
     - chapters/appendix-a-lua.qmd
     - chapters/appendix-b-sdk-map.qmd

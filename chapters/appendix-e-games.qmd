@@ -214,15 +214,18 @@ games (*Blast*, *Spirit*, *Relic*, *Burrow*) on the shared core.
 ![Blast, from the Tiles collection: a Bomberman on the 16px
 grid.](../figures/case-studies/blast.png){#fig-cs-blast}
 
-**Cited in:** more chapters than anything except molt — @sec-images
-(the fully procedural tileset in `tmap.lua`: four games shipped
-without a drawing tool ever being opened), @sec-camera (`tcam.lua` lerp-and-deadzone
-camera and the pre-rendered background repaint strategy), @sec-sfx
-(`tsnd.lua` noise sweeps), @sec-platformer (`tphys.lua` — the fixed-DT
-tile physics and 1px substep at that chapter's core, plus *Blast*'s
-walkable-bomb `isSolid` and *Burrow*'s falling-boulder variant), and
-@sec-maze (*Blast*'s radius checks). *Relic*'s save-versioning
-appears in @sec-save.
+**Cited in:** @sec-tiles — an entire chapter walks the `core/`
+engine module by module (the tile-cache cost model, the physics,
+the BFS field, the camera, and all four games) and is this
+collection's primary citation. Also @sec-images (the fully
+procedural tileset in `tmap.lua`: four games shipped without a
+drawing tool ever being opened), @sec-camera (`tcam.lua`'s
+follow-and-clamp camera and the pre-rendered background repaint
+strategy), @sec-sfx (`tsnd.lua` noise sweeps), @sec-platformer
+(`tphys.lua` — the fixed-DT tile physics and 1px substep at that
+chapter's core, plus *Blast*'s walkable-bomb `isSolid` and
+*Burrow*'s falling-boulder variant), and @sec-maze (*Blast*'s
+radius checks). *Relic*'s save-versioning appears in @sec-save.
 
 ## Modules
 
