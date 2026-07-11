@@ -46,6 +46,7 @@ book:
       chapters:
         - chapters/21-phosphor.qmd
         - chapters/22-tiles.qmd
+        - chapters/23-voxel.qmd
   appendices:
     - chapters/appendix-a-lua.qmd
     - chapters/appendix-b-sdk-map.qmd

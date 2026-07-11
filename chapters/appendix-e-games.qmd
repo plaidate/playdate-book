@@ -198,12 +198,17 @@ world of shaded columns in a 3/4 projection.
 ![Lob, from the Voxel collection: wind the crank, release the
 shot.](../figures/case-studies/lob.png){#fig-cs-lob}
 
-**Cited in:** @sec-wireframe (the two-add 3/4 projection, and the
-collection's design rule quoted there: *a voxel game must use height
-and volume — dig, lob, climb, flood, fall — to earn the engine*),
-@sec-crank (*Lob*'s wind-and-release crank mapping), and @sec-maze
-(*Lob* again: area-of-effect tools must check for friendlies,
-thrower included).
+**Cited in:** @sec-voxel — an entire chapter walks the `core/`
+engine module by module (the render-once background with exact
+hidden-face culling, `Vox.carve`'s dirty-strip craters, the
+occlusion ghost, both physics families, the shared aim solver, the
+`Kit.run` cabinet, and all ten games) and is this collection's
+primary citation. Also @sec-wireframe (the two-add 3/4 projection,
+and the collection's design rule quoted there: *a voxel game must
+use height and volume — dig, lob, climb, flood, fall — to earn the
+engine*), @sec-crank (*Lob*'s wind-and-release crank mapping), and
+@sec-maze (*Lob* again: area-of-effect tools must check for
+friendlies, thrower included).
 
 ### Tiles
 

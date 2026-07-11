@@ -1,0 +1,6 @@
+name=Voxel
+author=Simon Frost
+description=Chapter 23 example: a tour of the Voxel engine.
+bundleID=com.sdwfrost.book.23voxel
+version=1.0
+buildNumber=1
