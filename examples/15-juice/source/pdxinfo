@@ -1,0 +1,6 @@
+name=Juice
+author=Simon Frost
+description=Chapter 15 example: timers, animators, easing, and hand-rolled game feel.
+bundleID=com.sdwfrost.book.15juice
+version=1.0
+buildNumber=1

@@ -1,0 +1,6 @@
+name=Platformer
+author=Simon Frost
+description=Chapter 14 example: tile platformer physics and the 1px substep.
+bundleID=com.sdwfrost.book.14platformer
+version=1.0
+buildNumber=1

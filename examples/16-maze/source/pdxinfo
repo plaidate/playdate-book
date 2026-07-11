@@ -1,0 +1,6 @@
+name=Maze
+author=Simon Frost
+description=Chapter 16 example: BFS vs playdate.pathfinder, with path overlays.
+bundleID=com.sdwfrost.book.16maze
+version=1.0
+buildNumber=1

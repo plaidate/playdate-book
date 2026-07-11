@@ -1,0 +1,6 @@
+name=Save
+author=Simon Frost
+description=Chapter 17 example: datastores, schema migration, and a save inspector.
+bundleID=com.sdwfrost.book.17save
+version=1.0
+buildNumber=1
