@@ -167,9 +167,12 @@ cabinets drew them — on one thin shared library, `vec/`.
 ![Gyre, from the Phosphor collection: pure crank, pure
 vectors.](../figures/case-studies/gyre.png){#fig-cs-gyre}
 
-**Cited in:** @sec-images (the `beams.lua` stroke font — text drawn
-as line segments, no bitmaps), @sec-wireframe (its `mat.lua` rotation
-matrices, `proj.lua` near-plane clipping, and `shapes.lua` asteroid
+**Cited in:** @sec-phosphor — an entire chapter walks the `vec/`
+engine module by module (the mathematics, the code, and all sixteen
+games) and is this collection's primary citation. Also @sec-images
+(the `beams.lua` stroke font — text drawn as line segments, no
+bitmaps), @sec-wireframe (its `mat.lua` rotation matrices,
+`proj.lua` near-plane clipping, and `shapes.lua` asteroid
 generation are that chapter's spine), @sec-crank (*Gyre*, the
 collection's signature crank game — 1:1 angular control), @sec-juice
 (the shared particle pool in `vec/fx.lua`), and @sec-save (the

@@ -1,0 +1,6 @@
+name=Phosphor
+author=Simon Frost
+description=Chapter 21 example: a tour of the Phosphor vector engine.
+bundleID=com.sdwfrost.book.21phosphor
+version=1.0
+buildNumber=1

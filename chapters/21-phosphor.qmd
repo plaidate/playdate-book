@@ -1,0 +1,1011 @@
+# Inside Phosphor: A Vector Engine {#sec-phosphor}
+
+Sixteen of the case-study games — an Asteroids, a Tempest, a Lunar
+Lander, an Elite, a Geometry Wars, and eleven more — are one
+package, *Phosphor*, and they share one engine: `vec/`, eleven
+modules plus a one-import shim, 1,054 lines in all. There are no
+sprites, no images, no raster fonts anywhere in the package. Every rock, ship, ripple,
+letter, and explosion is `playdate.graphics.drawLine`, white on
+black, the way the vector cabinets drew. That is the design thesis
+in one sentence: **everything is lines**. Accept it and a cascade of
+good things follows — one aesthetic that never clashes with itself,
+zero asset pipeline, models you can generate in code, text that
+scales to any size, and per-game code thin enough that the smallest
+game in the package is a few hundred lines on top of the library.
+
+Earlier chapters borrowed pieces of this engine when they were the
+best illustration going: @sec-wireframe quoted its projection and
+matrices, @sec-juice its particle pool, @sec-save its high-score
+cabinet. This chapter walks the whole thing as a system — the
+mathematics each module implements (for real, with derivations that
+match the shipped lines), the engineering choices that keep it fast
+on the device, and then a tour of all sixteen games with an eye to
+which modules each one leans on and the one clever thing it does
+with them.
+
+The example, `21-phosphor`, is an *engine tour*: the eight core
+`vec/` modules vendored verbatim into the example's source (each
+file carries a one-line provenance header; the code is otherwise
+untouched), driven by a demo that cycles four screens — the warping
+spring grid taking an impulse, a full-attitude wireframe spin, the
+wrap-aware playfield with its shortest-path arithmetic drawn on
+screen, and the effects pool mid-explosion. Every listing in the
+mathematics sections below is extracted from those vendored files,
+so the formulas and the code cannot drift apart.
+
+## One library, sixteen cabinets
+
+Phosphor has no framework and no build system beyond `pdc`. Its
+Makefile *stages* a game — copies `vec/*.lua` and `games/<name>/*`
+into one flat directory and compiles that — so at runtime every
+module is imported by bare name and executes once into the shared
+global environment. Each file defines exactly one global table
+(`Vec`, `Field`, `Grid`, `Shapes`, `Mat`, `Proj`, `Beams`, `Fx`,
+`Sfx`, `Attract`, `Harness`), the module-per-concern convention this
+book's multi-file examples have used since @sec-wireframe — Phosphor
+is where that convention was hardened. A game's `main.lua` begins
+with `import "lib"`, a one-liner that pulls the library in
+dependency order. The example's version is the same list with the
+book's scaffolding in front:
+
+{{< snip 21-phosphor/source/main.lua tour-imports >}}
+
+Order matters twice over: `field` must precede `grid` (the lattice
+sizes itself to `Field.W`), and everything must precede a game that
+calls it. The other package-wide constants are the ones this book
+has assumed all along, because they came from here: 30 frames per
+second and a fixed `dt` of 1/30. Nothing in Phosphor reads a clock;
+every formula below takes $\Delta t$ as a constant, which is what
+makes the harness's unthrottled, frame-indexed smoke runs
+(@sec-harness) exactly reproducible.
+
+The demo's own loop is a four-entry screen table stepped by frame
+count — each screen gets 90 frames, scripted input arrives through
+the standard seam, and a human player can fire the same actions
+with A:
+
+{{< snip 21-phosphor/source/main.lua tour-loop >}}
+
+## The mathematics of beams
+
+An engine this small can be understood completely, and it is worth
+doing: each module is one or two pieces of real mathematics
+implemented without ceremony. This section derives them in the
+order the library loads.
+
+### Vectors as plain numbers
+
+`vec.lua` is 2D vector algebra with no vector *objects* — every
+function takes and returns plain numbers, so transforming a
+thousand points allocates nothing (the argument made in
+@sec-wireframe, and the reason the whole package generates almost
+no garbage):
+
+{{< snip 21-phosphor/source/vec.lua vec-ops >}}
+
+`Vec.len` and `Vec.norm` are the Euclidean norm
+$\lVert\mathbf{v}\rVert = \sqrt{x^2+y^2}$ and its unit vector —
+note `norm` returns the length as a *third* value, because nearly
+every caller wants both and computing it twice would double the
+square roots. `Vec.rot` is the 2D rotation
+
+$$
+\begin{pmatrix}x'\\y'\end{pmatrix} =
+\begin{pmatrix}\cos\theta & -\sin\theta\\
+\sin\theta & \cos\theta\end{pmatrix}
+\begin{pmatrix}x\\y\end{pmatrix},
+$$
+
+the $3{\times}3$ matrices of `mat.lua` cut down to the plane. Note
+the shouting comment above it: `Vec.rot` is the one angle API in
+the library that takes radians, on an otherwise degree-facing
+surface, and that inconsistency caused enough double-converted
+bugs in game code that a review pass gave it both the warning and
+a `Vec.rotDeg` twin. When one function in a module breaks the
+module's own convention, either fix it or *label it loudly* —
+silence is the only wrong choice. The remaining angle helpers
+convert between the degree-facing surface and the radians
+underneath:
+
+{{< snip 21-phosphor/source/vec.lua vec-angles >}}
+
+`Vec.angleDiff` deserves its one line of fame. The naive difference
+`to - from` can answer 350° when the short way round is −10°, and
+every chase AI written on top of it will pirouette at the seam. The
+expression $((t - f + 540) \bmod 360) - 180$ shifts the difference
+into a range where the modulo folds it, then shifts back, mapping
+any pair of angles to the signed shortest difference in
+$(-180, 180]$. This is the angular version of the torus metric
+coming in `field.lua`, and the package uses it everywhere a thing
+turns toward another thing.
+
+Motion throughout the engine and the games is fixed-step
+**semi-implicit Euler**: update velocity from acceleration first,
+then update position with the *new* velocity,
+
+$$
+\mathbf{v}_{n+1} = \gamma\,(\mathbf{v}_n + \mathbf{a}_n\,\Delta t),
+\qquad
+\mathbf{x}_{n+1} = \mathbf{x}_n + \mathbf{v}_{n+1}\,\Delta t,
+$$
+
+with $\Delta t = 1/30$ and $\gamma$ a per-frame damping factor
+(1 when a system is undamped). You will see this exact shape in the
+grid update below — `nvx = (vx[i] + ax * dt) * DAMP` then
+`nx = px[i] + nvx * dt` — and in every ship in the package. The
+ordering is not pedantry. Explicit Euler (position updated with the
+*old* velocity) systematically injects energy into oscillating
+systems: for an undamped spring each step multiplies the state's
+amplitude by $\sqrt{1+\omega^2\Delta t^2} > 1$, so orbits and
+springs spiral outward until they explode. The semi-implicit
+variant is symplectic — its energy error stays bounded — which is
+why a lattice of several hundred coupled springs can run all day at
+30 fps with a modest damping term instead of a numerical
+straitjacket.
+
+### Rotation matrices, and keeping them honest
+
+`mat.lua` packages 3D orientation as flat, row-major 9-element
+arrays. The three axis rotations are the standard right-handed
+forms, built exactly as written:
+
+$$
+R_x(\theta)=\begin{pmatrix}1&0&0\\[2pt]
+0&\cos\theta&-\sin\theta\\[2pt]
+0&\sin\theta&\cos\theta\end{pmatrix}
+\quad
+R_y(\theta)=\begin{pmatrix}\cos\theta&0&\sin\theta\\[2pt]
+0&1&0\\[2pt]
+-\sin\theta&0&\cos\theta\end{pmatrix}
+\quad
+R_z(\theta)=\begin{pmatrix}\cos\theta&-\sin\theta&0\\[2pt]
+\sin\theta&\cos\theta&0\\[2pt]
+0&0&1\end{pmatrix}
+$$
+
+{{< snip 21-phosphor/source/mat.lua mat-rotate >}}
+
+The convention that makes the whole module legible is stated in its
+header: read column $j$ of $M$ as the object's local axis $j$
+expressed in the parent frame, so column 3 is where the object's
+nose points, and a local vector becomes a parent vector by
+$\mathbf{p} = M\,\mathbf{l}$ (`Mat.mulVec`). The `spin` helpers
+*premultiply* — $M' = R(\theta)\,M$ — which rotates the object
+about a *parent* axis: crank a Playdate's roll and the ship rolls
+about the world's forward axis regardless of its current attitude.
+Compose the other way, $M\,R(\theta)$, and you would rotate about
+the object's own axis instead. Both are legitimate; the engine
+picks parent-frame spins because that is what flight controls feel
+like.
+
+The optional `out` parameters running through the listing are the
+zero-allocation discipline applied to matrices. A fleet of
+tumbling ships spins its matrices every frame, and each spin used
+to make two fresh 9-element tables — one for the rotation, one for
+the product. Now the rotation lands in the module-local `spinTmp`
+and the product can land wherever the caller says, including *on
+top of an input*:
+
+{{< snip 21-phosphor/source/mat.lua mat-mul >}}
+
+All nine entries are computed into locals before a single one is
+written to `out`, so `Mat.mul(R, o.m, o.m)` — and therefore
+`Mat.spinY(m, t, m)`, spinning a matrix in place — is safe. That
+ordering is the entire trick; write `out[1]` before reading
+`b[1]` and every aliased call silently corrupts its own product.
+The example's second screen spins its matrix exactly this way,
+`Mat.spinY(M, 0.031, M)`, allocating nothing per frame.
+
+Now the drift argument. A free-tumbling object updates its matrix
+incrementally — sixty small products a second, forever. Every
+`Mat.mul` performs 27 multiplications and 18 additions in floating
+point, each rounding its result; the product of two *exactly*
+orthonormal matrices is orthonormal, but the product of two
+*almost* orthonormal matrices is slightly less so, and the errors
+compound multiplicatively, on the order of $(1+\varepsilon)^n$
+after $n$ frames. Nothing corrects them: a matrix does not know it
+is supposed to be a rotation. After minutes of play the columns are
+no longer unit length or mutually perpendicular and the model
+visibly shears and breathes. The fix — run occasionally, not every
+frame — is Gram–Schmidt re-orthonormalization, which the code
+credits under its 1984 name:
+
+{{< snip 21-phosphor/source/mat.lua mat-tidy >}}
+
+Anchored on the nose $\mathbf{n}$ (column 3) because that is the
+axis whose direction gameplay cares about most, it computes
+
+$$
+\hat{\mathbf{n}} = \frac{\mathbf{n}}{\lVert\mathbf{n}\rVert},
+\qquad
+\mathbf{r}' = \mathbf{r} - (\mathbf{r}\cdot\hat{\mathbf{n}})\,
+\hat{\mathbf{n}},
+\qquad
+\hat{\mathbf{u}} = \hat{\mathbf{n}} \times \hat{\mathbf{r}}',
+$$
+
+— normalize the nose, strip the nose-component out of the right
+vector and normalize what is left, then rebuild up as a cross
+product, which is orthogonal to both by construction. The result is
+exactly orthonormal again, and at most a hair away from the matrix
+that drifted, so the correction is invisible on screen. Elite's
+original 6502 source called this routine TIDY and ran it once per
+few seconds; Phosphor's Elite calls `Mat.tidy` every time an AI
+adjusts a ship's nose, and the example's second screen spins a
+matrix incrementally and tidies every 30 frames
+(@fig-wire-mesh).
+
+::: {.callout-warning}
+## Drift is invisible until it isn't
+Skipping `tidy` does not fail fast. A spun matrix looks perfect for
+a minute or two, then models start to lean, then to flatten — and
+by then the bug report says "ships go weird after a while", which
+is nobody's favorite repro. If an orientation matrix in your game
+is ever *updated from its own previous value*, schedule
+re-orthonormalization from day one. If your state is two or three
+angles and you rebuild the matrix from them each frame (as
+@sec-wireframe's example does), you are drift-free by construction
+and `tidy` is unnecessary — rebuilding beats repairing whenever
+your state allows it.
+:::
+
+### Perspective, from similar triangles to the near plane
+
+@sec-wireframe stated the projection; here is the two-line
+derivation, because this chapter owns it. Put the camera at the
+origin looking down $+z$, and an image plane at distance $f$ in
+front of it. A point at camera-space $(x, y, z)$ projects along
+the ray to the origin; the triangle with legs $x$ and $z$ is
+similar to the one with legs $x'$ and $f$, so
+
+$$
+\frac{x'}{f} = \frac{x}{z}
+\quad\Rightarrow\quad
+x' = \frac{f\,x}{z},
+\qquad
+y' = \frac{f\,y}{z}.
+$$
+
+Add the screen center, flip $y$ (screens grow downward), and that
+is `Proj.point` in its entirety — one guard, one divide, two
+multiply-adds:
+
+{{< snip 21-phosphor/source/proj.lua proj-point >}}
+
+`toCam` upstream subtracts the camera position and applies yaw
+about $Y$ then pitch about $X$ — the two `Vec.rot`-shaped pairs are
+rows of $R_x(\phi)\,R_y(\psi)$ unrolled with the camera's sines
+and cosines precomputed once per frame in `Proj.setCamera`:
+
+{{< snip 21-phosphor/source/proj.lua proj-tocam >}}
+
+The interesting mathematics is at the near plane. The naive guard —
+skip points with $z < z_{near}$ — drops whole edges, and
+first-person games cannot live with that: drive past an obstacle in
+*Treadline* and its nearest edge legitimately crosses the camera
+plane while its far end is still in view. The edge must be *cut* at
+the plane. Parameterize it as
+$P(t) = A + t\,(B - A)$ for $t \in [0,1]$; its depth is linear in
+$t$, so the crossing point solves $z_A + t\,(z_B - z_A) = n$:
+
+$$
+t = \frac{n - z_A}{\,z_B - z_A\,}.
+$$
+
+Substitute that $t$ into the $x$ and $y$ components and you have
+the visible fragment's new endpoint, sitting exactly on the plane
+where its projected position is finite and honest:
+
+{{< snip 21-phosphor/source/proj.lua proj-clip >}}
+
+Three cases, in order: both endpoints behind — nothing to draw;
+$A$ behind — move $A$ up to the plane; $B$ behind — likewise. Note
+each endpoint then gets *its own* scale factor `ka`, `kb`: the two
+ends of a line are at different depths and project with different
+magnifications. Interpolating in screen space instead (project
+first, clip after) is the classic wrong answer — perspective
+projection does not preserve ratios along a line, and screen-space
+clipping visibly bends geometry near the camera.
+
+On top of `Proj.line` sit two model drawers. `Proj.model` handles
+yaw-only objects (buildings, tanks — things that stand upright),
+rotating each polyline vertex about $Y$ inline. `Proj.mesh` is the
+full-attitude version — indexed vertices, an orientation matrix,
+and a deliberate contract: the camera stays at the origin and *the
+universe moves*, which is how a space game keeps the player's ship
+mathematically trivial:
+
+{{< snip 21-phosphor/source/proj.lua proj-mesh >}}
+
+Three engineering notes hiding in a dozen lines. The scratch
+arrays `mx, my, mz` live at module scope and are reused by every
+call — the zero-allocation habit again (@sec-perf) — and each
+vertex is transformed exactly once even though it may appear in
+six edges. The third note is the guard in the edge loop, and it is
+scar tissue worth reading twice: *because* the scratch persists
+across calls, a model with one typo'd edge index used to reach
+past its own vertices and pick up a stale vertex from whatever
+mesh drew previously — a phantom line to somewhere plausible, on
+screen, sixty times a second, with every counter healthy. It is
+exactly the class of bug @sec-harness warns that heartbeats cannot
+catch (only eyes, or a review, can), and the fix is the cheapest
+kind: refuse indices beyond this call's `vi`, so a bad model draws
+*less*, visibly, instead of drawing *wrong*, plausibly. The
+example's second screen draws a five-vertex dart through this
+path, spinning in place via `Mat.spinY(M, t, M)` with a `tidy`
+every 30 frames, and prints its HUD with `Beams`
+(@fig-wire-mesh).
+
+![Screen two of the tour at frame 150: a full-attitude
+wireframe dart through `Proj.mesh`, orientation spun incrementally
+every frame and re-orthonormalized every thirty. The heading and
+caption are `Beams` stroke text, not a
+font.](../figures/21-phosphor/wire-mesh.png){#fig-wire-mesh}
+
+### The spring grid
+
+`grid.lua` is the module people ask about first, because its output
+looks expensive: the warping lattice under *Geometry Wars*-style
+shooters, denting away from explosions and rippling back. It is a
+few hundred damped springs and one clean idea. Each lattice point
+$i$ has a fixed **home** $\mathbf{h}_i$, a current position
+$\mathbf{p}_i$, and a velocity; each frame it feels two forces —
+a weak spring pulling it home, and a stronger coupling pulling it
+toward the average of its four neighbors:
+
+$$
+\mathbf{a}_i = k\,(\mathbf{h}_i - \mathbf{p}_i)
++ \kappa \Bigl( \frac{1}{|N_i|} \sum_{j \in N_i}
+\mathbf{p}_j - \mathbf{p}_i \Bigr),
+$$
+
+with $k = 26\,\mathrm{s}^{-2}$ (`STIFF`) and $\kappa =
+70\,\mathrm{s}^{-2}$ (`COUPLE`) by default. The second term is the
+discrete Laplacian of the displacement field, which is precisely
+the spatial operator of the wave equation — that is *why* a dent
+ripples outward instead of staying put. The first term is Hooke's
+law toward home, which is why the ripples eventually flatten back
+to a straight grid rather than sloshing forever. Integration is the
+semi-implicit update from earlier with $\gamma = 0.88$ per frame:
+
+{{< snip 21-phosphor/source/grid.lua grid-update >}}
+
+Stability, by the numbers rather than by luck: the stiffest mode a
+node feels is roughly $\omega = \sqrt{k + \kappa} =
+\sqrt{96} \approx 9.8\ \mathrm{rad/s}$, and explicit spring
+integration is stable while $\omega\,\Delta t < 2$; here
+$\omega\,\Delta t \approx 0.33$, a three-fold margin before
+damping is even considered. The damping is aggressive — $0.88$
+per frame is $0.88^{30} \approx 2\%$ of velocity surviving each
+second — so energy from any legal input dies in about half a
+second of visible wobble. And because gameplay is allowed to inject
+*illegal* inputs (a bomb with a typo'd strength), there is a hard
+fuse: the max-offset clamp in the middle of the update, which caps
+how far any point may stray from home and halves its velocity when
+it hits the cap. A wild force makes the grid slam to its limit and
+recover, instead of feeding NaNs to `drawLine`.
+
+Impulses enter through `Grid.push`, which is written to be called
+casually, many times a frame:
+
+{{< snip 21-phosphor/source/grid.lua grid-push >}}
+
+The falloff looks odd — $f = S\,(1 - d/R)\,/\,d$ — until you note
+that $f$ multiplies the *unnormalized* offset $(dx, dy)$, whose
+length is $d$. The division by $d$ is the normalization, folded in;
+the velocity kick each point receives has magnitude exactly
+$S\,(1 - d/R)$: linear falloff from $S$ at the center to zero at
+the radius. Negative $S$ is `Grid.pull` — ships' shields and black
+holes suck the lattice inward; explosions shove it out. The bounds
+arithmetic above the loops touches only the lattice points inside
+the affected rectangle, so a small shot's push costs a handful of
+nodes, not a full-grid sweep.
+
+The tour's first screen initializes the grid at 20-pixel spacing
+and fires one scripted `Grid.push` at frame 20. Four frames later
+the dent is at full depth (@fig-grid-impulse); twenty frames later
+the coupling term has carried it outward as a ring while the
+center rebounds (@fig-grid-ripple) — the wave equation, visible.
+
+![One radial impulse, four frames old: `Grid.push` has kicked
+every lattice point within its radius, hardest at the
+center.](../figures/21-phosphor/grid-impulse.png){#fig-grid-impulse}
+
+![The same impulse twenty frames on: the neighbor coupling — a
+discrete Laplacian — has propagated the dent outward as a ripple
+while the home springs pull the center
+flat.](../figures/21-phosphor/grid-ripple.png){#fig-grid-ripple}
+
+### Distance on a torus
+
+`field.lua` makes the 400×240 screen a torus: leave the right edge,
+reappear on the left. Wrapping positions is one conditional per
+axis (`Field.wrap`). The subtle part — the part that breaks every
+naive homing missile — is that *distance changes meaning*. On a
+wrapping axis of width $W$, two x-coordinates are separated by
+$|\Delta x|$ going one way and $W - |\Delta x|$ going the other,
+and the true separation is whichever is shorter:
+
+$$
+d_W(x_a, x_b) = \min\bigl(\,|x_a - x_b|,\; W - |x_a - x_b|\,\bigr),
+$$
+
+applied per axis, then combined as an ordinary Euclidean square:
+
+{{< snip 21-phosphor/source/field.lua field-dist >}}
+
+Why it matters: an enemy at $x = 390$ hunting a player at $x = 10$
+is 20 pixels away through the seam and 380 pixels away across the
+middle. Feed a chase AI the naive delta and it turns *away* from
+its prey and flies the long way — or, for a "nearest target"
+query, picks a target on the far side of the screen while a
+threat sits pixels away across the seam. Every proximity decision
+on a wrapped field must use the wrapped metric, and every steering
+decision needs its *signed* form — the same min taken with
+direction preserved. The library ships the scalar (`Field.dist2`);
+the signed vector the games kept re-rolling (Ringkeep's
+`G.wrapDelta` at `ringkeep/gamestate.lua:32`, Duelstar's copy in
+`ships.lua`) appears in the example as ten lines:
+
+{{< snip 21-phosphor/source/main.lua wrap-demo >}}
+
+The tour's third screen makes the argument visually: a hunter
+chases a target the short way round while the screen draws both
+paths — the naive route dashed across the middle of the field, the
+torus route solid through the seam, with both distances printed
+live in `Beams` text (@fig-wrap-arrow). A few seconds later the
+hunter itself straddles the edge, drawn whole on both sides
+(@fig-wrap-seam) by the third piece of the module:
+
+{{< snip 21-phosphor/source/field.lua field-offsets >}}
+
+`Field.offsets` answers "under which wrap offsets could an object
+of radius $r$ be visible?" — up to four for something in a corner —
+and calls a drawing (or collision) function once per offset. This
+is the standard treatment of seams: not a special case in every
+entity, but one shared enumeration of the copies.
+
+The shape of this function is a lesson in what "hot path" means at
+30 fps. Its first version was prettier — it built two little
+tables of candidate offsets and looped over them, and every caller
+handed it a fresh closure capturing the shape and transform. Both
+allocations are microscopic, and both sit in the draw path of
+*every wrapped object, every frame*: in *Rubble*'s late waves the
+review pass measured them at roughly 140 garbage objects per
+frame, which is a steady drizzle the collector eventually has to
+mop up mid-game (@sec-perf). The rewrite you just read spends four
+branch locals instead of two tables, and — the part worth stealing
+— takes pass-through arguments `a, b, c, d, e` that it forwards to
+`fn`, so a caller can pass a *top-level* function plus its data
+instead of manufacturing a closure. `Shapes.drawWrapped` is
+exactly that caller: a module-local `drawOffset(ox, oy, shape, x,
+y, angleDeg, scale)` handed to `Field.offsets` with its arguments
+alongside. Uglier signature, zero garbage; on this hardware, that
+trade is the right one wherever a function runs hundreds of times
+a frame.
+
+![The wrap field, mid-chase. The dashed line is the naive path
+(380 pixels the long way round); the solid beam leaves the right
+seam and re-enters at the left — 47 pixels on the torus. The HUD
+prints both metrics
+live.](../figures/21-phosphor/wrap-arrow.png){#fig-wrap-arrow}
+
+![Fifteen frames later the hunter itself crosses the seam and is
+drawn under two wrap offsets by `Field.offsets` — whole on neither
+side, visible on
+both.](../figures/21-phosphor/wrap-seam.png){#fig-wrap-seam}
+
+::: {.callout-note}
+## An engine earns its gaps
+`Field` has `dist2` but no signed `delta`; `Vec` has 2D lengths but
+no 3D (`Elite` hand-rolls `len3` in three files). Phosphor's
+developer guide lists these as known refactor candidates and leaves
+them alone: the library only ever absorbed code after *multiple*
+games had written the same thing, and a thousand-line engine that
+sixteen games actually fit is better than a complete one they
+don't. When you extract your own shared layer, extract behind the
+games, not ahead of them.
+:::
+
+### Shapes, blobs, and a font made of beams
+
+The last two drawing modules are 2D and data-driven. A `Shapes`
+model is a list of polylines in model space — flat
+`{x1,y1,x2,y2,...}` arrays — and drawing is the same
+rotate-scale-translate every vertex passes through in
+@sec-wireframe, using the $2{\times}2$ rotation from `Vec.rot`
+inlined:
+
+{{< snip 21-phosphor/source/shapes.lua shapes-draw >}}
+
+The tail of the listing is the closure-free wrapped drawing from
+the previous section in caller position: `drawOffset` is a
+top-level function, and `Shapes.drawWrapped` forwards the shape
+and transform through `Field.offsets`' pass-through slots instead
+of capturing them.
+
+Models are *generated*, not drawn in an editor. `Shapes.gon` makes
+regular and star polygons from a radius and a vertex count;
+`Shapes.blob` makes every asteroid in *Rubble* and every debris
+chunk anywhere — a closed polygon whose vertex radii are jittered
+between fractions of a nominal radius:
+
+{{< snip 21-phosphor/source/shapes.lua shapes-blob >}}
+
+The `firstR` bookkeeping is the kind of detail that separates
+shipped code from sketch code: the loop runs to $n{+}1$ so the
+polyline closes, the closing vertex must reuse the *first* random
+radius rather than drawing a fresh one, and the final coordinate
+pair is then overwritten with an exact copy of the first so the
+loop closes bit-perfectly instead of within floating-point spit.
+
+`Beams` extends the same polyline idea to typography. Every glyph
+is one to three strokes on a 4×6 grid, stored as human-editable
+coordinate strings and parsed once at load:
+
+{{< snip 21-phosphor/source/beams.lua beams-glyphs >}}
+
+`Beams.print` scales the grid by $k = \mathrm{size}/6$, so one
+glyph set serves 7-pixel HUD captions and 30-pixel titles alike —
+with `weight` mapped to `gfx.setLineWidth`, big titles get genuine
+thick beams rather than scaled-up pixels. The advance is six grid
+units per character (four of glyph, two of spacing), which gives
+the width formula in `Beams.width` —
+$w = (6\,|s| - 2)\,k$, the trailing gap trimmed — and centered
+alignment is just printing at $x - w/2$. When a weighted print
+finishes it restores the line width to `opts.restore or 1` rather
+than a hard-coded 1 — a caller stroking a thick-lined scene gets
+to say what "back to normal" means. Uppercase-only, digits,
+and a dozen punctuation marks: 40 glyphs cover everything an
+arcade cabinet ever needed to say, in about a hundred lines
+including the font data.
+
+## Engineering choices: pools, painters, and nothing per frame
+
+The effects module, `fx.lua`, is where the package's engineering
+habits are easiest to see in one place. `Fx` owns three things:
+point particles, tumbling line debris, and a full-screen flash
+timer. One shared pool per game — enemies, the player, the UI all
+burst into the same arrays:
+
+{{< snip 21-phosphor/source/fx.lua fx-burst >}}
+
+{{< snip 21-phosphor/source/fx.lua fx-pool >}}
+
+Expiry is **swap-remove** — the trick from @sec-juice, and the
+comment at the top of the update explains the license for it:
+these pools are *order-independent*. A point particle and a
+tumbling stick look identical whichever index they live at, so an
+expired slot can simply take the last element and shrink the
+count, $O(1)$ per death. The first version used `table.remove`
+mid-list instead, which shifts the entire tail down one slot —
+$O(n)$ per expiry — and a bomb frame that kills forty particles
+at once was quietly shifting hundreds of slots. If your list is
+*not* order-independent (a painter-sorted draw list is not),
+swap-remove reorders it and you must not use it; a particle pool
+is the textbook case where you may. The insert side gained a
+matching guard: pools are soft-capped at `MAX_POOL` (400), so a
+pathological cascade of bursts degrades to "fewer sparks" instead
+of an unbounded frame cost — the same fuse philosophy as the
+grid's `MAXOFF` clamp. Everything is birth-stamped with a `life`
+in seconds and decays by `dt`, so effects are frame-rate honest by
+construction. Debris
+carries an angle and spin, and draws as a rotating line segment
+about its center — twelve of them tumbling out of an explosion read
+as wreckage from six lines of math. The flash is one number:
+`Fx.flash(0.2)` arms a timer, and `Fx.flashing(frame)` reports true
+on *even* frames while it runs, which the frame's `clear` call
+turns into a 15 Hz black/white strobe — the whole screen is the
+explosion for a few frames (@fig-fx-burst).
+
+![The fx pool at frame 310 of the tour: thirty point particles
+from the fresh burst, tumbling line debris from the one before,
+the flash just
+spent.](../figures/21-phosphor/fx-burst.png){#fig-fx-burst}
+
+Painter order is a convention, not a system: each game's draw hook
+strokes the world back-to-front — grid first if there is one, then
+entities, then `Fx.draw`, then HUD text — and the shared frame
+wrapper clears before and draws nothing after, so sparks always
+land on top of the thing that exploded and text lands on top of
+everything. On a 1-bit screen with white-on-black lines there is no
+alpha and no palette to manage; *order is the entire compositing
+model*.
+
+And the discipline underneath it all, worth naming once more
+because every module above obeys it: **nothing allocates per
+frame**. Vectors are plain numbers, the grid is six flat arrays
+indexed by arithmetic, mesh projection reuses module-scope scratch,
+the font parses its strings once at load. The only steady-state
+garbage in a Phosphor frame is the handful of short-lived tables
+the *game* chooses to make (bullets spawning, `Fx` entries). That
+is why sixteen games run at a locked 30 fps on the device without a
+single perf heroic — the engine simply never gives the collector
+anything to do (@sec-perf).
+
+## The cabinet: attract.lua and sfx.lua
+
+Every Phosphor game boots to the same title screen — beam-stroked
+title, control list, blinking PRESS A, high score — because the
+title screen, the game-over screen, the high-score persistence, and
+the frame loop itself live in the library. `attract.lua` is the
+cabinet: a three-state machine (`"title"` → `"play"` → `"over"`)
+that owns `playdate.update`, and a game plugs in by handing
+`Attract.setup` its title, control strings, and five hooks —
+`start`, `update`, `draw`, an optional `ambient`/`drawAmbient` pair
+that keeps the world simmering behind the title, and `score`. The
+play branch shows the whole per-frame contract:
+
+```lua
+-- phosphor/vec/attract.lua:122
+    elseif Attract.state == "play" then
+        cfg.hooks.update(dt)
+        if Attract.state == "play" then
+            gfx.clear(Fx.flashing(Attract.frame) and gfx.kColorWhite or gfx.kColorBlack)
+            gfx.setColor(gfx.kColorWhite)
+            cfg.hooks.draw()
+            Fx.draw()
+        end
+```
+
+Update first, then clear and draw — and the state is re-checked
+between them, because `update` may have called `Attract.gameOver()`
+and drawing one frame of a dead world produces exactly the kind of
+one-frame glitch players screenshot. `gameOver` compares the score
+hook against the saved high score and persists it with
+`playdate.datastore.write` (@sec-save), keyed per game by bundle
+ID; it also latches `Attract.newHigh = score > Attract.high` *at
+that moment*, before the high score is overwritten, and the
+game-over screen tests the latch. The first version re-derived
+"new high?" at draw time with `score >= Attract.high` — after the
+overwrite, every merely *tying* run claimed NEW HIGH SCORE.
+Compute a fact when it happens; screens should display facts, not
+re-derive them.
+
+`Attract.setup` also does the boilerplate every game would
+otherwise botch slightly differently: seeds `math.random` from
+`playdate.getSecondsSinceEpoch()`, locks 30 fps, and registers a
+"restart" item in the system menu — a menu item that carries a
+shared-cabinet lesson of its own:
+
+```lua
+-- phosphor/vec/attract.lua:39
+    playdate.getSystemMenu():addMenuItem("restart", function()
+        -- a mid-run restart must not discard a record: settle the
+        -- score through gameOver before returning to the title
+        if Attract.state == "play" then Attract.gameOver() end
+        Attract.state = "title"
+    end)
+```
+
+Restart used to jump straight to the title, and a player who
+paused out of their best-ever run lost the record — the score
+never passed through `gameOver`, which is the *only* place the
+high score is written. Any escape hatch out of a state machine has
+to settle that state's accounts on the way out. Sixteen games; one
+implementation of "insert coin", and one place to fix its bugs.
+
+`sfx.lua` is the matching sound kit: nine shared synth voices
+(three squares, two triangles, a sawtooth, three noise channels)
+behind one-call effects — `Sfx.pew`, `Sfx.boom(size)`,
+`Sfx.zapSweep`, `Sfx.beat` (the two-tone Asteroids heartbeat),
+`Sfx.fanfare`. The voice count is an ear-driven allocation: sweeps
+and boom tails (`noise3`) and the warble (`tri2`) got dedicated
+synths because a `playNote` on a busy synth cuts the previous note
+dead — a big explosion used to silence the thrust hiss mid-hiss,
+which players hear as a sound bug even when nothing is wrong.
+Multi-note effects sequence themselves through the delayed-call
+scheduler in `vec.lua`:
+
+```lua
+-- phosphor/vec/sfx.lua:36
+function Sfx.bigBoom()
+    noise2:playNote(60, 0.5, 0.5)
+    Util.after(0.1, function() noise3:playNote(90, 0.4, 0.3) end)
+end
+```
+
+`Util.after` queues a closure; `Attract` pumps `Util.runPending(dt)`
+every frame; `Util.clearPending()` runs at game start so a fanfare
+scheduled at death cannot play over a fresh run. It is a
+five-line scheduler, and it is enough — the same judgment call as
+@sec-sfx made about synth voices versus samples. The last library
+file, `harness.lua`, you have effectively already read: it is the
+@sec-harness pattern as a first-class module, with the one addition
+that `Harness.autopilot` is a slot each game's `input.lua` fills so
+the title screen auto-starts and the game plays itself under smoke
+builds.
+
+## How the sixteen games use it
+
+The engine is half the story; the point of a shared library is what
+it lets each game *not* write. What follows is the whole roster —
+two to four sentences each, naming the modules it leans on and the
+trick worth stealing.
+
+### Rubble
+
+The Asteroids, and the package's reference implementation: crank
+spins the ship 1:1, `Field.wrap`/`dist2` make the classic toroidal
+arena, `Shapes.blob` grows every lumpy rock, and
+`Shapes.drawWrapped` handles the seam. Its clever economy is using
+blob *scale* rather than new models for the three rock sizes — one
+generator, three splits, and the background `Sfx.beat` heartbeat
+accelerating as the field thins.
+
+### Welldiver
+
+The Tempest — and proof the library knows when to stay home. It
+does **not** use `Proj`: a tube seen dead-on wants a radial
+perspective, so `wells.lua` rolls its own depth factor and lane
+math, and warps between levels by *animating the exponent* of that
+curve:
+
+```lua
+-- phosphor/games/welldiver/wells.lua:95
+-- perspective factor: f(0) = FAR_SCALE (far end), f(1) = 1 (rim).
+-- During the warp G.warpE shrinks, ballooning the far end toward the camera.
+function Wells.persp(z)
+    local e = G.warpE or 1.6
+    return C.FAR_SCALE + (1 - C.FAR_SCALE) * (math.max(z, 0) ^ e)
+end
+```
+
+One exponent easing from 1.6 toward zero *is* the fly-down-the-well
+effect. It leans on `Vec.rot`, `Fx`, `Sfx`, and `Beams`, plus a
+live level selector running on Attract's `ambient` hook — the title
+screen is playable UI.
+
+### Touchdown
+
+The Lunar Lander: `Shapes` for the lander and skyline, `Beams` for
+the instrument readouts, `Fx` for the crash you were trying to
+avoid. Terrain is a random-walk skyline with flat pads spliced in,
+and the whole game is a three-state machine (fly, landed, crashed)
+nested *inside* Attract's play state — the pattern every
+mode-swapping Phosphor game repeats.
+
+### Ringkeep
+
+An original: siege a fortress of three counter-rotating
+`Shapes.gon` rings on the wrap field, reusing Rubble's ship feel.
+Its two tricks: the signed `G.wrapDelta` (quoted in spirit above)
+so mines chase you *through* the seam, and a radial-crossing test
+for shots against rings — comparing radius-from-core before and
+after the step — so fast shots cannot tunnel between frames
+(@sec-platformer's tunneling lesson, in polar coordinates).
+
+### Border Circuit
+
+An arena racer that turns the wrap field *off*: everything —
+player, shots, enemies — reflects off the outer wall and a central
+scoreboard barrier via a least-penetration bounce in `arena.lua`.
+Elastic reflection plus no drag makes shots ricochet dangerously,
+which is the game. `Vec`, `Shapes`, `Beams`, `Fx`.
+
+### Lifters
+
+The Defender-shaped one: raiders latch onto fuel canisters and drag
+them off-screen, and the loss condition is canisters, not lives —
+you respawn forever, the fuel does not. A two-state seek/drag FSM
+per raider on `Vec` steering, soft edge-bounce instead of wrap, and
+the package's cleanest demonstration that a game's entire "AI" can
+be one `if` per enemy per frame.
+
+### Webguard
+
+Twin-stick defense of a spiderweb: the web is a precomputed
+spoke-and-ring node lattice with a neighbor graph, and enemies
+path node-to-node along it — graph movement dressed as geometry.
+Wave pacing drains a shuffled spawn queue on a shrinking timer, a
+tiny director you can lift into any wave game. `Shapes.gon` draws
+the web rings; crank aims, d-pad moves.
+
+### Treadline
+
+The first-person tank game, and `Proj`'s first customer:
+`setCamera`, `line`, `model`, and `horizon` render an endless
+obstacle plain. The signature idea is *two* yaws — hull and turret
+— composed only at render time (`G.viewYaw()` returns their sum),
+so the radar draws turret-relative while the treads drive
+hull-relative, and a needle shows the growing disagreement. The
+crank slews the turret, of course.
+
+### Night Vector
+
+First-person night driving on `Proj` *with pitch*: hills are
+camera pitch driven by the road's height profile. The road is a
+procedural centerline — curvature and elevation noise sampled by
+`Road.point` — and only a fixed window of segments ahead is drawn,
+which reads as headlight throw and caps the line budget at once:
+the fog-of-war trick and the perf trick are the same trick.
+
+### Trenchfire
+
+The trench run. The ship *is* the camera (the crosshair leads, the
+camera eases after it), the crank is a throttle that multiplies
+both speed and scoring, and a three-phase director walks each
+level from open-space fighters to ground towers to the trench.
+Its neatest reuse: the smoke autopilot aims by feeding world
+targets through the *renderer's own* projection —
+
+```lua
+-- phosphor/games/trenchfire/input.lua:24
+    if G.phase == "trench" then
+        local dz = G.trenchEnd - G.camZ
+        if dz > 10 and dz < C.PORT_RANGE * 1.15 then
+            -- the port outranks everything: line up and snipe
+            local px, py = Proj.point(0, C.PORT_Y, G.trenchEnd)
+            if px then tx, ty = px, py end
+```
+
+If `Proj.point` returns coordinates, the target is on screen and
+the bot steers the crosshair to them; the same math that draws the
+port aims at it. One projection, zero disagreements between eye
+and hand.
+
+### Gravity Wells
+
+Two games in one gravity: a system view (star pulling constantly,
+planets as destinations) and per-planet side-view missions
+(thrust-under-gravity, bunkers, a tractor beam), swapped by a
+`G.view` flag inside the play state. Everything burns one fuel
+economy across both scales, which is the design: `Vec`, `Shapes`,
+`Beams`, `Fx`, and arithmetic.
+
+### Duelstar
+
+Spacewar!: two ships, one sun, and gravity that bends *shots* as
+well as ships — every projectile integrates the same
+inverse-square pull:
+
+```lua
+-- phosphor/games/duelstar/ships.lua:42
+-- sun pull at a point; capped so close passes slingshot instead of exploding
+function Ships.gravity(x, y)
+    local dx, dy = C.SUN_X - x, C.SUN_Y - y
+    local d2 = dx * dx + dy * dy
+    if d2 < 16 then return 0, 0 end
+    local d = math.sqrt(d2)
+    local a = math.min(C.GRAV_MU / d2, C.GRAV_MAX)
+    return dx / d * a, dy / d * a
+end
+```
+
+The cap on $\mu/d^2$ is the load-bearing line: uncapped
+inverse-square goes numerically vertical near the sun, and a frame
+of $\Delta t = 1/30$ at that acceleration teleports ships to
+infinity. Capped, a close pass becomes a slingshot — the exploit
+the whole duel is played around. The rival cycles three
+personalities (orbiter, sniper, brawler) that sharpen as you win.
+
+### Elite
+
+The largest game and the deep-end user of `Mat` + `Proj`: the
+cockpit is fixed at the origin, the universe is transformed
+per-frame through per-object orientation matrices, and the ships
+are the *original* 1984 vertex/edge blueprints, machine-converted
+from the released assembly source into a generated `ships.lua`.
+Every AI that steers does so by blending its matrix's nose column
+toward a bearing and then repairing the matrix:
+
+```lua
+-- phosphor/games/elite/world.lua:302
+    -- blend the nose toward the bearing to the player (origin), then re-tidy
+    local ndx, ndy, ndz = -px / d, -py / d, -pz / d
+    local nx, ny, nz = o.m[3], o.m[6], o.m[9]
+    local turn = 0.06
+    nx, ny, nz = nx + (ndx - nx) * turn, ny + (ndy - ny) * turn, nz + (ndz - nz) * turn
+    o.m[3], o.m[6], o.m[9] = nx, ny, nz
+    o.m = Mat.tidy(o.m)
+```
+
+Writing a lerped, non-unit vector straight into a rotation matrix's
+column is vandalism — *unless* `Mat.tidy` immediately
+re-orthonormalizes around it, which turns "nudge the nose, fix the
+matrix" into a two-line steering controller. The galaxy and market
+are pure-Lua ports of the original's deterministic seed arithmetic,
+testable without a Playdate attached, and docking swaps to a
+station-screens submode that saves the commander to the datastore.
+
+### Geometry Wars (opengw)
+
+The `Grid` showcase: every actor in the game dents the lattice.
+The player's wake pushes it, the respawn shield *pulls* it, bullets
+push a little, dying bullets less, bombs a lot, and the black-hole
+enemy pulls continuously until it bursts:
+
+```lua
+-- phosphor/games/opengw/player.lua:45
+    if s.invuln > 0 then
+        s.invuln = s.invuln - dt
+        Grid.pull(s.x, s.y, 90, 36) -- the shield bends the lattice inward
+    else
+        Grid.push(s.x, s.y, 26 + sp * 0.08, 46) -- wake
+    end
+```
+
+The grid is pure output — it reads game state and never feeds back
+into physics — which is exactly why it can be tuned freely for
+looks. Difficulty is a continuous `spawnIndex` ramp rather than
+discrete waves; the arena never lets you settle.
+
+### Vectorblade
+
+The Galaga: waves fly in along quadratic Bézier curves (`bez(a, c,
+b, u)` in `enemies.lua` — the same three-point curve from
+@sec-juice's easing family) into a breathing formation, then peel
+off to dive. Between waves a shop spends banked cash — implemented
+as one more value of the in-play mode machine (`intro` → `battle`
+→ `cleared` → `shop`), not a new Attract state, so the cabinet
+never knows the game has an economy. Data-driven rank tables in
+`config.lua` decide what each level throws.
+
+### Gyre
+
+The Gyruss, and the collection's purest crank game: "the crank IS
+the ship — one revolution flies one full orbit of the rim"
+(`gyre/input.lua:1`). Everything lives in polar coordinates —
+`G.polarPx(a, r)` maps angle-radius to the screen, and depth is
+faked by one scale curve:
+
+```lua
+-- phosphor/games/gyre/gamestate.lua:39
+-- draw scale for tube depth: 1 at the rim, MIN_SCALE at the center
+function G.scaleAt(r)
+    local t = Util.clamp(r, 0, 1.2)
+    return C.MIN_SCALE + (1 - C.MIN_SCALE) * t ^ 1.3
+end
+```
+
+No `Proj`, no `Mat` — a power curve on draw scale is the entire
+tube. Enemy squadrons ride Catmull-Rom splines from the deep into
+a rotating hub formation with slot allocation, under a stage
+director that schedules squads and detects stalls. Sixteen games
+in, the thesis holds at both ends of the scale: Elite needed the
+full 3D stack, Gyre needed one exponent — and both got exactly
+what they needed from the same 1,054 lines.
+
+## What you know now
+
+- Phosphor is sixteen vector arcade games on one thousand-line
+  library: module-per-concern globals, staged flat by the
+  Makefile, fixed 30 fps and $\Delta t = 1/30$, everything drawn
+  with `drawLine`.
+- Motion is semi-implicit Euler — velocity first, position from
+  the *new* velocity — because it keeps springs and orbits from
+  gaining energy; `Vec` does vector math on plain numbers so none
+  of it allocates.
+- Orientation is a $3{\times}3$ matrix whose columns are the
+  object's axes; premultiplying by $R(\theta)$ spins in the parent
+  frame; incremental spinning accumulates rounding drift, and
+  `Mat.tidy` — Gram–Schmidt anchored on the nose — repairs it.
+- Perspective is $x' = f x / z$ from similar triangles; edges that
+  cross the near plane are clipped by solving
+  $t = (n - z_A)/(z_B - z_A)$ and cutting the line *in camera
+  space*, never in screen space.
+- The spring grid is Hooke's law home springs plus a neighbor-
+  average coupling (a discrete Laplacian — hence traveling
+  ripples), damped, clamped, and stable by arithmetic:
+  $\omega\,\Delta t \approx 0.33$.
+- On a wrapping field, distance is the torus metric
+  $\min(|\Delta|, W - |\Delta|)$ per axis — naive deltas make
+  chase AI flee its target — and seam drawing is one shared
+  offsets enumeration, not per-entity special cases.
+- The cabinet (`attract.lua`) owns the update loop, the state
+  machine, and the high score, so a game is just hooks; `sfx.lua`
+  and `fx.lua` are shared pools, and painter order is the whole
+  compositing model.
+- Hot paths earn their ugliness: pass-through arguments instead of
+  closures (`Field.offsets`), `out` parameters computed in locals
+  so aliasing is safe (`Mat.mul`), swap-remove where pools are
+  order-independent (`Fx.update`), and hard fuses (`MAXOFF`,
+  `MAX_POOL`) so bad inputs degrade instead of exploding.
+- And the meta-lesson: the library absorbed code *behind* the
+  games, never ahead of them — and kept improving under review
+  after they shipped.
+
+The complete engine and all sixteen games are MIT-licensed at
+[github.com/plaidate/phosphor](https://github.com/plaidate/phosphor)
+— small enough to read in an evening, and, after this chapter,
+already familiar.
