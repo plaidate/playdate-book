@@ -43,10 +43,13 @@ function playdate.update()
 end
 -- endsnip
 
--- The harness wraps the real update in a pcall and captures figures; in a
--- release build it calls straight through (Chapter 18 explains all of this).
+-- snip: wrapper
+-- The harness wraps the real update in a pcall and captures the
+-- book's figures; in a release build it calls straight through
+-- (Chapter 18 explains all of this).
 local realUpdate = playdate.update
 function playdate.update()
     frame = frame + 1
     Harness.frame(frame, realUpdate)
 end
+-- endsnip

@@ -1,0 +1,6 @@
+name=Dodge
+author=Simon Frost
+description=Chapter 3: a minimal complete game on a mode machine.
+bundleID=com.sdwfrost.book.03modes
+version=1.0
+buildNumber=1

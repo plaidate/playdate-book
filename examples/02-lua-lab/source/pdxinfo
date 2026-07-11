@@ -1,0 +1,6 @@
+name=Lua Lab
+author=Simon Frost
+description=Chapter 2: on-screen proofs of Playdate Lua behavior.
+bundleID=com.sdwfrost.book.02lualab
+version=1.0
+buildNumber=1

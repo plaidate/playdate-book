@@ -1,3 +1,435 @@
-# The Update Loop and Game Modes
+# The Update Loop and Game Modes {#sec-modes}
 
-*(Chapter to come.)*
+@sec-hello gave you one function, `playdate.update`, and one file.
+This chapter turns that into a *game* — a real one, with a title
+screen, play, pause, a game over, and a way back to the title. The
+game itself is as small as a game can honestly be (dodge the falling
+blocks), because the game is not the point. The point is the skeleton
+around it: a fixed timestep, one global state table, an input
+snapshot, and a mode machine that dispatches to whichever screen the
+player is on.
+
+This skeleton is the most load-bearing code in the book. The example,
+`03-modes`, is split into the six modules you will see at the start
+of every subsequent chapter — `main.lua`, `config.lua`,
+`gamestate.lua`, `input.lua`, `game.lua`, `draw.lua` — and every
+later example is this one with the middle swapped out. It is also,
+per @sec-lua-lab, a working demonstration of module-per-concern
+globals: six files, six global tables, no surprises. The pattern is
+lifted directly from the shipped games; where a design choice was
+settled by one of them, the sidebar quotes the scar.
+
+By the end you will know why every game here runs on a *constant*
+`DT` of 1/30 rather than measuring frame time, why "what screen am I
+on?" is a string field in a table called `G`, and how a game moves
+between its modes without leaving state behind.
+
+## The update contract
+
+The deal between your game and the OS is simple. You define
+`playdate.update`; the OS calls it before every display frame — by
+default 30 times per second, adjustable with
+`playdate.display.setRefreshRate(rate)` up to 50, and down to the
+special value 0, meaning "call me as fast as possible." Everything
+your game does, it does inside those calls.
+
+The contract has a hard clause: if your update function takes longer
+than a frame, the OS does not skip ahead, buffer frames, or interpolate
+— it simply calls you as often as it can. Your game *slows down*.
+There is no spiral of death, but there is also no free lunch; the
+frame budget at 30 fps is 33 milliseconds, and @sec-perf is about
+living inside it.
+
+The example opens by stating its terms:
+
+{{< snip 03-modes/source/main.lua boot >}}
+
+Thirty frames per second is the SDK's default and recommendation — a
+deliberate balance of animation smoothness, CPU headroom, and battery
+— and it is where all the games behind this book run. Setting it
+explicitly anyway is the skeleton making a promise out loud, because
+the next decision depends on it. (The seeding guard is explained by
+its comment: figure runs must be reproducible, human runs must not
+be. The book's harness, when active, also flips the refresh rate to
+0 so a scripted 390-frame run finishes in a couple of seconds —
+which is only safe because of what comes next.)
+
+## The fixed timestep: DT is a constant
+
+Ask a desktop engine how long the last frame took and you get a
+measured, wobbling `dt`. The games in this book do not measure
+anything. They declare:
+
+{{< snip 03-modes/source/config.lua config >}}
+
+`C.DT = 1/30`, a constant, always. Velocities are written in pixels
+per second, updates multiply by `C.DT`, and one update means one
+thirtieth of a game-second — regardless of what the wall clock did.
+
+Why fix it? On this hardware, the honest options are "hit 30 fps" or
+"fix the frame you're having," and a fixed step buys four things:
+
+- **Determinism.** Same inputs, same seed, same frames → the same
+  game, bit for bit. That is what makes scripted runs, autopilots,
+  and this book's figure pipeline possible: `shots.lua` can say
+  "frame 200 shows the pause screen" and be *right*. A measured
+  `dt` forfeits reproducibility on the first frame.
+- **Stable physics.** Tuning in @sec-platformer (gravity, jump
+  impulses, collision substeps) behaves identically every run.
+  Variable timesteps turn rare long frames into tunneling bugs that
+  no one can reproduce.
+- **Graceful overload.** If a frame runs long, the game drops to
+  slow motion instead of teleporting objects across a double-length
+  step. On a handheld, brief slow-motion under load feels dramatic;
+  objects skipping through walls feels broken.
+- **Simple code.** No accumulators, no interpolation, no
+  clamp-the-delta hacks. `x += vx * C.DT`, done.
+
+The cost is honesty about the budget: at sustained overload the game
+is visibly slow rather than choppy-but-on-time. The shipped games
+treat that as a feature — a performance problem you can *see* in
+playtesting is a problem you fix (@sec-perf), not one you paper over.
+
+Everything else in `config.lua` is the game's tuning in one place:
+paddle speed, block fall speed, spawn cadence. Constants live in `C`
+rather than scattered through the logic so that "make it ten percent
+harder" is a one-line diff — and so the smoke builds of @sec-harness
+can stage a variant config without touching game code.
+
+### Three clocks
+
+The skeleton keeps time three ways, and later chapters lean on all
+three, so it is worth fixing the roles now:
+
+- **`frame`** — an integer, incremented in `playdate.update`, never
+  reset. This is *machine* time: the harness captures "frame 200,"
+  the figure script keys decisions off it, and because the timestep
+  is fixed, frame numbers are reproducible coordinates into a run.
+- **`G.t`** — seconds since launch, `+ C.DT` per tick. *World* time:
+  ambient animation, anything that should keep breathing across
+  screens.
+- **`G.modeT`** — seconds since the last mode change. *Screen* time:
+  blinking prompts, lockouts, ceremonies. Reset by `G.setMode`, and
+  by nothing else.
+
+The discipline that matters: game logic never reads `frame`, and the
+harness never needs `G.t`. When a later chapter's boss "enrages after
+20 seconds in the arena," that is a fourth, local clock — a field on
+the boss, ticked by `C.DT` — not a subtraction against `G.t`, which
+would break the moment a pause mode stops ticking the fight.
+
+## G: one table to hold the state
+
+Module-per-concern answered where *code* lives. Where does *state*
+live? In one global table, `G`:
+
+{{< snip 03-modes/source/gamestate.lua gamestate >}}
+
+Every piece of mutable state the game owns is a field of `G`. The
+rule sounds naive and scales remarkably well; it is how a
+28-room metroidvania keeps its head straight, not just a toy. What
+it buys:
+
+- **One place to look.** Debugging starts at `G`. The Simulator
+  console can `print` any of it; the harness heartbeat of
+  @sec-harness serializes chunks of it every few seconds.
+- **A natural save boundary.** @sec-save saves games by copying
+  fields of `G` into the datastore and back. No gathering step.
+- **Reset by construction.** Starting a new run is "rebuild these
+  fields," as `Game.reset()` below does — impossible to forget a
+  file-local you cannot see.
+
+The field to stare at is the first one. `G.mode` is a string naming
+the screen the player is on, and its comment is a contract: those
+four names, and only those, are legal. The convention of documenting
+the whole enum at the declaration comes straight from the shipped
+games — here is the bubble-shooter Bauble making the same move with
+five:
+
+```lua
+-- bauble/source/gamestate.lua:3
+G = {
+    state = "title", -- "title" | "play" | "levelclear" | "retry" | "gameover"
+    frame = 0,
+    score = 0,
+    lives = C.START_LIVES,
+    level = 1,
+```
+
+Strings, not integers or enum tables, on purpose: they cost nothing
+at this scale, they read back out of a debugger or a heartbeat JSON
+as themselves (`"mode":"gameover"` needs no decoding), and a typo'd
+mode fails loudly — dispatching on a misspelled string crashes the
+frame with a nil call, rather than silently running the wrong screen.
+
+`G.setMode` is three lines and earns its place as the *only*
+sanctioned way to change modes: it stamps `G.modeT`, the
+seconds-in-this-mode clock. Half the polish in a mode machine —
+blinking prompts, input lockouts, timed ceremonies — turns out to
+hang off that little clock.
+
+## The input snapshot
+
+The skeleton touches the hardware in exactly one function:
+
+{{< snip 03-modes/source/input.lua input >}}
+
+`Input.gather` returns a plain table — the *snapshot* — describing
+this frame's intent: `left`, `right`, `confirm`, `pause`. Everything
+downstream (`Game.update`, the mode functions) consumes the snapshot
+and never asks `playdate.buttonIsPressed` anything directly.
+
+The pattern earns its keep three ways. It centralizes the
+level-versus-edge decision — movement wants `buttonIsPressed` (held),
+menu actions want `buttonJustPressed` (tapped), and here is the one
+place where that is decided (@sec-input goes deep). It names things:
+downstream code reads `inp.confirm`, and when @sec-crank remaps
+confirm to a crank gesture, one function changes. And the first two
+lines are the *seam*: the harness bot is consulted first, and if a
+script is driving, its table simply **is** the snapshot. The bot does
+not simulate button hardware; it speaks the same language the game
+already listens to. Every autopilot in @sec-harness, and every figure
+in this chapter, walked in through that door.
+
+## The mode machine
+
+Now the heart of the chapter. Four screens, four functions, one table:
+
+{{< snip 03-modes/source/main.lua modes >}}
+
+And the loop that drives it:
+
+{{< snip 03-modes/source/main.lua loop >}}
+
+`modes[G.mode](Input.gather(frame))` is the whole state machine: look
+up the current mode's function, hand it the snapshot. Each mode
+function has the same shape — *react to input, mutate `G`, draw* —
+and owns everything about its screen. `title` waits for confirm and
+launches a fresh run; `play` runs the simulation; `pause` pointedly
+does **not** run the simulation but still draws the frozen world;
+`gameover` waits out its lockout and returns to the title.
+
+Transitions are just assignments through `G.setMode`, and they read
+like stage directions: *on confirm, reset the game and enter play.*
+The reset-on-entry placement is a deliberate idiom — the transition
+*into* a mode does the setup, so there is no way to reach `play` with
+a half-stale world, no matter which screen you came from.
+
+Two structural choices deserve a word:
+
+**A dispatch table, not a class hierarchy.** Modes could be objects
+with enter/exit/update methods. On a game this size — on most games
+this platform can hold — four functions and a string beat the
+ceremony. When a mode needs entry behavior, the transition writes it
+(as `title→play` resets the game); when it needs a clock, `G.modeT`
+is already ticking.
+
+**Dispatch table versus `if/elseif` chain.** Molt, the largest game
+in the case-study fleet, uses the chain form of the same machine:
+
+```lua
+-- molt/source/main.lua:112
+    if G.mode == "title" then
+        Draw.title()
+        if Input.confirm() then
+            G.mode = "play"
+            G.t = 0
+            Sfx.serve()
+            Music.set(Rooms.music())
+        end
+    elseif G.mode == "play" then
+```
+
+Same shape, same string field, chain instead of table — with seven
+modes and interleaved sub-states, Molt's author wanted the
+transitions inline where the neighboring logic lives. The two forms
+are freely interchangeable; the table version keeps each mode's code
+in one named place, which is why the skeleton (and this book) uses
+it. What both share is the part that matters: *one* string names the
+screen, and *one* place per frame decides what runs.
+
+Molt's outer loop also shows what the skeleton's `playdate.update`
+grows up into — the same wrapper, plus a running cost measurement:
+
+```lua
+-- molt/source/main.lua:232
+local frame = 0
+function playdate.update()
+    frame = frame + 1
+    local t0 = playdate.getCurrentTimeMilliseconds()
+    Harness.frame(frame, tick)
+    local ms = playdate.getCurrentTimeMilliseconds() - t0
+    G.updMs = (G.updMs or 0) * 0.9 + ms * 0.1
+end
+```
+
+That last line is an exponential moving average of update cost in
+milliseconds — nine parts history, one part this frame — kept in `G`
+where the heartbeat can report it. When @sec-perf asks "are we inside
+the 33 ms budget?", this is the instrument that answers. The skeleton
+omits it only to stay minimal; you will bolt it on in @sec-perf.
+
+::: {.callout-note}
+## The loop-control APIs the skeleton refuses
+The SDK offers three ways to step outside the one-loop model, and it
+is worth knowing why this book's skeleton uses none of them.
+`playdate.wait(ms)` suspends update callbacks entirely — ideal for a
+static message screen, but the display freezes unless you flush it by
+hand, and *timers keep not running* while animators do, a mismatch
+the reference itself warns about. `playdate.stop()` / `playdate.start()`
+halt and resume callbacks for genuinely event-driven apps. The
+trouble with all three in a game is that a stopped loop is a world
+you cannot draw, test, or script: a `pause` implemented with
+`playdate.stop()` cannot show the frozen play field the way
+@fig-modes-pause does, and no autopilot can drive code that is not
+running. Making pause *a mode* keeps every screen inside the same
+contract. One genuinely useful cousin: `playdate.update` is invoked
+as a coroutine, so a long asset-loading pass can `coroutine.yield()`
+mid-work to let the OS refresh a progress bar — the sanctioned way to
+be slow on purpose.
+:::
+
+## The game in the middle
+
+The simulation and rendering are deliberately ordinary — they are
+the replaceable organs of the skeleton. The simulation:
+
+{{< snip 03-modes/source/game.lua reset >}}
+
+{{< snip 03-modes/source/game.lua gameupdate >}}
+
+Everything moves in pixels per second times `C.DT`, per the fixed
+timestep. The one design flourish is `AIM_EVERY`: every third block
+spawns directly above the paddle, so standing still is fatal — the
+game guarantees pressure, and (not coincidentally) it guarantees the
+figure script a way to end a run on schedule. When a block lands,
+`G.setMode("gameover")` fires from *inside* `Game.update`; the mode
+machine does not care who assigns the string, and the current
+`modes.play` call simply finishes its frame and never runs again.
+
+Collision is an axis-aligned overlap test:
+
+{{< snip 03-modes/source/game.lua hits >}}
+
+Drawing is a read-only projection of `G` — `Draw` functions render
+state and never mutate it, which is what made "pause draws the frozen
+world" a one-liner:
+
+{{< snip 03-modes/source/draw.lua drawplay >}}
+
+{{< snip 03-modes/source/draw.lua overlays >}}
+
+The overlays draw *on top of* the play field rather than replacing
+it. Pause keeps the run visible under the panel (@fig-modes-pause),
+and game over leaves the fatal arrangement of blocks on screen —
+the player gets to see what killed them (@fig-modes-gameover).
+
+## Transition patterns
+
+The machine so far is correct; these three small patterns make it
+feel finished. All three run on `G.modeT`, the clock `setMode`
+resets.
+
+**The blinking prompt.** The title's "press Ⓐ" pulses at 1 Hz:
+
+{{< snip 03-modes/source/draw.lua drawtitle >}}
+
+`math.floor(G.modeT * 2) % 2` flips every half second of *mode* time
+— it starts a fresh blink cycle whenever the title is entered, which
+is why the prompt is always lit when the screen first appears.
+
+**The input lockout.** `modes.gameover` ignores confirm for
+`C.LOCKOUT` seconds. The player who dies mid-button-mash would
+otherwise skip the score panel without ever seeing it; 0.4 seconds
+of deafness fixes a real usability bug that pure logic says cannot
+exist.
+
+**Reset on entry, not on exit.** `Game.reset()` runs in the
+`title→play` transition. Exits are unreliable — a run can end from
+`play` (death) or from `pause` (a future quit menu) — but every road
+into `play` passes through one assignment, so that is where the
+clean slate is guaranteed.
+
+For anything fancier — a wipe, a room-to-room slide — the pattern
+scales by *adding a mode*: Molt has a `"transition"` mode that owns
+its timer and drawing, entered and left like any other screen rather
+than special-cased into `play`.
+
+## Driving the whole loop
+
+The chapter's figures are one deterministic 390-frame run through
+every mode, scripted by the example's `shots.lua`:
+
+{{< snip 03-modes/source/shots.lua >}}
+
+The script is a tiny autopilot speaking the `Input.gather` snapshot
+language: press confirm at frame 60, *dodge* (sidestep the lowest
+threatening block) until the pause beat at 180, resume at 220, then
+*seek* — steer into a block on purpose — so the run ends
+deterministically, and finally confirm back to the title. Note that
+it reads `G` to decide: scripts and autopilots are just more code in
+the same one-global world, and "when in doubt, look at the game
+state" is exactly how the real autopilots of @sec-harness work.
+
+![Frame 30: title mode. The prompt is mid-blink and there is no
+best score yet.](../figures/03-modes/modes-title.png){#fig-modes-title}
+
+![Frame 150: play mode. The bot has been dodging for three seconds;
+the score counts blocks
+survived.](../figures/03-modes/modes-play.png){#fig-modes-play}
+
+![Frame 200: pause mode. The world is frozen under the panel — the
+same `Draw.play()`, just no
+`Game.update`.](../figures/03-modes/modes-pause.png){#fig-modes-pause}
+
+![Frame 330: game over. The blocks that ended the run are still on
+screen beneath the
+panel.](../figures/03-modes/modes-gameover.png){#fig-modes-gameover}
+
+![Frame 380: back on the title — the machine has come full circle,
+and the best score survived the trip through
+`G`.](../figures/03-modes/modes-title-again.png){#fig-modes-title-again}
+
+The last figure is the quiet payoff. @fig-modes-title-again is the
+title screen *again*, one full lap later — but now it shows a best
+score, because `G.best` outlived the run while everything
+`Game.reset()` owns was rebuilt. If your mode machine can do a full
+lap without leaking or losing state, the skeleton is sound.
+
+::: {.callout-note}
+## This skeleton is the book's template
+Every example from @sec-dither onward is this project with the
+middle replaced: same six modules, same `G`, same `Input.gather`
+seam, same mode table (sometimes with different mode names), same
+harness wrapper at the bottom of `main.lua`. When a later chapter
+shows you only its interesting module, the rest is exactly what you
+just read.
+:::
+
+## What you know now
+
+- `playdate.update` is called at the display refresh rate — default
+  and recommended 30 fps, max 50, `0` meaning unthrottled — and if
+  it overruns, the OS just calls it less often: the game slows down.
+- The examples run a **fixed timestep**: `C.DT = 1/30`, velocities
+  in pixels per second. Fixed DT buys determinism (scripted runs,
+  reproducible figures), stable physics, and slow-motion instead of
+  tunneling under load.
+- All tuning constants live in the global `C` (`config.lua`); all
+  mutable state lives in the global `G` (`gamestate.lua`), with the
+  legal mode strings documented right at the declaration.
+- `G.mode` is a string; the frame is dispatched by
+  `modes[G.mode](inp)` — a dispatch table or an `if/elseif` chain,
+  interchangeably. Transitions are assignments through `G.setMode`,
+  which resets the `G.modeT` clock.
+- `Input.gather()` snapshots the hardware once per frame into a
+  named table, and consults the harness bot first — the seam that
+  makes scripted figures and autopilots free.
+- Transition polish hangs off `G.modeT`: blinking prompts, the
+  game-over input lockout, and reset-on-entry transitions.
+- The whole skeleton — `main`, `config`, `gamestate`, `input`,
+  `game`, `draw` — is the template every later example clones.
+
+Next, @sec-dither: the screen gets interesting. One bit of color
+turns out to hold an entire palette, if you know how to lie with
+patterns.
