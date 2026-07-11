@@ -65,6 +65,10 @@ format:
     toc: true
   typst:
     papersize: us-letter
+    mainfont: "Manrope"
+    font-paths: [assets/fonts]
+    include-in-header: [assets/typst-header.typ]
+    include-before-body: [assets/typst-body.typ]
     margin:
       x: 1.25in
       y: 1in

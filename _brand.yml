@@ -10,4 +10,21 @@ color:
   primary: yellow
   foreground: ink
   background: paper
-  link: amber
+  link: "#8a5d00"
+
+# play.date is set entirely in Roobert (commercial, Displaay).
+# Manrope (OFL) is the closest free face — same semi-rounded
+# grotesque skeleton — so it stands in for both text and headings.
+typography:
+  fonts:
+    - family: Manrope
+      source: google
+      weight: [400, 500, 700, 800]
+  base:
+    family: Manrope
+    weight: 400
+  headings:
+    family: Manrope
+    weight: 800
+  link:
+    color: amber
