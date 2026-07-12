@@ -9,7 +9,7 @@ published games lives in the
 in the chapters carry `repo/path.lua:line` attributions so you can read
 every excerpt in context.
 
-The catalog is in two halves: the standalone games, then the five
+The catalog is in two halves: the standalone games, then the six
 *collections* — shared engines with a fleet of games on top — plus one
 reusable module. Screenshots are the games' own repository
 `screenshot.png` files, upscaled 2x nearest-neighbor like every other
@@ -154,7 +154,7 @@ line; their lessons arrived as design rules rather than excerpts:
 
 ## The collections
 
-Five repositories are not single games but engines with fleets on
+Six repositories are not single games but engines with fleets on
 top. When a chapter quotes `vec/` or `tiles/core/`, it is quoting
 code that a dozen games run through every frame — the strongest
 battle-testing in the catalog.
@@ -252,6 +252,38 @@ ladders, depth queue, and perspective floor of the scaler, and all
 three games) and is this collection's primary citation. It builds
 directly on @sec-dither's dither-ladder foundations, and its
 plane-cull war story is that chapter's ordering-dependency lesson.
+
+### Lore
+
+The RPG engine: story state over a chunked tile world — a big walkable
+overworld, people to talk to, a party that grows, and battles in **two
+grammars** (menu-driven turns in a scene, real-time swings in the
+field) over one shared character sheet. Three games: *Slice* (the
+vertical slice and living engine demo — a chunked overworld, NPCs, a
+shop, a chest, a battle, a save), *Shrew* (Dragon Quest grammar: a
+shrew knight must eat half her body weight by dawn — overworld, town,
+boat, two-floor burrow, the Mole Tyrant), and *Stoat* (Secret of Mana
+grammar: charge swings, pounces, telegraphed rats, and a Rat King who
+stops mid-fight to talk).
+
+![Shrew, from the Lore collection: the dawn meter, the chunked
+overworld, and twelve grams to
+eat.](../figures/case-studies/shrew.png){#fig-cs-shrew}
+
+**Cited in:** @sec-lore — an entire chapter walks the `core/` engine
+module by module (the chunked LRU map cache, the state stack that makes
+menus-over-dialogs-over-shops free, the coroutine screenplay runner
+whose primitives also write the smoke autopilot, the one character
+sheet under both battle engines, the pattern-and-order-list music with
+its resume-mid-phrase stinger, and all three games) and is this
+collection's primary citation. It builds on @sec-tiles (`lmap` descends
+from `tmap`: same char grids, same write barrier, chunked), @sec-camera
+(`lcam` is `tcam` plus a scripted pan), @sec-save (its `lstate` ledger
+is the string-key JSON lesson made structural), and @sec-harness, whose
+autopilot argument it takes to the limit — including the war story of
+the bot that farmed a boss's summons for 57 kills without ever touching
+the boss, and `tools/headless.lua`, a stubbed-SDK Lua runner that beats
+a whole RPG in two seconds.
 
 ## Modules
 

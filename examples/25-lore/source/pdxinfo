@@ -1,0 +1,6 @@
+name=Lore
+author=Simon Frost
+description=Chapter 25 example: a tour of the Lore RPG engine.
+bundleID=com.sdwfrost.book.25lore
+version=1.0
+buildNumber=1
