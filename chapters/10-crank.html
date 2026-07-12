@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>10&nbsp; The Crank – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/11-tilt.html" rel="next">
+<link href="../chapters/09-input.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/10-crank.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#three-questions-three-functions" id="toc-three-questions-three-functions" class="nav-link active" data-scroll-target="#three-questions-three-functions"><span class="header-section-number">10.1</span> Three questions, three functions</a>
+  <ul class="collapse">
+  <li><a href="#the-push-model-cranked" id="toc-the-push-model-cranked" class="nav-link" data-scroll-target="#the-push-model-cranked"><span class="header-section-number">10.1.1</span> The push model: cranked()</a></li>
+  </ul></li>
+  <li><a href="#docked-undocked-and-the-indicator" id="toc-docked-undocked-and-the-indicator" class="nav-link" data-scroll-target="#docked-undocked-and-the-indicator"><span class="header-section-number">10.2</span> Docked, undocked, and the indicator</a></li>
+  <li><a href="#the-example-three-mappings-one-handle" id="toc-the-example-three-mappings-one-handle" class="nav-link" data-scroll-target="#the-example-three-mappings-one-handle"><span class="header-section-number">10.3</span> The example: three mappings, one handle</a>
+  <ul class="collapse">
+  <li><a href="#panel-1-the-detented-selector" id="toc-panel-1-the-detented-selector" class="nav-link" data-scroll-target="#panel-1-the-detented-selector"><span class="header-section-number">10.3.1</span> Panel 1: the detented selector</a></li>
+  <li><a href="#panel-2-one-to-one-aim" id="toc-panel-2-one-to-one-aim" class="nav-link" data-scroll-target="#panel-2-one-to-one-aim"><span class="header-section-number">10.3.2</span> Panel 2: one-to-one aim</a></li>
+  <li><a href="#panel-3-wind-and-release" id="toc-panel-3-wind-and-release" class="nav-link" data-scroll-target="#panel-3-wind-and-release"><span class="header-section-number">10.3.3</span> Panel 3: wind and release</a></li>
+  </ul></li>
+  <li><a href="#degrees-are-not-game-units" id="toc-degrees-are-not-game-units" class="nav-link" data-scroll-target="#degrees-are-not-game-units"><span class="header-section-number">10.4</span> Degrees are not game units</a></li>
+  <li><a href="#a-catalog-of-proven-mappings" id="toc-a-catalog-of-proven-mappings" class="nav-link" data-scroll-target="#a-catalog-of-proven-mappings"><span class="header-section-number">10.5</span> A catalog of proven mappings</a></li>
+  <li><a href="#the-scripted-wrist" id="toc-the-scripted-wrist" class="nav-link" data-scroll-target="#the-scripted-wrist"><span class="header-section-number">10.6</span> The scripted wrist</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">10.7</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/10-crank.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-crank" class="quarto-section-identifier"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>No other console has one. The crank is a fold-out handle on the Playdate’s right edge that rotates freely, forever, in either direction — no stops, no detents, no spring. Mechanically it is a high-resolution rotary encoder; ergonomically it is a fishing reel, a pepper mill, a safe dial, a winch, and a steering wheel, depending entirely on the mapping you write. That mapping is a real design decision: the same hardware that feels <em>wonderful</em> reeling in a fish feels <em>terrible</em> steering a spaceship if you map it wrong, and this chapter ends with a catalog of mappings that sixty shipped games proved out so you can start from ones that work.</p>
+<p>The API surface is small — three read functions, a dock sensor, two callbacks, and one stock UI widget — but the three read functions answer three genuinely different questions, and picking the wrong one is the classic crank bug. This chapter’s example puts all three side by side in one pdx: a <strong>detented selector</strong> built on <code>getCrankTicks</code>, a <strong>1:1 aim turret</strong> built on <code>getCrankPosition</code>, and a <strong>wind-and-release lob</strong> built on <code>getCrankChange</code>, cycled with the A button. As always, a scripted wrist drives the figures, which forces us to solve a real problem — how do you fake a crank? — that turns out to teach the API more deeply than reading it ever would.</p>
+<section id="three-questions-three-functions" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="three-questions-three-functions"><span class="header-section-number">10.1</span> Three questions, three functions</h2>
+<p><strong>Where is the crank?</strong> <code>playdate.getCrankPosition()</code> returns the absolute position in degrees, 0 to 359.9999, where <strong>zero is the crank pointing straight up</strong> and clockwise rotation (viewed from the device’s right edge) increases the angle. Absolute position is for mappings where the handle <em>is</em> a physical thing in the game: a turret barrel, a clock hand, a mortar’s elevation.</p>
+<p><strong>How much did it move?</strong> <code>playdate.getCrankChange()</code> returns the signed delta in degrees since the last call — positive clockwise, negative anti-clockwise. It actually returns <em>two</em> values:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">change</span><span class="op">,</span> <span class="va">acceleratedChange</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>getCrankChange<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>acceleratedChange</code> is the same delta multiplied by a speed- dependent factor, like mouse acceleration: slow cranking passes through nearly 1:1, fast cranking is amplified. Use it for scroll views and long lists where a player spinning hard means “get me to the end,” and plain <code>change</code> for anything physical, where acceleration would break the machine metaphor.</p>
+<p><strong>How many notches did it click past?</strong> <code>playdate.getCrankTicks (ticksPerRevolution)</code> quantizes rotation into discrete ticks — pass 12 and you get one tick per 30 degrees, returned as a signed count (usually 0 or ±1 per frame) as boundaries are crossed. Tick boundaries sit at <em>fixed absolute angles</em>, not at wherever-you-started, so twelve ticks land on the same twelve clock positions every revolution. Ticks are for menus, item wheels, and anything that should feel like a ratchet.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>getCrankTicks requires CoreLibs/crank
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>getCrankPosition</code> and <code>getCrankChange</code> are core API, always present. <code>getCrankTicks</code> is <strong>not</strong> — it is defined in <code>CoreLibs/crank</code>, and without <code>import "CoreLibs/crank"</code> the call is an attempt to call a <code>nil</code> value that crashes at runtime, not compile time, on the first frame that reads it. Fightin’ Chitin was burned by exactly this in an early build; its fighter-select screen still carries the scar tissue, guarding the call so the screen survives even if the import goes missing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- chitin/source/select.lua:72</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ticks</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">getCrankTicks</span> <span class="kw">and</span> <span class="va">playdate</span><span class="op">.</span>getCrankTicks<span class="op">(</span><span class="dv">12</span><span class="op">)</span> <span class="kw">or</span> <span class="dv">0</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">ticks</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span> <span class="fu">move</span> <span class="op">=</span> <span class="va">ticks</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> <span class="dv">1</span> <span class="kw">or</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Import the CoreLib and you will not need the guard; the example’s <code>main.lua</code> imports it right at the top with a comment saying why.</p>
+</div>
+</div>
+<p>One more sharp corner: <strong>each of these functions consumes its own delta</strong>. <code>getCrankChange</code> reports movement “since the last time this function (or the <code>playdate.cranked()</code> callback) was called,” and <code>getCrankTicks</code> likewise counts from its own last call. Call either from two places in the same frame and each call sees only part of the motion. The classic symptom is a scroll view that moves at half speed after you add a second feature that “also just peeks at the crank.” The cure is the Chapter 9 discipline: read the crank <strong>once</strong> per frame into the input snapshot, and let everyone consume the snapshot.</p>
+<section id="the-push-model-cranked" class="level3" data-number="10.1.1">
+<h3 data-number="10.1.1" class="anchored" data-anchor-id="the-push-model-cranked"><span class="header-section-number">10.1.1</span> The push model: cranked()</h3>
+<p>Like the buttons, the crank also speaks the callback dialect. Define <code>playdate.cranked(change, acceleratedChange)</code> and the OS calls you with the same two values <code>getCrankChange</code> returns; a <code>cranked</code> entry in an input-handler table (Chapter 9) does the same, and stacks and masks like every other handler callback. This matters for exactly the situation input handlers exist for: a modal overlay that scrolls with the crank must <em>own</em> the crank while it is up, and a masking handler with a <code>cranked</code> function does that cleanly — remember that the callback consumes the same delta as <code>getCrankChange</code>, which is precisely what you want, since the game’s poll then correctly sees nothing while the overlay eats the rotation. For the core loop, poll; the reasons from Chapter 9 apply unchanged.</p>
+</section>
+</section>
+<section id="docked-undocked-and-the-indicator" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="docked-undocked-and-the-indicator"><span class="header-section-number">10.2</span> Docked, undocked, and the indicator</h2>
+<p>The crank folds flat into the console body, and the OS can tell. <code>playdate.isCrankDocked()</code> polls the state; the optional callbacks <code>playdate.crankDocked()</code> and <code>playdate.crankUndocked()</code> fire on the transitions. The docking action plays a stock sound effect, which <code>playdate.setCrankSoundsDisabled(true)</code> suppresses if your game has its own foley (it re-enables automatically when your game exits).</p>
+<p>Dock state is design input. A docked crank means the player is holding the machine like a Game Boy; an undocked crank means one thumb has left the buttons. Games that make the crank optional poll <code>isCrankDocked()</code> and swap control schemes — Lob aims with the crank when it is out and falls back to d-pad rotation when it is stowed.</p>
+<p>When the crank is <em>required</em>, tell the player with the system’s own widget. <code>playdate.ui.crankIndicator</code> (import <code>CoreLibs/ui</code>) draws the standard “use the crank” toast at the lower right: call <code>playdate.ui.crankIndicator:draw()</code> every frame you want it shown — typically <code>if playdate.isCrankDocked()</code> — and it animates a “Use the crank” message for about 0.7 seconds, then a rotating crank for about 1.4, looping. Stop calling <code>:draw()</code> and it is gone. The <code>.clockwise</code> boolean property flips the animation direction, and <code>:resetAnimation()</code> restarts the sequence; there is nothing to instantiate — the shared instance is the object. The example wires it exactly this way in its update loop, so on a real device the demo nags until the handle comes out.</p>
+</section>
+<section id="the-example-three-mappings-one-handle" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="the-example-three-mappings-one-handle"><span class="header-section-number">10.3</span> The example: three mappings, one handle</h2>
+<p>Everything the crank does in this chapter flows through one snapshot function, extending the Chapter 9 pattern:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+input.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="input.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- One snapshot per frame:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">--   pos    absolute degrees, 0 = crank straight up</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">--   change delta degrees since last frame (signed)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">--   ticks  detents crossed this frame (getCrankTicks)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">--   aJust  the panel-advance button</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">--   docked true when the crank is folded into the body</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Input</span><span class="op">.</span>gather<span class="op">(</span><span class="va">frame</span><span class="op">,</span> <span class="va">ticksPerRev</span><span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bot</span> <span class="op">=</span> <span class="va">Harness</span><span class="op">.</span>input<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">bot</span> <span class="cf">then</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">change</span> <span class="op">=</span> <span class="va">bot</span><span class="op">.</span><span class="va">crank</span> <span class="kw">or</span> <span class="dv">0</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">botPos</span> <span class="op">=</span> <span class="op">(</span><span class="va">botPos</span> <span class="op">+</span> <span class="va">change</span><span class="op">)</span> <span class="op">%</span> <span class="dv">360</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">pos</span><span class="op">,</span> <span class="va">s</span><span class="op">.</span><span class="va">change</span> <span class="op">=</span> <span class="va">botPos</span><span class="op">,</span> <span class="va">change</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">ticks</span> <span class="op">=</span> <span class="va">Input</span><span class="op">.</span>botTicks<span class="op">(</span><span class="va">change</span><span class="op">,</span> <span class="va">ticksPerRev</span><span class="op">)</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">aJust</span> <span class="op">=</span> <span class="op">(</span><span class="va">bot</span><span class="op">.</span><span class="va">a</span> <span class="kw">and</span> <span class="kw">not</span> <span class="va">prevA</span><span class="op">)</span> <span class="kw">or</span> <span class="kw">false</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">prevA</span> <span class="op">=</span> <span class="va">bot</span><span class="op">.</span><span class="va">a</span> <span class="kw">or</span> <span class="kw">false</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">docked</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">pos</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>getCrankPosition<span class="op">()</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">change</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>getCrankChange<span class="op">()</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- getCrankTicks REQUIRES import "CoreLibs/crank"</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">ticks</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>getCrankTicks<span class="op">(</span><span class="va">ticksPerRev</span><span class="op">)</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">aJust</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>buttonJustPressed<span class="op">(</span><span class="va">pd</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">)</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">docked</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>isCrankDocked<span class="op">()</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">s</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The human path is three SDK calls plus the dock poll. The bot path is where scripting a crank gets interesting: the figure script supplies a per-frame <em>delta</em> (<code>bot.crank</code>, in degrees), and the snapshot integrates it into an absolute position — so <code>pos</code>, <code>change</code>, and <code>ticks</code> stay mutually consistent, exactly as they are for hardware. Ticks are derived with the SDK’s own fixed-boundary rule:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+input.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="input.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Mirror of the SDK's tick rule: boundaries sit at fixed absolute</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- angles, every 360/n degrees; a tick fires when one is crossed.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">acc</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Input</span><span class="op">.</span>botTicks<span class="op">(</span><span class="va">change</span><span class="op">,</span> <span class="va">ticksPerRev</span><span class="op">)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">acc</span> <span class="op">=</span> <span class="va">acc</span> <span class="op">+</span> <span class="va">change</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">per</span> <span class="op">=</span> <span class="dv">360</span> <span class="op">/</span> <span class="va">ticksPerRev</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ticks</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">acc</span> <span class="op">&gt;=</span> <span class="va">per</span> <span class="cf">do</span> <span class="va">acc</span> <span class="op">=</span> <span class="va">acc</span> <span class="op">-</span> <span class="va">per</span><span class="op">;</span> <span class="va">ticks</span> <span class="op">=</span> <span class="va">ticks</span> <span class="op">+</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">acc</span> <span class="op">&lt;=</span> <span class="op">-</span><span class="va">per</span> <span class="cf">do</span> <span class="va">acc</span> <span class="op">=</span> <span class="va">acc</span> <span class="op">+</span> <span class="va">per</span><span class="op">;</span> <span class="va">ticks</span> <span class="op">=</span> <span class="va">ticks</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">ticks</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Twelve lines to emulate the encoder, and in exchange the panels below run identically under a script or a hand. Why integrate deltas instead of letting the script set positions directly? Consistency: real hardware never teleports, and code you write against <code>pos</code> and <code>change</code> should never see them disagree. A script that says “8 degrees a frame for 50 frames” is also a <em>physical</em> description — you can feel your wrist doing it — which keeps scripted runs honest about what a player can actually perform. The panels count their interesting events (<code>Harness.count("detents")</code>, <code>"tracers"</code>, <code>"lobs"</code>, <code>"hits"</code>) so a scripted run does not just produce figures, it asserts behavior: a refactor that breaks tick derivation zeroes the detent counter on the next run.</p>
+<p>The A button cycles the three panels:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">panels</span> <span class="op">=</span> <span class="op">{</span> <span class="va">Selector</span><span class="op">,</span> <span class="va">Turret</span><span class="op">,</span> <span class="va">Lob</span> <span class="op">}</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">cur</span> <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>update<span class="op">()</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="va">Input</span><span class="op">.</span>gather<span class="op">(</span><span class="va">frame</span><span class="op">,</span> <span class="dv">12</span><span class="op">)</span> <span class="co">-- 12 detents per revolution</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">aJust</span> <span class="cf">then</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">cur</span> <span class="op">=</span> <span class="va">cur</span> <span class="op">%</span> <span class="op">#</span><span class="va">panels</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">panels</span><span class="op">[</span><span class="va">cur</span><span class="op">].</span>reset<span class="op">()</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"panelSwaps"</span><span class="op">)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">panels</span><span class="op">[</span><span class="va">cur</span><span class="op">].</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>clear<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="st">"*"</span> <span class="op">..</span> <span class="cn">TITLES</span><span class="op">[</span><span class="va">cur</span><span class="op">]</span> <span class="op">..</span> <span class="st">"*"</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"A: next demo"</span><span class="op">,</span> <span class="dv">392</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">right</span><span class="op">)</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">panels</span><span class="op">[</span><span class="va">cur</span><span class="op">].</span>draw<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">docked</span> <span class="cf">then</span> <span class="co">-- nudge the player toward the handle</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">playdate</span><span class="op">.</span><span class="va">ui</span><span class="op">.</span><span class="va">crankIndicator</span><span class="op">:</span>draw<span class="op">()</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="panel-1-the-detented-selector" class="level3" data-number="10.3.1">
+<h3 data-number="10.3.1" class="anchored" data-anchor-id="panel-1-the-detented-selector"><span class="header-section-number">10.3.1</span> Panel 1: the detented selector</h3>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+selector.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="selector.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Selector</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">ticks</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">n</span> <span class="op">=</span> <span class="op">#</span><span class="cn">ITEMS</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">Selector</span><span class="op">.</span><span class="va">i</span> <span class="op">=</span> <span class="op">(</span><span class="va">Selector</span><span class="op">.</span><span class="va">i</span> <span class="op">-</span> <span class="dv">1</span> <span class="op">+</span> <span class="va">s</span><span class="op">.</span><span class="va">ticks</span><span class="op">)</span> <span class="op">%</span> <span class="va">n</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">Selector</span><span class="op">.</span><span class="va">flash</span> <span class="op">=</span> <span class="dv">6</span> <span class="co">-- brief highlight: one click, one step</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"detents"</span><span class="op">,</span> <span class="fu">math.abs</span><span class="op">(</span><span class="va">s</span><span class="op">.</span><span class="va">ticks</span><span class="op">))</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Selector</span><span class="op">.</span><span class="va">flash</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Selector</span><span class="op">.</span><span class="va">flash</span> <span class="op">=</span> <span class="va">Selector</span><span class="op">.</span><span class="va">flash</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>s.ticks</code> is almost always 0, occasionally ±1, so the selection walks one item per 30-degree click, wrapping with the usual <code>(i - 1 + n) % n + 1</code> modular dance. The six-frame <code>flash</code> thickens the dial needle after each click — a tiny visual detent to stand in for the mechanical one the hardware doesn’t have. <a href="#fig-crank-detent" class="quarto-xref">Figure&nbsp;<span>10.1</span></a> catches the flash mid-click, with the on-screen dial showing the twelve boundary notches the ticks snap to.</p>
+<div id="fig-crank-detent" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crank-detent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/10-crank/crank-detent.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crank-detent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.1: The detented selector mid-click: 12 ticks per revolution, one list step per 30-degree click, needle bold for the six-frame flash.
+</figcaption>
+</figure>
+</div>
+<p>Detents are the right mapping whenever the underlying value is discrete. The player never has to <em>aim</em> — overshoot by 14 degrees and nothing happens; the ratchet only speaks at the boundaries.</p>
+</section>
+<section id="panel-2-one-to-one-aim" class="level3" data-number="10.3.2">
+<h3 data-number="10.3.2" class="anchored" data-anchor-id="panel-2-one-to-one-aim"><span class="header-section-number">10.3.2</span> Panel 2: one-to-one aim</h3>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+turret.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="turret.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Turret</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- crank straight up (0 deg) = barrel straight up</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">Turret</span><span class="op">.</span><span class="va">angle</span> <span class="op">=</span> <span class="fu">math.rad</span><span class="op">(</span><span class="va">s</span><span class="op">.</span><span class="va">pos</span> <span class="op">-</span> <span class="dv">90</span><span class="op">)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Turret</span><span class="op">.</span><span class="va">timer</span> <span class="op">=</span> <span class="va">Turret</span><span class="op">.</span><span class="va">timer</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Turret</span><span class="op">.</span><span class="va">timer</span> <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">then</span> <span class="co">-- steady tracer fire</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">c</span> <span class="op">=</span> <span class="fu">math.cos</span><span class="op">(</span><span class="va">Turret</span><span class="op">.</span><span class="va">angle</span><span class="op">)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">si</span> <span class="op">=</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">Turret</span><span class="op">.</span><span class="va">angle</span><span class="op">)</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">Turret</span><span class="op">.</span><span class="va">shots</span><span class="op">[#</span><span class="va">Turret</span><span class="op">.</span><span class="va">shots</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">x</span> <span class="op">=</span> <span class="cn">TX</span> <span class="op">+</span> <span class="va">c</span> <span class="op">*</span> <span class="dv">30</span><span class="op">,</span> <span class="va">y</span> <span class="op">=</span> <span class="cn">TY</span> <span class="op">+</span> <span class="va">si</span> <span class="op">*</span> <span class="dv">30</span><span class="op">,</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>            <span class="va">dx</span> <span class="op">=</span> <span class="va">c</span> <span class="op">*</span> <span class="dv">6</span><span class="op">,</span> <span class="va">dy</span> <span class="op">=</span> <span class="va">si</span> <span class="op">*</span> <span class="dv">6</span><span class="op">,</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"tracers"</span><span class="op">)</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="op">#</span><span class="va">Turret</span><span class="op">.</span><span class="va">shots</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">do</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">sh</span> <span class="op">=</span> <span class="va">Turret</span><span class="op">.</span><span class="va">shots</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">sh</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="va">sh</span><span class="op">.</span><span class="va">x</span> <span class="op">+</span> <span class="va">sh</span><span class="op">.</span><span class="va">dx</span><span class="op">,</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">+</span> <span class="va">sh</span><span class="op">.</span><span class="va">dy</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">sh</span><span class="op">.</span><span class="va">x</span> <span class="op">&lt;</span> <span class="op">-</span><span class="dv">8</span> <span class="kw">or</span> <span class="va">sh</span><span class="op">.</span><span class="va">x</span> <span class="op">&gt;</span> <span class="dv">408</span> <span class="kw">or</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">&lt;</span> <span class="op">-</span><span class="dv">8</span> <span class="kw">or</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">&gt;</span> <span class="dv">248</span> <span class="cf">then</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>            <span class="fu">table.remove</span><span class="op">(</span><span class="va">Turret</span><span class="op">.</span><span class="va">shots</span><span class="op">,</span> <span class="va">i</span><span class="op">)</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>One line of mapping: <code>angle = rad(pos - 90)</code>. The <code>- 90</code> converts crank-zero (straight up, toward the sky) into screen coordinates, where an angle of zero points right; with it, crank-up means barrel-up, and the handle becomes the barrel. The turret fires a tracer every ten frames so the figure shows where it points (<a href="#fig-crank-aim" class="quarto-xref">Figure&nbsp;<span>10.2</span></a>).</p>
+<div id="fig-crank-aim" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crank-aim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/10-crank/crank-aim.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crank-aim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.2: 1:1 aim: the crank at 150 degrees, the barrel at 150 degrees, tracers marking the sweep.
+</figcaption>
+</figure>
+</div>
+<p>This is the crank at its most transparent, and Lob — a voxel artillery duel — ships exactly this line, plus the dock-state fallback from the previous section:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- voxel/games/lob/input.lua:26</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">pd</span> <span class="op">=</span> <span class="va">playdate</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">s</span><span class="op">.</span><span class="va">aim</span> <span class="op">=</span> <span class="kw">nil</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">pd</span><span class="op">.</span>isCrankDocked<span class="op">()</span> <span class="cf">then</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- crank up = aim away from the viewer</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">.</span><span class="va">aim</span> <span class="op">=</span> <span class="fu">math.rad</span><span class="op">(</span><span class="va">pd</span><span class="op">.</span>getCrankPosition<span class="op">()</span> <span class="op">-</span> <span class="dv">90</span><span class="op">)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>nil</code> when docked, an angle when not: downstream code treats “the player is aiming” and “the player has stowed the crank” as different inputs, not different <em>values</em>, and the d-pad fallback fills in only in the first case.</p>
+</section>
+<section id="panel-3-wind-and-release" class="level3" data-number="10.3.3">
+<h3 data-number="10.3.3" class="anchored" data-anchor-id="panel-3-wind-and-release"><span class="header-section-number">10.3.3</span> Panel 3: wind and release</h3>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lob.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="lob.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Lob</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">change</span> <span class="op">&gt;</span> <span class="dv">0.5</span> <span class="cf">then</span>           <span class="co">-- winding forward</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">Lob</span><span class="op">.</span><span class="va">power</span> <span class="op">=</span> <span class="fu">math.min</span><span class="op">(</span><span class="dv">100</span><span class="op">,</span> <span class="va">Lob</span><span class="op">.</span><span class="va">power</span> <span class="op">+</span> <span class="va">s</span><span class="op">.</span><span class="va">change</span> <span class="op">*</span> <span class="dv">0.25</span><span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">Lob</span><span class="op">.</span><span class="va">still</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> <span class="va">Lob</span><span class="op">.</span><span class="va">power</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> <span class="kw">not</span> <span class="va">Lob</span><span class="op">.</span><span class="va">shell</span> <span class="cf">then</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">Lob</span><span class="op">.</span><span class="va">still</span> <span class="op">=</span> <span class="va">Lob</span><span class="op">.</span><span class="va">still</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">Lob</span><span class="op">.</span><span class="va">still</span> <span class="op">&gt;=</span> <span class="cn">STILL</span> <span class="cf">then</span>   <span class="co">-- hands off: release!</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">v</span> <span class="op">=</span> <span class="dv">2</span> <span class="op">+</span> <span class="va">Lob</span><span class="op">.</span><span class="va">power</span> <span class="op">*</span> <span class="dv">0.05</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">Lob</span><span class="op">.</span><span class="va">shell</span> <span class="op">=</span> <span class="op">{</span> <span class="va">x</span> <span class="op">=</span> <span class="dv">40</span><span class="op">,</span> <span class="va">y</span> <span class="op">=</span> <span class="cn">GROUND</span><span class="op">,</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                <span class="va">dx</span> <span class="op">=</span> <span class="va">v</span> <span class="op">*</span> <span class="dv">0.8</span><span class="op">,</span> <span class="va">dy</span> <span class="op">=</span> <span class="op">-</span><span class="va">v</span> <span class="op">}</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"lobs"</span><span class="op">)</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>            <span class="va">Lob</span><span class="op">.</span><span class="va">power</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">sh</span> <span class="op">=</span> <span class="va">Lob</span><span class="op">.</span><span class="va">shell</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">sh</span> <span class="cf">then</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">sh</span><span class="op">.</span><span class="va">dy</span> <span class="op">=</span> <span class="va">sh</span><span class="op">.</span><span class="va">dy</span> <span class="op">+</span> <span class="dv">0.25</span>         <span class="co">-- gravity</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">sh</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="va">sh</span><span class="op">.</span><span class="va">x</span> <span class="op">+</span> <span class="va">sh</span><span class="op">.</span><span class="va">dx</span><span class="op">,</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">+</span> <span class="va">sh</span><span class="op">.</span><span class="va">dy</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">sh</span><span class="op">.</span><span class="va">y</span> <span class="op">&gt;=</span> <span class="cn">GROUND</span> <span class="cf">then</span>       <span class="co">-- touchdown</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">hit</span> <span class="op">=</span> <span class="fu">math.abs</span><span class="op">(</span><span class="va">sh</span><span class="op">.</span><span class="va">x</span> <span class="op">-</span> <span class="cn">TARGET</span><span class="op">)</span> <span class="op">&lt;</span> <span class="dv">16</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>            <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span> <span class="op">=</span> <span class="op">{</span> <span class="va">x</span> <span class="op">=</span> <span class="va">sh</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">t</span> <span class="op">=</span> <span class="dv">40</span><span class="op">,</span> <span class="va">hit</span> <span class="op">=</span> <span class="va">hit</span> <span class="op">}</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">hit</span> <span class="cf">then</span> <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"hits"</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>            <span class="va">Lob</span><span class="op">.</span><span class="va">shell</span> <span class="op">=</span> <span class="kw">nil</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span> <span class="cf">then</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>        <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span><span class="op">.</span><span class="va">t</span> <span class="op">=</span> <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span><span class="op">.</span><span class="va">t</span> <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span><span class="op">.</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Lob</span><span class="op">.</span><span class="va">splash</span> <span class="op">=</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The third mapping treats cranking as <em>effort</em>. Forward motion pumps the power meter (<code>change * 0.25</code>, capped at 100); the moment the crank goes still for five frames, the stored power releases as a lobbed shell whose velocity scales with the meter. The player physically winds up a throw and lets go — no button involved. <a href="#fig-crank-wind" class="quarto-xref">Figure&nbsp;<span>10.3</span></a> shows the meter filling under hard cranking; <a href="#fig-crank-release" class="quarto-xref">Figure&nbsp;<span>10.4</span></a> the shell in flight after the hands came off; and <a href="#fig-crank-hit" class="quarto-xref">Figure&nbsp;<span>10.5</span></a> the payoff, a full-power shot splashing onto the target ring.</p>
+<div id="fig-crank-wind" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crank-wind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/10-crank/crank-wind.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crank-wind-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.3: Winding: 8 degrees a frame pours into the power meter.
+</figcaption>
+</figure>
+</div>
+<div id="fig-crank-release" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crank-release-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/10-crank/crank-release.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crank-release-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.4: Five still frames later, the stored power releases as a shell.
+</figcaption>
+</figure>
+</div>
+<div id="fig-crank-hit" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crank-hit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/10-crank/crank-hit.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crank-hit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.5: Touchdown on the target ring — full wind was calibrated to exactly this range.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why “went still” and not “A to fire”?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Because release <em>is</em> the verb. Wind-and-release lives or dies on the wind-up being the whole gesture; adding a button turns a throw back into a menu. Playtesting across Lob and Bulwark settled a refinement, though: players like aiming on the crank and confirming power with a <strong>held-A oscillating meter</strong> when the two must combine — one hand per concern. If your design needs aim <em>and</em> power on one crank, steal that split rather than overloading the handle with both.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="degrees-are-not-game-units" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="degrees-are-not-game-units"><span class="header-section-number">10.4</span> Degrees are not game units</h2>
+<p>Every crank mapping ends with a multiplication, and that constant deserves more respect than it usually gets. A few rules from the tuning trenches:</p>
+<p><strong>Gear it deliberately.</strong> The wrist turns comfortably at roughly one revolution per second, in bursts. If one revolution of the crank should reel in one meter of fishing line, your constant is <code>meters = change / 360</code> — and now “how fast can the player reel” is a physical fact you can design around rather than an accident of a magic number. State the gearing in real terms in a comment (<code>-- 90 deg of crank = one ladder rung</code>) and tuning sessions stop being guesswork.</p>
+<p><strong>Deltas need no DT.</strong> A per-frame <code>change</code> is already “degrees this frame” — physical motion, sampled. Multiplying it by <code>DT</code> double-applies time and makes crank speed depend on frame rate. Compare the two terms in Gyre’s mixer, quoted below: the crank delta passes straight through, while the <em>d-pad</em> term — a per-second rate — is the one multiplied by <code>C.DT</code>.</p>
+<p><strong>Clamp arcs for dials.</strong> A throttle or volume knob should not wrap from full to zero as the crank crosses its top. Either accumulate deltas into a clamped value (a “virtual dial” that simply stops accepting input at its ends), or if you map absolute position, pick an arc well away from 0/360 so normal use never crosses the seam. Herd’s release-rate dial is a clamped accumulator; the players who tested it never noticed — which is the point.</p>
+<p><strong>Respect direction.</strong> Clockwise-when-viewed-from-the-right is “forward”/“in”/“up” in most players’ intuition (reeling, winding, throttling up). If your mapping feels backward in testing, negate the constant rather than asking players to adapt — one changed sign beats a tutorial sentence.</p>
+</section>
+<section id="a-catalog-of-proven-mappings" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="a-catalog-of-proven-mappings"><span class="header-section-number">10.5</span> A catalog of proven mappings</h2>
+<p>Sixty games in, these are the crank mappings that survived play, with a shipped reference for each. Steal freely.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mapping</th>
+<th>Read</th>
+<th>Feels like</th>
+<th>Proven in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1:1 rotation/aim</td>
+<td><code>getCrankPosition</code></td>
+<td>the handle is the object</td>
+<td>Asteroids-style ships, Rubble, Lob</td>
+</tr>
+<tr class="even">
+<td>Wind-and-release power</td>
+<td><code>getCrankChange</code></td>
+<td>a throw, a catapult</td>
+<td>Lob, Bulwark</td>
+</tr>
+<tr class="odd">
+<td>Spring/boost charge</td>
+<td><code>getCrankChange</code></td>
+<td>cocking a spring</td>
+<td>Crumble, Marble</td>
+</tr>
+<tr class="even">
+<td>Detented selection</td>
+<td><code>getCrankTicks</code></td>
+<td>a ratchet, a rotary phone</td>
+<td>Bulwark piece rotation, Chitin select</td>
+</tr>
+<tr class="odd">
+<td>Rate dial / throttle</td>
+<td><code>getCrankPosition</code> (as a knob)</td>
+<td>a volume knob</td>
+<td>Herd’s release-rate dial</td>
+</tr>
+<tr class="even">
+<td>Crank-as-velocity</td>
+<td><code>getCrankChange</code></td>
+<td>stirring the world</td>
+<td>Gyre</td>
+</tr>
+<tr class="odd">
+<td>Paddle / steering</td>
+<td><code>getCrankChange</code> or position</td>
+<td>Pong knob, a wheel</td>
+<td>paddle and steering prototypes</td>
+</tr>
+<tr class="even">
+<td>Fuse / timer length</td>
+<td><code>getCrankTicks</code></td>
+<td>setting an egg timer</td>
+<td>fuse-length tuning</td>
+</tr>
+</tbody>
+</table>
+<p>The last untried-looking entry, crank-as-velocity, deserves its quote. Gyre is a Gyruss-style tube shooter in which the ship rides a ring around the screen edge, and its entire movement model is one line — the crank’s delta <em>is</em> the ship’s angular velocity:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- phosphor/games/gyre/input.lua:79</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">move</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>getCrankChange<span class="op">()</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonLeft</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">move</span> <span class="op">=</span> <span class="fu">move</span> <span class="op">+</span> <span class="cn">C</span><span class="op">.</span><span class="cn">DPAD_DEG_PER_SEC</span> <span class="op">*</span> <span class="cn">C</span><span class="op">.</span><span class="cn">DT</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Crank fast, orbit fast; stop, stop. No tuning constant ever felt as direct as the raw delta — the crank IS the ship. (Note the d-pad <em>additively</em> mixed in as a fallback, in the same snapshot, so a docked-crank player is never stranded.)</p>
+<p>Two rules of thumb fall out of the catalog. First, match the verb’s <em>physics</em>: continuous world quantities map to <code>change</code>, positional things map to <code>position</code>, discrete choices map to <code>ticks</code> — misassign these and the handle fights the player’s wrist. Second, respect fatigue: cranking is more muscle than a thumbstick, so mappings that demand sustained fast rotation (velocity, winding) need sessions measured in seconds, while position and detent mappings, which are nearly effortless, can run a whole game.</p>
+</section>
+<section id="the-scripted-wrist" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="the-scripted-wrist"><span class="header-section-number">10.6</span> The scripted wrist</h2>
+<p>As in Chapter 9, every figure came from a script — this time a wrist rather than a thumb:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+shots.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="shots.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Figure script: one scripted wrist. A slow 3 deg/frame crawl</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- clicks through the selector, a 4 deg/frame sweep aims the turret</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- (A advances panels at 90 and 180), then a hard 8 deg/frame wind</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- charges the lob, which releases when the crank goes still at 235</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- and fires at ~240, landing on the target at ~296.</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="va">Shots</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">seed</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">last</span> <span class="op">=</span> <span class="dv">310</span><span class="op">,</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">shots</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"crank-detent"</span><span class="op">]</span>  <span class="op">=</span> <span class="dv">70</span><span class="op">,</span>  <span class="co">-- selector mid-click, needle bold</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"crank-aim"</span><span class="op">]</span>     <span class="op">=</span> <span class="dv">150</span><span class="op">,</span> <span class="co">-- barrel at 150 deg, tracers out</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"crank-wind"</span><span class="op">]</span>    <span class="op">=</span> <span class="dv">220</span><span class="op">,</span> <span class="co">-- meter charging, WINDING label</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"crank-release"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">260</span><span class="op">,</span> <span class="co">-- shell mid-arc</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"crank-hit"</span><span class="op">]</span>     <span class="op">=</span> <span class="dv">302</span><span class="op">,</span> <span class="co">-- splash ring on the target</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">script</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">crank</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">90</span> <span class="cf">then</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">crank</span> <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">180</span> <span class="cf">then</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>            <span class="va">crank</span> <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">185</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">235</span> <span class="cf">then</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>            <span class="va">crank</span> <span class="op">=</span> <span class="dv">8</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">{</span> <span class="va">crank</span> <span class="op">=</span> <span class="va">crank</span><span class="op">,</span> <span class="va">a</span> <span class="op">=</span> <span class="op">(</span><span class="va">f</span> <span class="op">==</span> <span class="dv">90</span> <span class="kw">or</span> <span class="va">f</span> <span class="op">==</span> <span class="dv">180</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Read it as choreography. A slow 3-degrees-per-frame crawl through the selector is 270 degrees over 90 frames — nine detent clicks, each of which must move the list exactly one row or the <code>detents</code> counter betrays the bug. The turret’s 4-degree sweep puts the barrel at a photogenic 150 degrees on the shot frame, with tracers from the preceding half-revolution still in flight. And the lob panel’s timeline is the mechanic itself, spelled out in frames: wind hard until 235, go still, release fires five quiet frames later, and the shell’s whole ballistic arc — including the touchdown on the target at ~296 — follows deterministically from the release velocity. The comment block at the top of the file records those expected beats, which is a habit worth copying: when a run’s figures come out wrong, the script’s own comments say what <em>should</em> have happened on which frame.</p>
+</section>
+<section id="what-you-know-now" class="level2" data-number="10.7">
+<h2 data-number="10.7" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">10.7</span> What you know now</h2>
+<ul>
+<li><code>getCrankPosition()</code> = absolute degrees, 0 = straight up; <code>getCrankChange()</code> = signed delta plus an accelerated second return; <code>getCrankTicks(n)</code> = fixed-boundary detents — and it lives in <code>CoreLibs/crank</code>, crashing at runtime without the import.</li>
+<li>Deltas are consumed per call: read the crank once per frame into the input snapshot.</li>
+<li><code>isCrankDocked()</code> plus the <code>crankDocked</code>/<code>crankUndocked</code> callbacks let you swap control schemes; <code>playdate.ui.crankIndicator:draw()</code> (CoreLibs/ui) is the stock “use the crank” nag.</li>
+<li>A scripted crank is an integrated delta: feed deltas, derive position and ticks, and the same panel code serves script and hand.</li>
+<li>Match mapping to verb — position for aim, change for effort and velocity, ticks for choices — and budget the player’s wrist.</li>
+</ul>
+<p>Next: the input you cannot see. The accelerometer, the System Menu, the keyboard, and the rest of the system UI — everything your game does when it is not strictly playing.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/09-input.html" class="pagination-link" aria-label="Buttons: The Input Layer">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/11-tilt.html" class="pagination-link" aria-label="Tilt, Menus, and System UI">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

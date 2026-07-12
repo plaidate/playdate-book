@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Appendix E — The Case-Study Games – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/appendix-d-harness.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-a-lua.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-e-games.html"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#standalones" id="toc-standalones" class="nav-link active" data-scroll-target="#standalones"><span class="header-section-number">E.1</span> Standalones</a>
+  <ul class="collapse">
+  <li><a href="#molt" id="toc-molt" class="nav-link" data-scroll-target="#molt"><span class="header-section-number">E.1.1</span> Molt</a></li>
+  <li><a href="#blood-and-whine" id="toc-blood-and-whine" class="nav-link" data-scroll-target="#blood-and-whine"><span class="header-section-number">E.1.2</span> Blood and Whine</a></li>
+  <li><a href="#fightin-chitin" id="toc-fightin-chitin" class="nav-link" data-scroll-target="#fightin-chitin"><span class="header-section-number">E.1.3</span> Fightin’ Chitin</a></li>
+  <li><a href="#clam-jumper" id="toc-clam-jumper" class="nav-link" data-scroll-target="#clam-jumper"><span class="header-section-number">E.1.4</span> Clam Jumper</a></li>
+  <li><a href="#weasel-war-dance" id="toc-weasel-war-dance" class="nav-link" data-scroll-target="#weasel-war-dance"><span class="header-section-number">E.1.5</span> Weasel War Dance</a></li>
+  <li><a href="#archers-zoomie-circuit" id="toc-archers-zoomie-circuit" class="nav-link" data-scroll-target="#archers-zoomie-circuit"><span class="header-section-number">E.1.6</span> Archer’s Zoomie Circuit</a></li>
+  <li><a href="#bauble" id="toc-bauble" class="nav-link" data-scroll-target="#bauble"><span class="header-section-number">E.1.7</span> Bauble</a></li>
+  <li><a href="#bearing" id="toc-bearing" class="nav-link" data-scroll-target="#bearing"><span class="header-section-number">E.1.8</span> Bearing</a></li>
+  <li><a href="#the-supporting-bestiary" id="toc-the-supporting-bestiary" class="nav-link" data-scroll-target="#the-supporting-bestiary"><span class="header-section-number">E.1.9</span> The supporting bestiary</a></li>
+  </ul></li>
+  <li><a href="#the-collections" id="toc-the-collections" class="nav-link" data-scroll-target="#the-collections"><span class="header-section-number">E.2</span> The collections</a>
+  <ul class="collapse">
+  <li><a href="#phosphor" id="toc-phosphor" class="nav-link" data-scroll-target="#phosphor"><span class="header-section-number">E.2.1</span> Phosphor</a></li>
+  <li><a href="#classics" id="toc-classics" class="nav-link" data-scroll-target="#classics"><span class="header-section-number">E.2.2</span> Classics</a></li>
+  <li><a href="#voxel" id="toc-voxel" class="nav-link" data-scroll-target="#voxel"><span class="header-section-number">E.2.3</span> Voxel</a></li>
+  <li><a href="#tiles" id="toc-tiles" class="nav-link" data-scroll-target="#tiles"><span class="header-section-number">E.2.4</span> Tiles</a></li>
+  <li><a href="#dither" id="toc-dither" class="nav-link" data-scroll-target="#dither"><span class="header-section-number">E.2.5</span> Dither</a></li>
+  <li><a href="#lore" id="toc-lore" class="nav-link" data-scroll-target="#lore"><span class="header-section-number">E.2.6</span> Lore</a></li>
+  <li><a href="#shmup" id="toc-shmup" class="nav-link" data-scroll-target="#shmup"><span class="header-section-number">E.2.7</span> Shmup</a></li>
+  </ul></li>
+  <li><a href="#modules" id="toc-modules" class="nav-link" data-scroll-target="#modules"><span class="header-section-number">E.3</span> Modules</a>
+  <ul class="collapse">
+  <li><a href="#midiplayer" id="toc-midiplayer" class="nav-link" data-scroll-target="#midiplayer"><span class="header-section-number">E.3.1</span> midiplayer</a></li>
+  </ul></li>
+  <li><a href="#reading-the-sources" id="toc-reading-the-sources" class="nav-link" data-scroll-target="#reading-the-sources"><span class="header-section-number">E.4</span> Reading the sources</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/appendix-a-lua.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/appendix-e-games.html"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-appendix-games" class="quarto-section-identifier">Appendix E — The Case-Study Games</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The code quoted in this book’s sidebars comes from real, shipped Playdate games — more than sixty of them, built by the author on the house style this book teaches. This appendix is the cast list: what each game is, and where and why the book quotes it. Source for the published games lives in the <a href="https://github.com/plaidate">github.com/plaidate</a> organization; quotes in the chapters carry <code>repo/path.lua:line</code> attributions so you can read every excerpt in context.</p>
+<p>The catalog is in two halves: fifteen standalone games, then the seven <em>collections</em> — shared engines with a fleet of games on top, forty-nine games between them — plus one reusable module. Five of those collections get a whole chapter to themselves in Part VII. Screenshots are the games’ own repository <code>screenshot.png</code> files, upscaled 2x nearest-neighbor like every other figure in the book.</p>
+<section id="standalones" class="level2" data-number="E.1">
+<h2 data-number="E.1" class="anchored" data-anchor-id="standalones"><span class="header-section-number">E.1</span> Standalones</h2>
+<section id="molt" class="level3" data-number="E.1.1">
+<h3 data-number="E.1.1" class="anchored" data-anchor-id="molt"><span class="header-section-number">E.1.1</span> Molt</h3>
+<p>An arkanoidvania: you are a crab, your carapace is the paddle, and a bounced pearl smashes coral across a connected undersea world of 28 rooms, 6 zones, and 7 bosses. The largest game in the fleet, and the book’s favorite witness for “does this pattern survive contact with a real game.”</p>
+<div id="fig-cs-molt" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-molt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/molt.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-molt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.1: Molt: paddle, pearl, and a room of the connected world.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="02-lua-lab.html" class="quarto-xref"><span>Chapter 2</span></a> (the twenty-import <code>main.lua</code> that demonstrates module-per-concern at scale), <a href="03-modes.html" class="quarto-xref"><span>Chapter 3</span></a> (the <code>if/elseif</code> flavor of the mode machine, and the EMA update-cost wrapper that feeds <a href="19-perf.html" class="quarto-xref"><span>Chapter 19</span></a>), <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a> (fourteen all-synth voices in one <code>sfx.lua</code>, zero audio files), <a href="13-music.html" class="quarto-xref"><span>Chapter 13</span></a> (its step-clock music module), <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a> (<code>save.lua</code> quoted as a complete file — the nil-coalescing load pattern), and <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>, where its 47-line smoke harness is the direct ancestor of this book’s own (<a href="appendix-d-harness.html" class="quarto-xref"><span>Appendix D</span></a>). Its full-game-beating autopilot — BFS recovery, offset aiming, persistent boss wounds — is the existence proof behind that chapter’s claims.</p>
+</section>
+<section id="blood-and-whine" class="level3" data-number="E.1.2">
+<h3 data-number="E.1.2" class="anchored" data-anchor-id="blood-and-whine"><span class="header-section-number">E.1.2</span> Blood and Whine</h3>
+<p>A mosquito continuing her bloodline: nectar to survive, blood to breed, and every host can end you. A full procedural 1-bit art sweep gave it the book’s favorite dither lesson.</p>
+<div id="fig-cs-whine" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-whine-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/whine.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-whine-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.2: Blood and Whine: procedural 1-bit art, all dither.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a> — its <code>draw.lua</code> <code>gray(d)</code> helper, and the scar behind that chapter’s central warning: <code>setDitherPattern</code>’s argument is <em>transparency</em>, not darkness (low = dark), a polarity that cost this game an art pass.</p>
+</section>
+<section id="fightin-chitin" class="level3" data-number="E.1.3">
+<h3 data-number="E.1.3" class="anchored" data-anchor-id="fightin-chitin"><span class="header-section-number">E.1.3</span> Fightin’ Chitin</h3>
+<p>A one-on-one 2D fighting game starring the insect world’s real brawlers: two attack buttons, motion inputs, a crank-driven Frenzy super, and a six-fighter archetype roster.</p>
+<div id="fig-cs-chitin" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-chitin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/chitin.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-chitin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.3: Fightin’ Chitin: two bugs enter.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a> (HUD-versus-stage dither discipline in <code>stage.lua</code>), <a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a> (the character-select wheel in <code>select.lua</code>), <a href="14-platformer.html" class="quarto-xref"><span>Chapter 14</span></a> (fighter AABBs in <code>fight.lua</code> — the strict-inequality overlap test), and <a href="15-juice.html" class="quarto-xref"><span>Chapter 15</span></a> (KO hitstop: bodies hang a beat before falling).</p>
+</section>
+<section id="clam-jumper" class="level3" data-number="E.1.4">
+<h3 data-number="E.1.4" class="anchored" data-anchor-id="clam-jumper"><span class="header-section-number">E.1.4</span> Clam Jumper</h3>
+<p>An ocean-bed take on the 1982 arcade game <em>Claim Jumper</em>: pick sea star, octopus, or ray — each with different verbs — against a rival species in a connected coral maze.</p>
+<div id="fig-cs-clamjumper" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-clamjumper-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/clamjumper.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-clamjumper-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.4: Clam Jumper: species versus species in the coral maze.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="09-input.html" class="quarto-xref"><span>Chapter 9</span></a> (its input module’s snapshot shape) and <a href="16-maze.html" class="quarto-xref"><span>Chapter 16</span></a>, where its <code>Util.pathNext</code> BFS — one flood fill shared by the enemy AI <em>and</em> the autopilot — is the chapter’s founding example of “the bot is just another consumer of the game’s own pathfinding.”</p>
+</section>
+<section id="weasel-war-dance" class="level3" data-number="E.1.5">
+<h3 data-number="E.1.5" class="anchored" data-anchor-id="weasel-war-dance"><span class="header-section-number">E.1.5</span> Weasel War Dance</h3>
+<p>A rhythm game about the mustelid family’s greatest trick: the frenzied “war dance” stoats and weasels really do perform. Eight mustelids, small to large, dance to a clock-driven step sequencer.</p>
+<div id="fig-cs-weaselwardance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-weaselwardance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/weaselwardance.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-weaselwardance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.5: Weasel War Dance: chart, dancer, and the beat clock.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="13-music.html" class="quarto-xref"><span>Chapter 13</span></a>, three times — its <code>conductor.lua</code> is the book’s reference implementation of the zero-drift step sequencer: a clock that schedules notes by beat arithmetic rather than trusting callbacks to arrive on time. A rhythm game is the genre least able to tolerate drift, which is what makes its conductor the load-bearing witness.</p>
+</section>
+<section id="archers-zoomie-circuit" class="level3" data-number="E.1.6">
+<h3 data-number="E.1.6" class="anchored" data-anchor-id="archers-zoomie-circuit"><span class="header-section-number">E.1.6</span> Archer’s Zoomie Circuit</h3>
+<p><em>Wind up the whippet.</em> A one-button-and-crank racing game starring the author’s actual dog (who also, by seniority, supplied this book’s cover). <strong>Cited in:</strong> <a href="15-juice.html" class="quarto-xref"><span>Chapter 15</span></a> — notably as the only game in the fleet built on <code>playdate.timer</code>, which is exactly why that chapter trusts it for the timer coverage the other sixty-three games skip.</p>
+</section>
+<section id="bauble" class="level3" data-number="E.1.7">
+<h3 data-number="E.1.7" class="anchored" data-anchor-id="bauble"><span class="header-section-number">E.1.7</span> Bauble</h3>
+<p>A 1-bit color-matching bubble shooter: crank to aim, fire, pop clusters of three or more. <strong>Cited in:</strong> <a href="03-modes.html" class="quarto-xref"><span>Chapter 3</span></a> — its <code>gamestate.lua</code> documents the whole legal-mode enum in a comment at the declaration, the convention the skeleton adopts.</p>
+</section>
+<section id="bearing" class="level3" data-number="E.1.8">
+<h3 data-number="E.1.8" class="anchored" data-anchor-id="bearing"><span class="header-section-number">E.1.8</span> Bearing</h3>
+<p>A tilt-controlled marble maze: the accelerometer rolls a steel bearing through a labyrinth, past holes, against the clock. <strong>Cited in:</strong> <a href="11-tilt.html" class="quarto-xref"><span>Chapter 11</span></a> — accelerometer smoothing from its <code>main.lua</code>, the difference between raw tilt (jittery) and playable tilt.</p>
+</section>
+<section id="the-supporting-bestiary" class="level3" data-number="E.1.9">
+<h3 data-number="E.1.9" class="anchored" data-anchor-id="the-supporting-bestiary"><span class="header-section-number">E.1.9</span> The supporting bestiary</h3>
+<p>Seven more standalones inform chapters without being quoted line by line; their lessons arrived as design rules rather than excerpts:</p>
+<ul>
+<li><strong>Squirl</strong> — a squirrel Metroidvania/parkour game; the Magic Acorn swaps you between six squirrel species, each a traversal key. Its full-game-beating autopilot (31 rooms, 6 bosses) is part of the evidence base for <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>’s claim that autopilots scale to whole games.</li>
+<li><strong>AnEnemy</strong> — sea-anemone territorial warfare: crank-engorged acrorhagi, a feed-versus-fight economy, tides. Its four-strain campaign ships with a full-campaign autopilot in the same tradition.</li>
+<li><strong>Bin Night</strong> — a tag-team trash heist (raccoon, ibis, cat versus the dawn garbage truck). Contributed the “summon what the test needs” autopilot style and heartbeat time-series tracing to the toolbox <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a> teaches.</li>
+<li><strong>Peckish</strong> — a killdeer foraging the tideline: a wet-band worm economy behind receding waves, with the crank performing the broken-wing lure. A study in mapping one crank to one strong verb (<a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a>’s design rule).</li>
+<li><strong>Nectar Rush</strong> — territorial-hummingbird feeder defense over a shared nectar pool; crank to sip. Its autopilot fails in <em>stages</em> — deliberately losing in controlled ways — a testing idea that resurfaces in <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>.</li>
+<li><strong>Fairway</strong> and <strong>Roost</strong> — top-down golf across larger-than-screen procedural holes, and an egg-gathering aerial lance-jousting arcade — round out the fleet, exercising the big-world camera patterns of <a href="07-camera.html" class="quarto-xref"><span>Chapter 7</span></a> and the flap-physics tuning habits of <a href="14-platformer.html" class="quarto-xref"><span>Chapter 14</span></a> respectively.</li>
+</ul>
+</section>
+</section>
+<section id="the-collections" class="level2" data-number="E.2">
+<h2 data-number="E.2" class="anchored" data-anchor-id="the-collections"><span class="header-section-number">E.2</span> The collections</h2>
+<p>Seven repositories are not single games but engines with fleets on top. When a chapter quotes <code>vec/</code> or <code>tiles/core/</code>, it is quoting code that a dozen games run through every frame — the strongest battle-testing in the catalog. Five of the seven — Phosphor, Tiles, Voxel, Dither, and Lore — are read end to end in Part VII, each in a chapter of its own with the engine vendored into a runnable example.</p>
+<section id="phosphor" class="level3" data-number="E.2.1">
+<h3 data-number="E.2.1" class="anchored" data-anchor-id="phosphor"><span class="header-section-number">E.2.1</span> Phosphor</h3>
+<p>Sixteen vector arcade games — white beam lines on black, the way the cabinets drew them — on one thin shared library, <code>vec/</code>.</p>
+<div id="fig-cs-gyre" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-gyre-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/gyre.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-gyre-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.6: Gyre, from the Phosphor collection: pure crank, pure vectors.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="21-phosphor.html" class="quarto-xref"><span>Chapter 21</span></a> — an entire chapter walks the <code>vec/</code> engine module by module (the mathematics, the code, and all sixteen games) and is this collection’s primary citation. Also <a href="05-images.html" class="quarto-xref"><span>Chapter 5</span></a> (the <code>beams.lua</code> stroke font — text drawn as line segments, no bitmaps), <a href="08-wireframe.html" class="quarto-xref"><span>Chapter 8</span></a> (its <code>mat.lua</code> rotation matrices, <code>proj.lua</code> near-plane clipping, and <code>shapes.lua</code> asteroid generation are that chapter’s spine), <a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a> (<em>Gyre</em>, the collection’s signature crank game — 1:1 angular control), <a href="15-juice.html" class="quarto-xref"><span>Chapter 15</span></a> (the shared particle pool in <code>vec/fx.lua</code>), and <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a> (the cabinet-style shared attract mode and its high-score table in <code>attract.lua</code>).</p>
+</section>
+<section id="classics" class="level3" data-number="E.2.2">
+<h3 data-number="E.2.2" class="anchored" data-anchor-id="classics"><span class="header-section-number">E.2.2</span> Classics</h3>
+<p>Both volumes of <em>Code the Classics</em>, ported as original Lua implementations sharing one core — a Pong, a Frogger, a Centipede, a soccer game, a brawler, and five more. Less quoted than lived-in: this port marathon (ten games in one push) is where the headless smoke-testing workflow was first hardened — the pcall-to-datastore error trap, the <code>writeToFile</code> visual debugging, and the asset-conversion checks that resurface across <a href="05-images.html" class="quarto-xref"><span>Chapter 5</span></a>, <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>, and <a href="appendix-c-setup.html" class="quarto-xref"><span>Appendix C</span></a>.</p>
+</section>
+<section id="voxel" class="level3" data-number="E.2.3">
+<h3 data-number="E.2.3" class="anchored" data-anchor-id="voxel"><span class="header-section-number">E.2.3</span> Voxel</h3>
+<p>Original 1-bit voxel games on one thin engine — a Voxatron-style world of shaded columns in a 3/4 projection.</p>
+<div id="fig-cs-lob" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-lob-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/lob.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-lob-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.7: Lob, from the Voxel collection: wind the crank, release the shot.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="23-voxel.html" class="quarto-xref"><span>Chapter 23</span></a> — an entire chapter walks the <code>core/</code> engine module by module (the render-once background with exact hidden-face culling, <code>Vox.carve</code>’s dirty-strip craters, the occlusion ghost, both physics families, the shared aim solver, the <code>Kit.run</code> cabinet, and all ten games) and is this collection’s primary citation. Also <a href="08-wireframe.html" class="quarto-xref"><span>Chapter 8</span></a> (the two-add 3/4 projection, and the collection’s design rule quoted there: <em>a voxel game must use height and volume — dig, lob, climb, flood, fall — to earn the engine</em>), <a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a> (<em>Lob</em>’s wind-and-release crank mapping), and <a href="16-maze.html" class="quarto-xref"><span>Chapter 16</span></a> (<em>Lob</em> again: area-of-effect tools must check for friendlies, thrower included).</p>
+</section>
+<section id="tiles" class="level3" data-number="E.2.4">
+<h3 data-number="E.2.4" class="anchored" data-anchor-id="tiles"><span class="header-section-number">E.2.4</span> Tiles</h3>
+<p>Original tile-and-sprite games built the way you would build for the NES or Game Boy: a fixed 16px grid, a scrolling camera, and four games (<em>Blast</em>, <em>Spirit</em>, <em>Relic</em>, <em>Burrow</em>) on the shared core.</p>
+<div id="fig-cs-blast" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-blast-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/blast.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-blast-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.8: Blast, from the Tiles collection: a Bomberman on the 16px grid.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="22-tiles.html" class="quarto-xref"><span>Chapter 22</span></a> — an entire chapter walks the <code>core/</code> engine module by module (the tile-cache cost model, the physics, the BFS field, the camera, and all four games) and is this collection’s primary citation. Also <a href="05-images.html" class="quarto-xref"><span>Chapter 5</span></a> (the fully procedural tileset in <code>tmap.lua</code>: four games shipped without a drawing tool ever being opened), <a href="07-camera.html" class="quarto-xref"><span>Chapter 7</span></a> (<code>tcam.lua</code>’s follow-and-clamp camera and the pre-rendered background repaint strategy), <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a> (<code>tsnd.lua</code> noise sweeps), <a href="14-platformer.html" class="quarto-xref"><span>Chapter 14</span></a> (<code>tphys.lua</code> — the fixed-DT tile physics and 1px substep at that chapter’s core, plus <em>Blast</em>’s walkable-bomb <code>isSolid</code> and <em>Burrow</em>’s falling-boulder variant), and <a href="16-maze.html" class="quarto-xref"><span>Chapter 16</span></a> (<em>Blast</em>’s radius checks). <em>Relic</em>’s save-versioning appears in <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a>.</p>
+</section>
+<section id="dither" class="level3" data-number="E.2.5">
+<h3 data-number="E.2.5" class="anchored" data-anchor-id="dither"><span class="header-section-number">E.2.5</span> Dither</h3>
+<p>The shade engine: dither ramps, dynamic lights, shadows, transitions, and Super Scaler pseudo-3D on one core, with three games that each <em>use</em> shade — <em>Sprint</em> (a Super Sprint-style racer with day/dusk/night headlight racing), <em>Glim</em> (a firefly-keeper whose lantern wick is the resource), and <em>Skimmer</em> (a Space Harrier-lineage dragonfly over a pond).</p>
+<div id="fig-cs-glim" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-glim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/glim.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-glim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.9: Glim, from the Dither collection: the lantern is a light, the light is the game.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="24-dither.html" class="quarto-xref"><span>Chapter 24</span></a> — an entire chapter walks the <code>core/</code> engine module by module (the 17-level Bayer/noise ramps, the stencil-gated three-band light compositor and its <code>Light.at</code> pixels-equal-logic query, shadows and Bayer transitions, the mip ladders, depth queue, and perspective floor of the scaler, and all three games) and is this collection’s primary citation. It builds directly on <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>’s dither-ladder foundations, and its plane-cull war story is that chapter’s ordering-dependency lesson.</p>
+</section>
+<section id="lore" class="level3" data-number="E.2.6">
+<h3 data-number="E.2.6" class="anchored" data-anchor-id="lore"><span class="header-section-number">E.2.6</span> Lore</h3>
+<p>The RPG engine: story state over a chunked tile world — a big walkable overworld, people to talk to, a party that grows, and battles in <strong>two grammars</strong> (menu-driven turns in a scene, real-time swings in the field) over one shared character sheet. Three games: <em>Slice</em> (the vertical slice and living engine demo — a chunked overworld, NPCs, a shop, a chest, a battle, a save), <em>Shrew</em> (Dragon Quest grammar: a shrew knight must eat half her body weight by dawn — overworld, town, boat, two-floor burrow, the Mole Tyrant), and <em>Stoat</em> (Secret of Mana grammar: charge swings, pounces, telegraphed rats, and a Rat King who stops mid-fight to talk).</p>
+<div id="fig-cs-shrew" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-shrew-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/shrew.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-shrew-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.10: Shrew, from the Lore collection: the dawn meter, the chunked overworld, and twelve grams to eat.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="25-lore.html" class="quarto-xref"><span>Chapter 25</span></a> — an entire chapter walks the <code>core/</code> engine module by module (the chunked LRU map cache, the state stack that makes menus-over-dialogs-over-shops free, the coroutine screenplay runner whose primitives also write the smoke autopilot, the one character sheet under both battle engines, the pattern-and-order-list music with its resume-mid-phrase stinger, and all three games) and is this collection’s primary citation. It builds on <a href="22-tiles.html" class="quarto-xref"><span>Chapter 22</span></a> (<code>lmap</code> descends from <code>tmap</code>: same char grids, same write barrier, chunked), <a href="07-camera.html" class="quarto-xref"><span>Chapter 7</span></a> (<code>lcam</code> is <code>tcam</code> plus a scripted pan), <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a> (its <code>lstate</code> ledger is the string-key JSON lesson made structural), and <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>, whose autopilot argument it takes to the limit — including the war story of the bot that farmed a boss’s summons for 57 kills without ever touching the boss, and <code>tools/headless.lua</code>, a stubbed-SDK Lua runner that beats a whole RPG in two seconds.</p>
+</section>
+<section id="shmup" class="level3" data-number="E.2.7">
+<h3 data-number="E.2.7" class="anchored" data-anchor-id="shmup"><span class="header-section-number">E.2.7</span> Shmup</h3>
+<p>A generic 1-bit shoot-’em-up engine, written for the 400x240 screen and built around <strong>three scroll paradigms</strong>, with a demo of each: <em>Nova Strike</em> (a vertical shooter of classic top-down waves), <em>Ravine</em> (a horizontal forced-scroll cave-flyer with Scramble-style terrain, fuel and bombs), and <em>Skimmer</em> (Uridium-style bidirectional follow-scrolling — a different <em>Skimmer</em> from Dither’s dragonfly; the fleet reuses a good name). Games on it are almost entirely <em>data</em>: enemy types compose from a small library of movement and fire behaviors, and a wave is a spawn timeline.</p>
+<p><strong>Cited in:</strong> nothing, and it is listed anyway — it is the one collection the chapters never quote, and a catalog that quietly omitted it would be a cast list, not a census. Its house rule is worth the paragraph regardless: solid white sprites on black space, code-drawn, because that is the lesson a 1-bit OpenTyrian port teaches — anything subtler turns to muddy dither at this contrast (<a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>).</p>
+</section>
+</section>
+<section id="modules" class="level2" data-number="E.3">
+<h2 data-number="E.3" class="anchored" data-anchor-id="modules"><span class="header-section-number">E.3</span> Modules</h2>
+<section id="midiplayer" class="level3" data-number="E.3.1">
+<h3 data-number="E.3.1" class="anchored" data-anchor-id="midiplayer"><span class="header-section-number">E.3.1</span> midiplayer</h3>
+<p>Not a game: a reusable MIDI playback module (GM-lite patch bank, track mapper, SMF generator) wrapped in a mixer-style demo app. <strong>Cited in:</strong> <a href="13-music.html" class="quarto-xref"><span>Chapter 13</span></a> for the SDK-sequence side of the sequences-versus-step-clocks argument — and, less gloriously, in <a href="01-hello.html" class="quarto-xref"><span>Chapter 1</span></a>: its <code>tools/smoke.sh</code> carries the warning comment about the SDK 3.0.6 Simulator launch form, the scar that protects every build script in this book (<a href="appendix-c-setup.html" class="quarto-xref"><span>Appendix C</span></a>).</p>
+</section>
+</section>
+<section id="reading-the-sources" class="level2" data-number="E.4">
+<h2 data-number="E.4" class="anchored" data-anchor-id="reading-the-sources"><span class="header-section-number">E.4</span> Reading the sources</h2>
+<p>Every plaidate repository follows the conventions this book teaches — <code>source/</code> with module-per-concern files, a <code>Makefile</code>, a smoke-test harness, a <code>screenshot.png</code> — so the skills transfer directly: pick any game cited in a chapter you have just read, clone it, <code>make run</code>, and find the quoted line. The fleet is the book’s bibliography, and unlike most bibliographies, it compiles.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/appendix-d-harness.html" class="pagination-link" aria-label="The Book Harness Reference">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

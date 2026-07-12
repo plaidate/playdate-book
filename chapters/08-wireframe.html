@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>8&nbsp; Vector Graphics and Faking 3D – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/09-input.html" rel="next">
+<link href="../chapters/07-camera.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-dither.html">Graphics</a></li><li class="breadcrumb-item"><a href="../chapters/08-wireframe.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#playdate.geometry-the-sdks-vector-toolkit" id="toc-playdate.geometry-the-sdks-vector-toolkit" class="nav-link active" data-scroll-target="#playdate.geometry-the-sdks-vector-toolkit"><span class="header-section-number">8.1</span> playdate.geometry: the SDK’s vector toolkit</a></li>
+  <li><a href="#rotation-is-a-matrix" id="toc-rotation-is-a-matrix" class="nav-link" data-scroll-target="#rotation-is-a-matrix"><span class="header-section-number">8.2</span> Rotation is a matrix</a></li>
+  <li><a href="#perspective-is-a-divide" id="toc-perspective-is-a-divide" class="nav-link" data-scroll-target="#perspective-is-a-divide"><span class="header-section-number">8.3</span> Perspective is a divide</a></li>
+  <li><a href="#a-model-is-vertices-plus-edges" id="toc-a-model-is-vertices-plus-edges" class="nav-link" data-scroll-target="#a-model-is-vertices-plus-edges"><span class="header-section-number">8.4</span> A model is vertices plus edges</a></li>
+  <li><a href="#the-starfield-depth-for-three-multiplies" id="toc-the-starfield-depth-for-three-multiplies" class="nav-link" data-scroll-target="#the-starfield-depth-for-three-multiplies"><span class="header-section-number">8.5</span> The starfield: depth for three multiplies</a></li>
+  <li><a href="#the-voxel-34-projection-and-earning-your-engine" id="toc-the-voxel-34-projection-and-earning-your-engine" class="nav-link" data-scroll-target="#the-voxel-34-projection-and-earning-your-engine"><span class="header-section-number">8.6</span> The voxel 3/4 projection, and earning your engine</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">8.7</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-dither.html">Graphics</a></li><li class="breadcrumb-item"><a href="../chapters/08-wireframe.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-wireframe" class="quarto-section-identifier"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A 1-bit screen is a terrible place for textured polygons and a wonderful place for <em>lines</em>. Hairline strokes on black are this hardware’s native glamour — they alias crisply, cost almost nothing, and carry an arcade-cabinet pedigree that 1-bit dither flatters instead of fighting. This chapter builds up the whole stack of line-based illusion: the SDK’s <code>playdate.geometry</code> toolkit, rotation matrices, perspective projection (one divide), wireframe models as vertex-and-edge lists, parallax starfields — and the judgment call about when any of this is worth doing.</p>
+<p>The example, <code>08-wireframe</code>, is the classic demo done properly: a cube, a square pyramid, and an icosahedron spinning over a three-layer starfield, with the crank as the rotation control — turn the crank, turn the solid, and the sky pans with you. The figure script cranks three degrees a frame, which is how the figures in this chapter caught the same cube at two different attitudes. Twelve of the case-study games — the entire <em>Phosphor</em> package — live on this stack, and their engine files (<code>vec/mat.lua</code>, <code>vec/proj.lua</code>, <code>vec/shapes.lua</code>) are quoted throughout.</p>
+<section id="playdate.geometry-the-sdks-vector-toolkit" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="playdate.geometry-the-sdks-vector-toolkit"><span class="header-section-number">8.1</span> playdate.geometry: the SDK’s vector toolkit</h2>
+<p>The SDK ships a full 2D geometry library under <code>playdate.geometry</code>: <code>point.new(x, y)</code>, <code>vector2D.new(dx, dy)</code> (with <code>vector2D.newPolar(len, angle)</code>, dot products via <code>v:dotProduct</code>, <code>:magnitude</code>, <code>:normalized</code>, <code>:leftNormal</code>…), <code>lineSegment</code>, <code>rect</code>, <code>arc</code>, <code>polygon</code>, and <code>affineTransform.new()</code> — a 2D matrix you build up with <code>:rotate(deg)</code>, <code>:scale(s)</code>, <code>:translate(dx, dy)</code> and apply with <code>:transformPoint(p)</code> (or its non-mutating sibling <code>:transformedPoint</code>). Objects support operators — a transform times a point works — and several drawing calls accept geometry objects directly (<code>gfx.drawCircleAtPoint(p, r)</code>, <code>gfx.fillPolygon(polygon)</code>).</p>
+<p>It is good code, and this chapter mostly doesn’t use it. Two reasons, both instructive. First, every <code>point.new</code> in a per frame loop allocates a table, and a wireframe scene transforms hundreds of vertices a frame — plain number pairs and flat arrays generate zero garbage (a theme the performance chapter returns to). Second, <code>affineTransform</code> is 2D-only; rotation <em>in depth</em> needs the 3×3 matrices we are about to write anyway. Reach for <code>playdate.geometry</code> when you hold a handful of long-lived shapes — collision polygons, level geometry, a <code>lineSegment</code> you intersect against — and stay with flat arrays when you transform in bulk.</p>
+</section>
+<section id="rotation-is-a-matrix" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="rotation-is-a-matrix"><span class="header-section-number">8.2</span> Rotation is a matrix</h2>
+<p>To spin a 3D model you rotate its vertices. A rotation about one axis is high-school trig; the standard packaging is a 3×3 matrix, and the example stores one as a flat, row-major 9-element array — no classes, no allocation churn:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+wire.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="wire.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 3x3 rotation matrices as flat row-major 9-arrays.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">Mat</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Mat</span><span class="op">.</span>rx<span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span><span class="op">,</span> <span class="va">c</span> <span class="op">=</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">t</span><span class="op">),</span> <span class="fu">math.cos</span><span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="va">c</span><span class="op">,</span> <span class="op">-</span><span class="va">s</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="va">s</span><span class="op">,</span> <span class="va">c</span> <span class="op">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Mat</span><span class="op">.</span>ry<span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span><span class="op">,</span> <span class="va">c</span> <span class="op">=</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">t</span><span class="op">),</span> <span class="fu">math.cos</span><span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span> <span class="va">c</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="va">s</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="va">s</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="va">c</span> <span class="op">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Mat</span><span class="op">.</span>mul<span class="op">(</span><span class="va">a</span><span class="op">,</span> <span class="va">b</span><span class="op">)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">m</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">r</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span> <span class="cf">do</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">3</span> <span class="cf">do</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">m</span><span class="op">[</span><span class="va">r</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="va">c</span><span class="op">]</span> <span class="op">=</span> <span class="va">a</span><span class="op">[</span><span class="va">r</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">b</span><span class="op">[</span><span class="va">c</span><span class="op">]</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">+</span> <span class="va">a</span><span class="op">[</span><span class="va">r</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">b</span><span class="op">[</span><span class="va">c</span> <span class="op">+</span> <span class="dv">3</span><span class="op">]</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">+</span> <span class="va">a</span><span class="op">[</span><span class="va">r</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">3</span><span class="op">]</span> <span class="op">*</span> <span class="va">b</span><span class="op">[</span><span class="va">c</span> <span class="op">+</span> <span class="dv">6</span><span class="op">]</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">m</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Mat</span><span class="op">.</span>apply<span class="op">(</span><span class="va">m</span><span class="op">,</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">z</span><span class="op">)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">m</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">y</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">3</span><span class="op">]</span> <span class="op">*</span> <span class="va">z</span><span class="op">,</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="va">m</span><span class="op">[</span><span class="dv">4</span><span class="op">]</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">5</span><span class="op">]</span> <span class="op">*</span> <span class="va">y</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">6</span><span class="op">]</span> <span class="op">*</span> <span class="va">z</span><span class="op">,</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        <span class="va">m</span><span class="op">[</span><span class="dv">7</span><span class="op">]</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">8</span><span class="op">]</span> <span class="op">*</span> <span class="va">y</span> <span class="op">+</span> <span class="va">m</span><span class="op">[</span><span class="dv">9</span><span class="op">]</span> <span class="op">*</span> <span class="va">z</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>Mat.rx(t)</code> and <code>Mat.ry(t)</code> build single-axis rotations; <code>Mat.mul(a, b)</code> composes them (apply <code>b</code>, then <code>a</code> — order matters, as it always does with matrices); <code>Mat.apply(m, x, y, z)</code> transforms one vertex for the cost of nine multiplies. The example composes crank-yaw with a slow automatic pitch each frame:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">m</span> <span class="op">=</span> <span class="va">Mat</span><span class="op">.</span>mul<span class="op">(</span><span class="va">Mat</span><span class="op">.</span>rx<span class="op">(</span><span class="va">pitch</span><span class="op">),</span> <span class="va">Mat</span><span class="op">.</span>ry<span class="op">(</span><span class="va">yaw</span><span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the same design as <em>Phosphor</em>’s <code>vec/mat.lua</code>, which adds the one refinement a long-running game needs — matrices that are <em>spun incrementally</em> every frame accumulate floating point drift until the model shears, so it re-orthonormalizes, a trick it credits to Elite:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- phosphor/vec/mat.lua:87</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Re-orthonormalize to shed the rounding drift that accumulates</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- when a matrix is spun every frame (Elite's TIDY).</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- Gram-Schmidt anchored on column 3 (nose).</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Mat</span><span class="op">.</span>tidy<span class="op">(</span><span class="va">m</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Our example rebuilds its matrix from angles every frame instead — drift-free by construction, and the right call when your state <em>is</em> two angles. Keep a persistent orientation matrix only when objects tumble freely (a ship rolling about its own nose), and then <code>tidy</code> it now and again.</p>
+</section>
+<section id="perspective-is-a-divide" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="perspective-is-a-divide"><span class="header-section-number">8.3</span> Perspective is a divide</h2>
+<p>All of 3D projection, in one sentence: things twice as far away look half as big. The code is barely longer:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+wire.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="wire.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Perspective projection: camera at the origin looking down +Z.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- A point projects by dividing x and y by its depth.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">Proj</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">cx</span> <span class="op">=</span> <span class="dv">200</span><span class="op">,</span> <span class="va">cy</span> <span class="op">=</span> <span class="dv">120</span><span class="op">,</span>   <span class="co">-- screen center</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">focal</span> <span class="op">=</span> <span class="dv">210</span><span class="op">,</span>          <span class="co">-- ~60 degree FOV on a 400px screen</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">near</span> <span class="op">=</span> <span class="dv">0.5</span><span class="op">,</span>           <span class="co">-- nothing closer than this draws</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Proj</span><span class="op">.</span>point<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">z</span><span class="op">)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">z</span> <span class="op">&lt;</span> <span class="va">Proj</span><span class="op">.</span><span class="va">near</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">k</span> <span class="op">=</span> <span class="va">Proj</span><span class="op">.</span><span class="va">focal</span> <span class="op">/</span> <span class="va">z</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">Proj</span><span class="op">.</span><span class="va">cx</span> <span class="op">+</span> <span class="va">x</span> <span class="op">*</span> <span class="va">k</span><span class="op">,</span> <span class="va">Proj</span><span class="op">.</span><span class="va">cy</span> <span class="op">-</span> <span class="va">y</span> <span class="op">*</span> <span class="va">k</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Divide x and y by depth, scale by a focal length, offset to the screen center, flip y (screens grow downward, worlds grow upward). The focal length sets the field of view — 210 gives roughly 60° across a 400-pixel screen; bigger is a telephoto, smaller a fisheye. That is the entire mathematical content of “3D on the Playdate”. Everything else is bookkeeping.</p>
+<p>The <code>near</code> guard matters more than it looks. As z approaches zero the divide blows up; at z ≤ 0 the point is <em>behind</em> you and the math cheerfully projects it anyway, mirrored, producing the classic inside-out flicker. The example refuses to project anything closer than <code>near</code> and drops edges with an unprojected endpoint — honest and crude. <em>Phosphor</em>’s first-person games cannot drop those edges (walls legitimately pass the camera), so <code>vec/proj.lua</code> <em>clips</em> each line to the near plane by interpolation instead — this is the projection core the whole package rides on:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- phosphor/vec/proj.lua:46</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- draw a world-space line with near-plane clipping</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Proj</span><span class="op">.</span>line<span class="op">(</span><span class="va">x1</span><span class="op">,</span> <span class="va">y1</span><span class="op">,</span> <span class="va">z1</span><span class="op">,</span> <span class="va">x2</span><span class="op">,</span> <span class="va">y2</span><span class="op">,</span> <span class="va">z2</span><span class="op">)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ax</span><span class="op">,</span> <span class="va">ay</span><span class="op">,</span> <span class="va">az</span> <span class="op">=</span> toCam<span class="op">(</span><span class="va">x1</span><span class="op">,</span> <span class="va">y1</span><span class="op">,</span> <span class="va">z1</span><span class="op">)</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bx</span><span class="op">,</span> <span class="va">by</span><span class="op">,</span> <span class="va">bz</span> <span class="op">=</span> toCam<span class="op">(</span><span class="va">x2</span><span class="op">,</span> <span class="va">y2</span><span class="op">,</span> <span class="va">z2</span><span class="op">)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">n</span> <span class="op">=</span> <span class="va">Proj</span><span class="op">.</span><span class="va">near</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">az</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="kw">and</span> <span class="va">bz</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">az</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="cf">then</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">t</span> <span class="op">=</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="va">az</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">bz</span> <span class="op">-</span> <span class="va">az</span><span class="op">)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">ax</span><span class="op">,</span> <span class="va">ay</span><span class="op">,</span> <span class="va">az</span> <span class="op">=</span> <span class="va">ax</span> <span class="op">+</span> <span class="op">(</span><span class="va">bx</span> <span class="op">-</span> <span class="va">ax</span><span class="op">)</span> <span class="op">*</span> <span class="va">t</span><span class="op">,</span> <span class="va">ay</span> <span class="op">+</span> <span class="op">(</span><span class="va">by</span> <span class="op">-</span> <span class="va">ay</span><span class="op">)</span> <span class="op">*</span> <span class="va">t</span><span class="op">,</span> <span class="va">n</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> <span class="va">bz</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="cf">then</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">t</span> <span class="op">=</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="va">bz</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">az</span> <span class="op">-</span> <span class="va">bz</span><span class="op">)</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">bx</span><span class="op">,</span> <span class="va">by</span><span class="op">,</span> <span class="va">bz</span> <span class="op">=</span> <span class="va">bx</span> <span class="op">+</span> <span class="op">(</span><span class="va">ax</span> <span class="op">-</span> <span class="va">bx</span><span class="op">)</span> <span class="op">*</span> <span class="va">t</span><span class="op">,</span> <span class="va">by</span> <span class="op">+</span> <span class="op">(</span><span class="va">ay</span> <span class="op">-</span> <span class="va">by</span><span class="op">)</span> <span class="op">*</span> <span class="va">t</span><span class="op">,</span> <span class="va">n</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ka</span><span class="op">,</span> <span class="va">kb</span> <span class="op">=</span> <span class="va">Proj</span><span class="op">.</span><span class="va">focal</span> <span class="op">/</span> <span class="va">az</span><span class="op">,</span> <span class="va">Proj</span><span class="op">.</span><span class="va">focal</span> <span class="op">/</span> <span class="va">bz</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawLine<span class="op">(</span><span class="va">Proj</span><span class="op">.</span><span class="va">cx</span> <span class="op">+</span> <span class="va">ax</span> <span class="op">*</span> <span class="va">ka</span><span class="op">,</span> <span class="va">Proj</span><span class="op">.</span><span class="va">cy</span> <span class="op">-</span> <span class="va">ay</span> <span class="op">*</span> <span class="va">ka</span><span class="op">,</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                 <span class="va">Proj</span><span class="op">.</span><span class="va">cx</span> <span class="op">+</span> <span class="va">bx</span> <span class="op">*</span> <span class="va">kb</span><span class="op">,</span> <span class="va">Proj</span><span class="op">.</span><span class="va">cy</span> <span class="op">-</span> <span class="va">by</span> <span class="op">*</span> <span class="va">kb</span><span class="op">)</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="a-model-is-vertices-plus-edges" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="a-model-is-vertices-plus-edges"><span class="header-section-number">8.4</span> A model is vertices plus edges</h2>
+<p>A wireframe model needs no meshes, no normals, no UVs: a flat array of vertex coordinates and a flat array of index pairs saying which vertices to connect:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+wire.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="wire.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- A model is a flat vertex array {x,y,z, x,y,z, ...} plus a flat</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- edge array of 1-based vertex index pairs {a,b, a,b, ...}.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="va">Models</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="va">Models</span><span class="op">.</span><span class="va">cube</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">name</span> <span class="op">=</span> <span class="st">"cube"</span><span class="op">,</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">verts</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">edges</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span>     <span class="co">-- back face</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="dv">5</span><span class="op">,</span> <span class="dv">6</span><span class="op">,</span> <span class="dv">6</span><span class="op">,</span> <span class="dv">7</span><span class="op">,</span> <span class="dv">7</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span>     <span class="co">-- front face</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">6</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">7</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span>     <span class="co">-- the connecting struts</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="va">Models</span><span class="op">.</span><span class="va">pyramid</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">name</span> <span class="op">=</span> <span class="st">"pyramid"</span><span class="op">,</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="va">verts</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span><span class="op">,</span> <span class="dv">1.2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="va">edges</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">5</span> <span class="op">},</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">-- Icosahedron: three golden-ratio rectangles; the 30 edges are</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">-- found by distance (every edge has squared length 4).</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> icosahedron<span class="op">()</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">p</span> <span class="op">=</span> <span class="op">(</span><span class="dv">1</span> <span class="op">+</span> <span class="fu">math.sqrt</span><span class="op">(</span><span class="dv">5</span><span class="op">))</span> <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">v</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="op">-</span><span class="va">p</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">e</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">12</span> <span class="cf">do</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">j</span> <span class="op">=</span> <span class="va">i</span> <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">12</span> <span class="cf">do</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">ax</span><span class="op">,</span> <span class="va">ay</span><span class="op">,</span> <span class="va">az</span> <span class="op">=</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">*</span><span class="dv">3</span><span class="op">-</span><span class="dv">2</span><span class="op">],</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">*</span><span class="dv">3</span><span class="op">-</span><span class="dv">1</span><span class="op">],</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">*</span><span class="dv">3</span><span class="op">]</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">bx</span><span class="op">,</span> <span class="va">by</span><span class="op">,</span> <span class="va">bz</span> <span class="op">=</span> <span class="va">v</span><span class="op">[</span><span class="va">j</span><span class="op">*</span><span class="dv">3</span><span class="op">-</span><span class="dv">2</span><span class="op">],</span> <span class="va">v</span><span class="op">[</span><span class="va">j</span><span class="op">*</span><span class="dv">3</span><span class="op">-</span><span class="dv">1</span><span class="op">],</span> <span class="va">v</span><span class="op">[</span><span class="va">j</span><span class="op">*</span><span class="dv">3</span><span class="op">]</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">d</span> <span class="op">=</span> <span class="op">(</span><span class="va">ax</span><span class="op">-</span><span class="va">bx</span><span class="op">)^</span><span class="dv">2</span> <span class="op">+</span> <span class="op">(</span><span class="va">ay</span><span class="op">-</span><span class="va">by</span><span class="op">)^</span><span class="dv">2</span> <span class="op">+</span> <span class="op">(</span><span class="va">az</span><span class="op">-</span><span class="va">bz</span><span class="op">)^</span><span class="dv">2</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="fu">math.abs</span><span class="op">(</span><span class="va">d</span> <span class="op">-</span> <span class="dv">4</span><span class="op">)</span> <span class="op">&lt;</span> <span class="dv">0.001</span> <span class="cf">then</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>                <span class="va">e</span><span class="op">[#</span><span class="va">e</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="va">i</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>                <span class="va">e</span><span class="op">[#</span><span class="va">e</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="va">j</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- normalize the radius to match the cube's (sqrt 3)</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="fu">math.sqrt</span><span class="op">(</span><span class="dv">3</span><span class="op">)</span> <span class="op">/</span> <span class="fu">math.sqrt</span><span class="op">(</span><span class="dv">1</span> <span class="op">+</span> <span class="va">p</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="op">#</span><span class="va">v</span> <span class="cf">do</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">*</span> <span class="va">s</span> <span class="cf">end</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"icosahedron"</span><span class="op">,</span> <span class="va">verts</span> <span class="op">=</span> <span class="va">v</span><span class="op">,</span> <span class="va">edges</span> <span class="op">=</span> <span class="va">e</span> <span class="op">}</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="va">Models</span><span class="op">.</span><span class="va">icosa</span> <span class="op">=</span> icosahedron<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The cube is typed by hand; the icosahedron is <em>derived</em> — its twelve vertices are three golden-ratio rectangles, and rather than hand-enter thirty edges, the code finds every vertex pair at the known edge length. Deriving beats transcribing whenever a shape has structure: it cannot contain a typo’d index, and it documents the geometry. (For 2D outlines the same philosophy appears in <em>Phosphor</em>’s <code>vec/shapes.lua</code>, where asteroids are <code>Shapes.blob</code> — polylines with randomly jittered radii — and every ship is a list of hand-typed polylines.)</p>
+<p>Drawing is: rotate every vertex, push it out to viewing depth, project it, then connect the dots:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+wire.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="wire.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Rotate every vertex by m, push the model out to depth z, then</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- draw each edge -- skipping any edge that crosses the near</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- plane (phosphor's Proj.line clips these by interpolation).</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">sx</span><span class="op">,</span> <span class="va">sy</span> <span class="op">=</span> <span class="op">{},</span> <span class="op">{}</span>   <span class="co">-- projected-vertex scratch, reused</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Models</span><span class="op">.</span>draw<span class="op">(</span><span class="va">model</span><span class="op">,</span> <span class="va">m</span><span class="op">,</span> <span class="va">z</span><span class="op">,</span> <span class="va">scale</span><span class="op">)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">v</span> <span class="op">=</span> <span class="va">model</span><span class="op">.</span><span class="va">verts</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">n</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="op">#</span><span class="va">v</span> <span class="op">-</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span> <span class="cf">do</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">d</span> <span class="op">=</span> <span class="va">Mat</span><span class="op">.</span>apply<span class="op">(</span><span class="va">m</span><span class="op">,</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">v</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">*</span> <span class="va">scale</span><span class="op">,</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">scale</span><span class="op">,</span> <span class="va">v</span><span class="op">[</span><span class="va">i</span> <span class="op">+</span> <span class="dv">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">scale</span><span class="op">)</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">n</span> <span class="op">=</span> <span class="va">n</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">sx</span><span class="op">[</span><span class="va">n</span><span class="op">],</span> <span class="va">sy</span><span class="op">[</span><span class="va">n</span><span class="op">]</span> <span class="op">=</span> <span class="va">Proj</span><span class="op">.</span>point<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">d</span> <span class="op">+</span> <span class="va">z</span><span class="op">)</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">e</span> <span class="op">=</span> <span class="va">model</span><span class="op">.</span><span class="va">edges</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="op">#</span><span class="va">e</span> <span class="op">-</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span> <span class="cf">do</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">a</span><span class="op">,</span> <span class="va">b</span> <span class="op">=</span> <span class="va">e</span><span class="op">[</span><span class="va">i</span><span class="op">],</span> <span class="va">e</span><span class="op">[</span><span class="va">i</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">sx</span><span class="op">[</span><span class="va">a</span><span class="op">]</span> <span class="kw">and</span> <span class="va">sx</span><span class="op">[</span><span class="va">b</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>drawLine<span class="op">(</span><span class="va">sx</span><span class="op">[</span><span class="va">a</span><span class="op">],</span> <span class="va">sy</span><span class="op">[</span><span class="va">a</span><span class="op">],</span> <span class="va">sx</span><span class="op">[</span><span class="va">b</span><span class="op">],</span> <span class="va">sy</span><span class="op">[</span><span class="va">b</span><span class="op">])</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note the scratch arrays <code>sx, sy</code> reused across calls — with 12 vertices nobody cares, but the habit (project each vertex <em>once</em>, allocate <em>nothing</em> per frame) is what lets <em>Phosphor</em>’s <code>Proj.mesh</code> — the same function shape — draw fleets of ships at 30 fps.</p>
+<div id="fig-wf-cube-a" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-wf-cube-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/08-wireframe/wf-cube-a.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-wf-cube-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.1: The cube at crank 117°, pitched slightly, over the starfield.
+</figcaption>
+</figure>
+</div>
+<div id="fig-wf-cube-b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-wf-cube-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/08-wireframe/wf-cube-b.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-wf-cube-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.2: The same cube 35 frames later, crank 222° — the sky has panned with the crank and the silhouette has turned.
+</figcaption>
+</figure>
+</div>
+<p>Culling, briefly. This example draws every edge, spin regardless — for a single convex solid, the “wrong” edges read as the object’s far side and the effect is the point. Solid-looking 3D adds <strong>backface culling</strong>: give the model faces (vertex triples), compute each face’s winding after projection (the 2D cross product of two edges), and skip faces — or edges belonging only to faces — that wind clockwise. <strong>Near-plane culling</strong> you have already met; it is the <code>near</code> guard, upgraded to clipping when things may pass the camera. That, plus painter’s-sorting objects by depth, is as far as wireframe 3D ever needs to go.</p>
+</section>
+<section id="the-starfield-depth-for-three-multiplies" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="the-starfield-depth-for-three-multiplies"><span class="header-section-number">8.5</span> The starfield: depth for three multiplies</h2>
+<p>Nothing sells rotation like a background that answers it. The example’s sky is ninety stars in three parallax layers; when the crank turns the view, each layer pans at its own rate — near stars (drawn heavier) sweep fastest, far ones barely creep:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+wire.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="wire.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Three parallax layers. Each star is {x, y, layer}; the crank</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- angle pans the sky, near layers moving more than far ones.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="va">Stars</span> <span class="op">=</span> <span class="op">{</span> <span class="va">list</span> <span class="op">=</span> <span class="op">{},</span> <span class="cn">SPEED</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">0.4</span><span class="op">,</span> <span class="dv">0.9</span><span class="op">,</span> <span class="dv">1.8</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Stars</span><span class="op">.</span>init<span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">n</span> <span class="cf">do</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">Stars</span><span class="op">.</span><span class="va">list</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            <span class="fu">math.random</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">399</span><span class="op">),</span> <span class="fu">math.random</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">239</span><span class="op">),</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            <span class="fu">math.random</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">3</span><span class="op">),</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Stars</span><span class="op">.</span>draw<span class="op">(</span><span class="va">yawDeg</span><span class="op">)</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">s</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">Stars</span><span class="op">.</span><span class="va">list</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="op">(</span><span class="va">s</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">yawDeg</span> <span class="op">*</span> <span class="va">Stars</span><span class="op">.</span><span class="cn">SPEED</span><span class="op">[</span><span class="va">s</span><span class="op">[</span><span class="dv">3</span><span class="op">]])</span> <span class="op">%</span> <span class="dv">400</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">s</span><span class="op">[</span><span class="dv">3</span><span class="op">]</span> <span class="op">==</span> <span class="dv">3</span> <span class="cf">then</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillCircleAtPoint<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">],</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>drawPixel<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">])</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>No projection at all — just <code>x = (x0 - yaw * speed) % 400</code> — yet the eye reads layered depth immediately. This is the cheapest 3D effect in the book and the first one to reach for: the <em>Phosphor</em> space games run the same trick with drift instead of crank.</p>
+<p>The update that ties crank to matrix to model to sky, through the same bot-first input seam as every example (the script supplies <code>crank</code>; on hardware it is <code>playdate.getCrankPosition()</code>, absolute degrees, 0 = crank up):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>update<span class="op">()</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bot</span> <span class="op">=</span> <span class="va">Harness</span><span class="op">.</span>input<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">crank</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">bot</span> <span class="cf">then</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">crank</span> <span class="op">=</span> <span class="va">bot</span><span class="op">.</span><span class="va">crank</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">pick</span> <span class="op">=</span> <span class="fu">math.min</span><span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="fu">math.ceil</span><span class="op">(</span><span class="va">frame</span> <span class="op">/</span> <span class="dv">80</span><span class="op">))</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">crank</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>getCrankPosition<span class="op">()</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonJustPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>            <span class="va">pick</span> <span class="op">=</span> <span class="va">pick</span> <span class="op">%</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">yaw</span> <span class="op">=</span> <span class="fu">math.rad</span><span class="op">(</span><span class="va">crank</span><span class="op">)</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">pitch</span> <span class="op">=</span> <span class="va">frame</span> <span class="op">*</span> <span class="dv">0.008</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">m</span> <span class="op">=</span> <span class="va">Mat</span><span class="op">.</span>mul<span class="op">(</span><span class="va">Mat</span><span class="op">.</span>rx<span class="op">(</span><span class="va">pitch</span><span class="op">),</span> <span class="va">Mat</span><span class="op">.</span>ry<span class="op">(</span><span class="va">yaw</span><span class="op">))</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>clear<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">Stars</span><span class="op">.</span>draw<span class="op">(</span><span class="va">crank</span><span class="op">)</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setLineWidth<span class="op">(</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">model</span> <span class="op">=</span> <span class="va">Models</span><span class="op">[</span><span class="cn">ORDER</span><span class="op">[</span><span class="va">pick</span><span class="op">]]</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="va">Models</span><span class="op">.</span>draw<span class="op">(</span><span class="va">model</span><span class="op">,</span> <span class="va">m</span><span class="op">,</span> <span class="dv">4.2</span><span class="op">,</span> <span class="dv">1.1</span><span class="op">)</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillWhite</span><span class="op">)</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="st">"*"</span> <span class="op">..</span> <span class="va">model</span><span class="op">.</span><span class="va">name</span> <span class="op">..</span> <span class="st">"*"</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">8</span><span class="op">)</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        <span class="fu">string.format</span><span class="op">(</span><span class="st">"crank %d deg"</span><span class="op">,</span> <span class="va">crank</span> <span class="op">%</span> <span class="dv">360</span><span class="op">),</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        <span class="dv">392</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">right</span><span class="op">)</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeCopy</span><span class="op">)</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-wf-pyramid" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-wf-pyramid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/08-wireframe/wf-pyramid.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-wf-pyramid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.3: The pyramid, mid-run: five vertices, eight edges — the cheapest convincing solid there is.
+</figcaption>
+</figure>
+</div>
+<div id="fig-wf-icosa" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-wf-icosa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/08-wireframe/wf-icosa.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-wf-icosa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.4: The icosahedron at crank 297°: thirty edges derived from three golden rectangles, and the practical upper end of single-object wireframe complexity at this scale.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-voxel-34-projection-and-earning-your-engine" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="the-voxel-34-projection-and-earning-your-engine"><span class="header-section-number">8.6</span> The voxel 3/4 projection, and earning your engine</h2>
+<p>Perspective is not the only projection worth faking. The <em>Voxel</em> package renders Voxatron-style rooms with a fixed <em>3/4 view</em> — a projection with no divide at all:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- voxel/core/vox.lua:1</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Voxel core: the room engine. A Voxatron-style fixed room -- a</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- W x D x H grid of shaded voxels in a 3/4 projection on the</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- 1-bit screen.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">--</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">--   world x -&gt; screen x (S px per voxel)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">--   world y (depth, 0 = back) -&gt; screen y down (TY px per step)</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">--   world z (height, 0 = floor) -&gt; screen y up (TZ px per step)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Depth steps the pixel down, height steps it up, done. Each voxel is a dither-shaded top face and front face; static terrain pre-renders to a background image exactly as in <a href="07-camera.html" class="quarto-xref"><span>Chapter 7</span></a>. The lesson is that “3D” is a menu, not a destination: perspective wireframe, 3/4 voxel, flat parallax — each buys a different illusion at a different price.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A projection must earn its engine
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The voxel package came with a design rule, learned by shipping the counterexamples: <em>a voxel game must use height and volume — dig, lob, climb, flood, fall — to earn the engine.</em> Bomberman and a flat tower defense were built in voxel paint, judged unreadable and pointless, and cut. The rule generalizes to every projection in this chapter. If your gameplay is 2D, a 3D projection adds cost (every vertex, every frame), subtracts clarity (1-bit pixels are scarce; spend them on information), and adds nothing the design uses. Spin the icosahedron because rotation <em>is</em> the mechanic — the crank made it one — not because it demos well. Before adopting any projection, name the mechanic that needs it. No mechanic, no engine.</p>
+</div>
+</div>
+</section>
+<section id="what-you-know-now" class="level2" data-number="8.7">
+<h2 data-number="8.7" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">8.7</span> What you know now</h2>
+<ul>
+<li><code>playdate.geometry</code> covers 2D points, vectors, transforms, and shapes — use it for long-lived geometry, but transform bulk vertices with flat arrays and plain numbers to avoid per-frame allocation.</li>
+<li>Rotation is a 3×3 matrix: build per-axis with sin/cos, compose with multiplication (order matters), rebuild from angles when you can, re-orthonormalize (<code>Mat.tidy</code>) when you must accumulate.</li>
+<li>Perspective projection is <code>screen = center + focal * xy / z</code>, a y-flip, and a near-plane guard — upgraded to interpolated clipping when geometry passes the camera.</li>
+<li>A wireframe model is a flat vertex array plus edge index pairs; derive structured shapes (the icosahedron) instead of transcribing them; project each vertex once into reused scratch arrays.</li>
+<li>Parallax starfields fake depth with one multiply per layer; the voxel 3/4 view fakes it with two adds; both are legitimate projections on the same menu as perspective.</li>
+<li>And the rule that governs the whole chapter: <strong>a projection must earn its engine</strong> — no mechanic, no engine.</li>
+<li>Both of this chapter’s borrowed engines get read in full later on: <a href="21-phosphor.html" class="quarto-xref"><span>Chapter 21</span></a> walks <code>vec/</code> and its sixteen vector games, <a href="23-voxel.html" class="quarto-xref"><span>Chapter 23</span></a> the 3/4 view and its ten.</li>
+</ul>
+<p>That closes the graphics part of the book. Next, Part III turns to input, starting with the button layer — edges versus levels, input snapshots, and the seam that let every figure in these five chapters script itself.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/07-camera.html" class="pagination-link" aria-label="Cameras and Big Worlds">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/09-input.html" class="pagination-link" aria-label="Buttons: The Input Layer">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

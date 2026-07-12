@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2&nbsp; Lua the Playdate Way – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/03-modes.html" rel="next">
+<link href="../chapters/01-hello.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/01-hello.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../chapters/02-lua-lab.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sixty-seconds-of-lua-for-the-arriving-programmer" id="toc-sixty-seconds-of-lua-for-the-arriving-programmer" class="nav-link active" data-scroll-target="#sixty-seconds-of-lua-for-the-arriving-programmer"><span class="header-section-number">2.1</span> Sixty seconds of Lua, for the arriving programmer</a></li>
+  <li><a href="#one-global-world" id="toc-one-global-world" class="nav-link" data-scroll-target="#one-global-world"><span class="header-section-number">2.2</span> One global world</a>
+  <ul class="collapse">
+  <li><a href="#module-per-concern-the-convention-this-book-uses" id="toc-module-per-concern-the-convention-this-book-uses" class="nav-link" data-scroll-target="#module-per-concern-the-convention-this-book-uses"><span class="header-section-number">2.2.1</span> Module-per-concern: the convention this book uses</a></li>
+  </ul></li>
+  <li><a href="#corelibs-the-sdks-lua-half" id="toc-corelibs-the-sdks-lua-half" class="nav-link" data-scroll-target="#corelibs-the-sdks-lua-half"><span class="header-section-number">2.3</span> CoreLibs: the SDK’s Lua half</a></li>
+  <li><a href="#class-or-a-plain-table" id="toc-class-or-a-plain-table" class="nav-link" data-scroll-target="#class-or-a-plain-table"><span class="header-section-number">2.4</span> <code>class()</code> or a plain table?</a></li>
+  <li><a href="#const-and-why-every-file-starts-with-one" id="toc-const-and-why-every-file-starts-with-one" class="nav-link" data-scroll-target="#const-and-why-every-file-starts-with-one"><span class="header-section-number">2.5</span> <code>&lt;const&gt;</code>, and why every file starts with one</a></li>
+  <li><a href="#the-sandbox-and-what-pdc-adds" id="toc-the-sandbox-and-what-pdc-adds" class="nav-link" data-scroll-target="#the-sandbox-and-what-pdc-adds"><span class="header-section-number">2.6</span> The sandbox, and what pdc adds</a></li>
+  <li><a href="#traps" id="toc-traps" class="nav-link" data-scroll-target="#traps"><span class="header-section-number">2.7</span> Traps</a>
+  <ul class="collapse">
+  <li><a href="#assert-returns-its-arguments" id="toc-assert-returns-its-arguments" class="nav-link" data-scroll-target="#assert-returns-its-arguments"><span class="header-section-number">2.7.1</span> assert returns its arguments</a></li>
+  <li><a href="#the-system-font-is-missing-glyphs-you-will-reach-for" id="toc-the-system-font-is-missing-glyphs-you-will-reach-for" class="nav-link" data-scroll-target="#the-system-font-is-missing-glyphs-you-will-reach-for"><span class="header-section-number">2.7.2</span> The system font is missing glyphs you will reach for</a></li>
+  <li><a href="#same-named-files-silently-overwrite-at-staging" id="toc-same-named-files-silently-overwrite-at-staging" class="nav-link" data-scroll-target="#same-named-files-silently-overwrite-at-staging"><span class="header-section-number">2.7.3</span> Same-named files silently overwrite at staging</a></li>
+  <li><a href="#sign0-is-not-a-direction" id="toc-sign0-is-not-a-direction" class="nav-link" data-scroll-target="#sign0-is-not-a-direction"><span class="header-section-number">2.7.4</span> sign(0) is not a direction</a></li>
+  </ul></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">2.8</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/01-hello.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../chapters/02-lua-lab.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-lua-lab" class="quarto-section-identifier"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Playdate Lua looks like the Lua you may already know — it is Lua 5.4, compiled by <code>pdc</code> and run by a runtime configured for 32-bit numbers — but it differs from desktop Lua in a handful of ways that shape how every game in this book is structured. The biggest is a single keyword: <code>import</code>, which replaces <code>require</code> and, crucially, does <strong>not</strong> give each file its own module scope. Every file in your game runs in one shared global environment. Fight that fact and you get mysterious collisions; build on it and you get the clean module-per-concern layout used by all sixty games behind this book.</p>
+<p>This chapter’s example is a laboratory, not a game. <code>02-lua-lab</code> is a four-page Playdate app, flipped through with the d-pad, and each page draws <em>proof</em> of a claim made in this chapter: two files sharing a global, a second <code>import</code> doing nothing, <code>require</code> and <code>os</code> and <code>io</code> simply not existing, a class instance dispatching an overridden method, and a famously sneaky <code>assert</code> leaking a value into a table. When this book asserts something about the runtime, you can flip to the page and watch the runtime agree.</p>
+<p>We cover the shared environment and the module convention first, then CoreLibs and its <code>class()</code> object system versus plain tables, then <code>&lt;const&gt;</code>, the sandbox and pdc’s language extensions, and finally a rogues’ gallery of traps that have each cost a real game an afternoon.</p>
+<section id="sixty-seconds-of-lua-for-the-arriving-programmer" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sixty-seconds-of-lua-for-the-arriving-programmer"><span class="header-section-number">2.1</span> Sixty seconds of Lua, for the arriving programmer</h2>
+<p>If Lua is new to you, four of its habits explain most of what follows in this book; the rest you can absorb from the listings.</p>
+<p><strong>Tables are the only data structure.</strong> Arrays, records, objects, sets, modules — all are tables, <code>{}</code>. A table maps keys to values; <code>t.name</code> is sugar for <code>t["name"]</code>; assigning <code>nil</code> to a key deletes it.</p>
+<p><strong>Arrays start at 1.</strong> <code>t[1]</code> is the first element, <code>#t</code> is the length, and the whole Playdate API agrees — the SDK’s own conventions document leads with this. Off-by-one reflexes from C will bite you here, not there.</p>
+<p><strong>Functions return multiple values.</strong> Not tuples, not arrays — actual multiple returns. <code>playdate.getCrankChange()</code> returns two numbers; <code>gfx.getTextSize(msg)</code> in <a href="01-hello.html" class="quarto-xref"><span>Chapter 1</span></a> returned width <em>and</em> height. Multiple returns spill into whatever receives them, which is powerful and, as the traps section shows, occasionally treacherous.</p>
+<p><strong>Everything not declared <code>local</code> is global.</strong> There is no variable declaration keyword; assign to a new name and you have just minted a global. On most platforms that is a style problem. On Playdate, where all files share one global environment, it is the architecture — so it deserves its own section.</p>
+</section>
+<section id="one-global-world" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="one-global-world"><span class="header-section-number">2.2</span> One global world</h2>
+<p>On desktop Lua, <code>require "alpha"</code> loads a module, and the module decides what to expose by returning a table; its globals can be isolated per environment. Playdate has no <code>require</code>. Files join a game with <code>import</code>, and the SDK reference is blunt about the difference: all files imported from <code>main.lua</code> (directly or transitively) are compiled into a single bundle, and <code>import</code> runs each file’s code <strong>exactly once</strong> — a second <code>import</code> of the same file, from anywhere, does nothing at all.</p>
+<p>Here is the example’s import block:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>import <span class="st">"alpha"</span>   <span class="co">-- defines Alpha, sets the global SHARED</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>import <span class="st">"alpha"</span>   <span class="co">-- a second import runs NOTHING (page 1 proves it)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>import <span class="st">"beta"</span>    <span class="co">-- defines Beta; reads SHARED while loading</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>import <span class="st">"lab"</span>     <span class="co">-- the page framework and all four proofs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Note <code>alpha</code> imported twice — deliberately. Now the two files. <code>alpha.lua</code> sets a global and a local:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+alpha.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="alpha.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- alpha.lua runs in the SAME global environment as every other</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- file in the game. Nothing is returned, nothing is isolated.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">AlphaLoads</span> <span class="op">=</span> <span class="op">(</span><span class="va">AlphaLoads</span> <span class="kw">or</span> <span class="dv">0</span><span class="op">)</span> <span class="op">+</span> <span class="dv">1</span>   <span class="co">-- counts how often this runs</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cn">SHARED</span> <span class="op">=</span> <span class="st">"set by alpha.lua"</span>          <span class="co">-- a global: every file sees it</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">secret</span> <span class="op">=</span> <span class="st">"only alpha.lua can read this"</span>  <span class="co">-- locals stay private</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="va">Alpha</span> <span class="op">=</span> <span class="op">{}</span>                           <span class="co">-- the module-table convention</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Alpha</span><span class="op">.</span>report<span class="op">()</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">"AlphaLoads = "</span> <span class="op">..</span> <span class="va">AlphaLoads</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>beta.lua</code> imports nothing, declares nothing about <code>alpha</code>, and reads the global anyway:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+beta.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="beta.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- beta.lua imports nothing, yet it sees alpha.lua's global the</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- moment it loads, because import ran alpha.lua's code first.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">Beta</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="va">Beta</span><span class="op">.</span><span class="va">sawAtLoad</span> <span class="op">=</span> <span class="cn">SHARED</span>              <span class="co">-- captured while loading</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Beta</span><span class="op">.</span>report<span class="op">()</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">'Beta.sawAtLoad = "'</span> <span class="op">..</span> <span class="fu">tostring</span><span class="op">(</span><span class="va">Beta</span><span class="op">.</span><span class="va">sawAtLoad</span><span class="op">)</span> <span class="op">..</span> <span class="st">'"'</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The lab’s first page renders what actually happened (<a href="#fig-lab-shared" class="quarto-xref">Figure&nbsp;<span>2.1</span></a>):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">pages</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    title<span class="op">(</span><span class="st">"1. ONE GLOBAL WORLD"</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="st">'SHARED = "'</span> <span class="op">..</span> <span class="cn">SHARED</span> <span class="op">..</span> <span class="st">'"'</span><span class="op">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="va">Beta</span><span class="op">.</span>report<span class="op">())</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="va">Alpha</span><span class="op">.</span>report<span class="op">()</span> <span class="op">..</span> <span class="st">"  (imported twice, ran once)"</span><span class="op">)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="st">"_G.secret = "</span> <span class="op">..</span> <span class="fu">tostring</span><span class="op">(</span><span class="cn">_G</span><span class="op">.</span><span class="va">secret</span><span class="op">)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">..</span> <span class="st">"  (locals stay file-private)"</span><span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-lab-shared" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lab-shared-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/02-lua-lab/lab-shared.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lab-shared-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.1: Page 1 of the lab. <code>beta.lua</code> saw <code>alpha.lua</code>’s global at load time; the double import ran <code>alpha.lua</code> once (<code>AlphaLoads = 1</code>); and <code>alpha</code>’s <code>local secret</code> is invisible in the global table.
+</figcaption>
+</figure>
+</div>
+<p>Four facts, all on screen. Globals cross file boundaries freely, in import order — <code>beta.lua</code> could read <code>SHARED</code> <em>while loading</em> because <code>alpha.lua</code> had already run. The double import was harmless: <code>AlphaLoads</code> is 1, so you never need to be clever about “has this been loaded yet.” Locals, meanwhile, are the only privacy there is: <code>secret</code> exists for <code>alpha.lua</code>’s code and nobody else, and <code>_G.secret</code> is <code>nil</code>.</p>
+<p><code>import</code> also differs from <code>require</code> in a smaller way that bites people porting desktop habits: it is a compile-time directive, not a function. You cannot compute a filename and import it conditionally at runtime; <code>pdc</code> resolves the whole import graph when it builds the pdz.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The dark side of easy globals, and CoreLibs/strict
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>One shared world also means one shared spelling test. Misspell a global on <em>assignment</em> and you silently create a second variable; misspell it on <em>read</em> and you silently get <code>nil</code>, and the error surfaces somewhere else entirely. The SDK ships a countermeasure: <code>import "CoreLibs/strict"</code> installs a metatable on the global table that turns any use of an undeclared global inside a function into an immediate, correctly-located error. “Declared” means assigned once at file top level — which the module-per-concern convention already does for every module table — so well-structured code runs under strict mode unchanged. Import it while developing if stray-global bugs find you often; it is a debugging tool, not something to ship.</p>
+</div>
+</div>
+<section id="module-per-concern-the-convention-this-book-uses" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="module-per-concern-the-convention-this-book-uses"><span class="header-section-number">2.2.1</span> Module-per-concern: the convention this book uses</h3>
+<p>One shared environment means one namespace, and one namespace needs a convention. The one used throughout this book — and throughout the shipped games it draws on — is <em>module-per-concern globals</em>: each file owns exactly one globally named table (<code>Input</code>, <code>Draw</code>, <code>Game</code>, <code>Config</code>…), puts its functions in that table, and keeps everything else <code>local</code>. That is what <code>Alpha = {}</code> and <code>function Alpha.report()</code> were doing above. The file <em>is</em> the module; the global table is its one export; the capital letter marks it as deliberate.</p>
+<p>You can see the convention at scale in Molt, an arkanoidvania whose <code>main.lua</code> opens by assembling the game out of twenty concerns:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- molt/source/main.lua:9</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>import <span class="st">"config"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>import <span class="st">"util"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>import <span class="st">"harness"</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>import <span class="st">"sfx"</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>import <span class="st">"music"</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>import <span class="st">"fx"</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>import <span class="st">"save"</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>import <span class="st">"blocks"</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="op">...</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>import <span class="st">"input"</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>import <span class="st">"draw"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each of those files defines one global — <code>C</code>, <code>Util</code>, <code>Harness</code>, <code>Sfx</code>, <code>Music</code> and so on — and any file may call any other’s, because they all live in the same world. Import order is the only dependency mechanism: <code>config</code> comes first because everyone reads <code>C</code> at load time. There is no header, no module manifest, and after twenty-eight rooms and seven bosses, no confusion about where anything lives: the concern in the filename is the table in the code.</p>
+<p>The anti-pattern is the desktop reflex:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- ANTI-PATTERN: desktop-Lua module style; do not do this on Playdate</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">M</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="cn">M</span><span class="op">.</span>report<span class="op">()</span> <span class="op">...</span> <span class="kw">end</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="cn">M</span>   <span class="co">-- import ignores this; callers get nothing</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>import</code> does not capture return values the way <code>require</code> does (the lab’s page 1 already showed you where the real sharing happens). A file written this way runs, defines its functions in a local table, and then evaporates — nothing outside the file can reach <code>M</code>. If a module of yours seems to “not exist” at runtime, this is almost always why.</p>
+</section>
+</section>
+<section id="corelibs-the-sdks-lua-half" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="corelibs-the-sdks-lua-half"><span class="header-section-number">2.3</span> CoreLibs: the SDK’s Lua half</h2>
+<p>The core <code>playdate.*</code> API is implemented in C, but the SDK also ships <code>CoreLibs/</code> — a set of optional libraries written in Lua, which you can read in the SDK directory like any other source. Nothing in CoreLibs loads unless you import it, and several APIs in this book carry a “requires CoreLibs” footnote. The ones you will meet:</p>
+<ul>
+<li><code>CoreLibs/graphics</code> — conveniences over <code>playdate.graphics</code>; the examples import it as a matter of course.</li>
+<li><code>CoreLibs/object</code> — the <code>class()</code> system, next section.</li>
+<li><code>CoreLibs/sprites</code>, <code>CoreLibs/timer</code>, <code>CoreLibs/animation</code>, <code>CoreLibs/easing</code> — the sprite system and motion toolkits of <a href="06-sprites.html" class="quarto-xref"><span>Chapter 6</span></a> and <a href="15-juice.html" class="quarto-xref"><span>Chapter 15</span></a>.</li>
+<li><code>CoreLibs/crank</code> — <code>getCrankTicks</code>, the detent-style crank read (<a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a>). Forgetting this import is the classic “why is <code>getCrankTicks</code> nil” bug: <code>playdate.getCrankChange</code> is core, <code>getCrankTicks</code> is CoreLibs.</li>
+<li><code>CoreLibs/ui</code> — the grid view and crank indicator of <a href="11-tilt.html" class="quarto-xref"><span>Chapter 11</span></a>.</li>
+</ul>
+<p>Because CoreLibs is plain Lua running in the same global world as your code, there is no magic to respect: importing <code>CoreLibs/object</code> simply defines a global function named <code>class</code>, exactly the way <code>alpha.lua</code> defined <code>Alpha</code>.</p>
+</section>
+<section id="class-or-a-plain-table" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="class-or-a-plain-table"><span class="header-section-number">2.4</span> <code>class()</code> or a plain table?</h2>
+<p>Lua has no built-in classes; it has tables and metatables, from which you can build any object system you like. CoreLibs builds one for you. The lab defines a tiny hierarchy with it:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>class<span class="op">(</span><span class="st">"Critter"</span><span class="op">).</span>extends<span class="op">()</span>   <span class="co">-- needs import "CoreLibs/object"</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Critter</span><span class="op">:</span>init<span class="op">(</span><span class="va">name</span><span class="op">)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Critter</span><span class="op">.</span><span class="va">super</span><span class="op">.</span>init<span class="op">(</span><span class="va">self</span><span class="op">)</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span><span class="op">.</span><span class="va">name</span> <span class="op">=</span> <span class="va">name</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Critter</span><span class="op">:</span>speak<span class="op">()</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span><span class="op">.</span><span class="va">name</span> <span class="op">..</span> <span class="st">" says ..."</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>class<span class="op">(</span><span class="st">"Hound"</span><span class="op">).</span>extends<span class="op">(</span><span class="va">Critter</span><span class="op">)</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Hound</span><span class="op">:</span>speak<span class="op">()</span>       <span class="co">-- override: calls dispatch dynamically</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span><span class="op">.</span><span class="va">name</span> <span class="op">..</span> <span class="st">" says WOOF"</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>class("Critter").extends()</code> creates a global class named <code>Critter</code> deriving from <code>Object</code>, the CoreLibs base class. Instances come from calling the class — <code>Critter("Any")</code> — which invokes your <code>init</code>. Subclasses chain to the parent through <code>ClassName.super.init(self, ...)</code>, and overriding a method just works: a <code>Hound</code> stored in a variable typed as nothing at all still barks, because dispatch happens at runtime through the instance.</p>
+<p>The same critter needs no class system at all:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The same critter without class(): a table and a constructor.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> newCritter<span class="op">(</span><span class="va">name</span><span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">c</span> <span class="op">=</span> <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="va">name</span> <span class="op">}</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="va">c</span><span class="op">:</span>speak<span class="op">()</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span><span class="op">.</span><span class="va">name</span> <span class="op">..</span> <span class="st">" says ..."</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">c</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Page 3 of the lab shows both flavors answering the same calls (<a href="#fig-lab-class" class="quarto-xref">Figure&nbsp;<span>2.2</span></a>): the base critter mumbles, <code>rex:speak()</code> dispatches to the override, <code>rex:isa(Critter)</code> confirms the inheritance relationship, and the plain-table critter is indistinguishable from the classy one at the call site.</p>
+<div id="fig-lab-class" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lab-class-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/02-lua-lab/lab-class.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lab-class-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.2: Page 3: dynamic dispatch through <code>class()</code> (top three lines) and a plain table doing the same job (bottom).
+</figcaption>
+</figure>
+</div>
+<p>So which do you use? Reach for <code>class()</code> when you genuinely have a hierarchy — a dozen enemy types sharing update logic, or when the SDK requires it (sprite subclasses in <a href="06-sprites.html" class="quarto-xref"><span>Chapter 6</span></a> extend <code>playdate.graphics.sprite</code>). For everything else, the games behind this book overwhelmingly use plain tables and module functions: a crab is <code>G.crab = { x = 0, snapT = 0 }</code> and the behavior lives in <code>Crab.update(dt)</code>. Data stays inspectable, there is no hidden metatable machinery in your hot loop, and the “method or function?” question never arises.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Colon and dot are different calls
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>rex:speak()</code> is sugar for <code>rex.speak(rex)</code> — the colon passes the receiver as a hidden <code>self</code> argument. Call a colon-defined method with a dot (<code>rex.speak()</code>) and <code>self</code> is <code>nil</code>; define with a dot and call with a colon and your first argument silently becomes <code>self</code>. The SDK documentation singles this out as a source of very-difficult-to-track-down bugs, and it is. If a method dies with “attempt to index a nil value (local ‘self’)”, you dot-called a colon method.</p>
+</div>
+</div>
+</section>
+<section id="const-and-why-every-file-starts-with-one" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="const-and-why-every-file-starts-with-one"><span class="header-section-number">2.5</span> <code>&lt;const&gt;</code>, and why every file starts with one</h2>
+<p>You met this line in <a href="01-hello.html" class="quarto-xref"><span>Chapter 1</span></a>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">gfx</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">graphics</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>&lt;const&gt;</code> is a Lua 5.4 variable attribute: the local cannot be reassigned, and the compiler is free to treat it as a compile-time constant. On Playdate it earns its keep twice over. First, speed — <code>playdate.graphics.fillRect(...)</code> performs two global-table lookups every call, while <code>gfx.fillRect(...)</code> performs none for <code>gfx</code> itself; in an update loop that draws hundreds of things, the difference is measurable (the SDK’s own documentation makes this exact recommendation). Second, safety in the one-global-world: a <code>local</code> can never collide with another file’s names, and <code>&lt;const&gt;</code> guarantees you cannot accidentally clobber your own shorthand. Because locals are file-scoped, the line must be repeated at the top of every file that draws — you will see it there in every example from here on.</p>
+</section>
+<section id="the-sandbox-and-what-pdc-adds" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="the-sandbox-and-what-pdc-adds"><span class="header-section-number">2.6</span> The sandbox, and what pdc adds</h2>
+<p>Playdate Lua removes parts of the standard library and adds things standard Lua does not have. The lab’s second page interrogates the runtime directly:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="va">pages</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    title<span class="op">(</span><span class="st">"2. THE SANDBOX, AND THE ADDITIONS"</span><span class="op">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="st">"type(require) = "</span> <span class="op">..</span> <span class="fu">type</span><span class="op">(</span><span class="fu">require</span><span class="op">))</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="st">"type(os) = "</span> <span class="op">..</span> <span class="fu">type</span><span class="op">(</span><span class="va">os</span><span class="op">)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">..</span> <span class="st">"   type(io) = "</span> <span class="op">..</span> <span class="fu">type</span><span class="op">(</span><span class="va">io</span><span class="op">))</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="st">"type(playdate.file.open) = "</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">..</span> <span class="fu">type</span><span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">file</span><span class="op">.</span><span class="va">open</span><span class="op">))</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="st">"type(table.create) = "</span> <span class="op">..</span> <span class="fu">type</span><span class="op">(</span><span class="fu">table.create</span><span class="op">))</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    line<span class="op">(</span><span class="dv">4</span><span class="op">,</span> <span class="st">"opsDemo = 10; opsDemo += 5  --&gt;  "</span> <span class="op">..</span> <span class="va">opsDemo</span><span class="op">)</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-lab-sandbox" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lab-sandbox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/02-lua-lab/lab-sandbox.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lab-sandbox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.3: Page 2: <code>require</code>, <code>os</code>, and <code>io</code> do not exist; <code>playdate.file</code> and the SDK’s table additions do; and <code>+=</code> compiled and ran.
+</figcaption>
+</figure>
+</div>
+<p>As <a href="#fig-lab-sandbox" class="quarto-xref">Figure&nbsp;<span>2.3</span></a> shows, <code>require</code>, <code>os</code>, and <code>io</code> are all <code>nil</code> — not restricted, not stubbed; the libraries were never opened. The runtime provides <code>coroutine</code>, <code>math</code>, <code>string</code>, <code>table</code>, and <code>utf8</code>, and that is your standard library. Everything those missing libraries did is either gone on purpose (spawning processes, arbitrary filesystem access) or replaced by the <code>playdate</code> namespace: files go through <code>playdate.file</code> and the delightfully simple <code>playdate.datastore</code> (<a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a>), time through <code>playdate.getTime</code> and friends, and module loading through <code>import</code>. When you port Lua code from elsewhere, grep it for <code>os.</code> and <code>io.</code> first; that is the porting work.</p>
+<p>In the other direction, the SDK extends the language and the <code>table</code> library:</p>
+<ul>
+<li><strong>Compound assignment.</strong> <code>pdc</code> accepts <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>, <code>//=</code>, <code>%=</code>, <code>&lt;&lt;=</code>, <code>&gt;&gt;=</code>, <code>&amp;=</code>, <code>|=</code>, and <code>^=</code>. The lab’s <code>opsDemo += 5</code> on page 2 is standard-Lua-invalid and Playdate-Lua-fine. Handy, with one caveat: the moment you paste that code into a desktop Lua tool (a linter, a test runner, a REPL), it stops parsing.</li>
+<li><strong>Table additions.</strong> <code>table.indexOfElement(t, el)</code> finds a value in an array-style table; <code>table.getsize(t)</code> reports array and hash counts; <code>table.create(narr, nhash)</code> preallocates — the one to remember for <a href="19-perf.html" class="quarto-xref"><span>Chapter 19</span></a>, because growing a table element by element in your update loop is a garbage-collection tax you can avoid.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>print still works
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The sandbox keeps <code>print</code>, and in the Simulator its output lands in the console window along with error tracebacks. It remains the fastest debugging tool on the platform — with the caveat that a <code>print</code> every frame is itself slow enough to distort timings, which is one reason <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a> moves telemetry into counters written once every few seconds.</p>
+</div>
+</div>
+</section>
+<section id="traps" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="traps"><span class="header-section-number">2.7</span> Traps</h2>
+<p>Everything above is architecture. What follows is scar tissue: four traps, each of which has burned at least one real game, three of them demonstrable on the lab’s final page (<a href="#fig-lab-traps" class="quarto-xref">Figure&nbsp;<span>2.4</span></a>).</p>
+<section id="assert-returns-its-arguments" class="level3" data-number="2.7.1">
+<h3 data-number="2.7.1" class="anchored" data-anchor-id="assert-returns-its-arguments"><span class="header-section-number">2.7.1</span> assert returns its arguments</h3>
+<p><code>assert(v, message)</code> checks <code>v</code> — and then, on success, returns <em>all</em> of its arguments, <code>message</code> included. Combine that with Lua’s rule that a function call in the middle of a table constructor or argument list expands to all of its return values, and this innocent-looking “validate while you build” idiom plants a bomb:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+lab.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="lab.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- assert returns ALL of its arguments on success, so the message</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- becomes a surprise second element in the table constructor.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">speed</span> <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">leaky</span> <span class="op">=</span> <span class="op">{</span> <span class="fu">assert</span><span class="op">(</span><span class="va">speed</span><span class="op">,</span> <span class="st">"speed missing"</span><span class="op">)</span> <span class="op">}</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- #leaky == 2, and leaky[2] == "speed missing"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The lab prints the wreckage on page 4: <code>#leaky</code> is 2, and <code>leaky[2]</code> is the string <code>"speed missing"</code> (<a href="#fig-lab-traps" class="quarto-xref">Figure&nbsp;<span>2.4</span></a>). In a real game this surfaces far from the cause — a varargs helper suddenly receives an extra string, <code>ipairs</code> walks one element too many, a “table of one number” serializes with a stowaway. The fix is to keep the assert and the construction separate: <code>assert(speed, "speed missing")</code> on its own line, then <code>local t = { speed }</code> — or wrap the call in parentheses, <code>(assert(speed, "msg"))</code>, which truncates it to one value.</p>
+<div id="fig-lab-traps" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lab-traps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/02-lua-lab/lab-traps.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lab-traps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.4: Page 4: the assert leak (<code>#leaky = 2</code>), and the system font rendering <code>·</code> and <code>—</code> as error boxes while <code>-</code>, Ⓐ, and Ⓑ render fine.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-system-font-is-missing-glyphs-you-will-reach-for" class="level3" data-number="2.7.2">
+<h3 data-number="2.7.2" class="anchored" data-anchor-id="the-system-font-is-missing-glyphs-you-will-reach-for"><span class="header-section-number">2.7.2</span> The system font is missing glyphs you will reach for</h3>
+<p>The default system font is charming and mostly complete — but the middle dot <code>·</code> and the em dash <code>—</code>, two characters technical writers type by reflex, are not in it. They render as error boxes, as page 4 demonstrates live; here is the page that drew <a href="#fig-lab-traps" class="quarto-xref">Figure&nbsp;<span>2.4</span></a>, boxes and all:</p>
+<p>lab.lua<br>
+<code class="sourceCode lua" data-filename="lab.lua"><span class="va">pages</span><span class="op">[</span><span class="dv">4</span><span class="op">]</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span>
+    title<span class="op">(</span><span class="st">"4. TRAPS"</span><span class="op">)</span>
+    line<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="st">'leaky = { assert(speed, "speed missing") }'</span><span class="op">)</span>
+    line<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="st">"#leaky = "</span> <span class="op">..</span> <span class="op">#</span><span class="va">leaky</span>
+        <span class="op">..</span> <span class="st">"   leaky[2] = "</span> <span class="op">..</span> <span class="fu">tostring</span><span class="op">(</span><span class="va">leaky</span><span class="op">[</span><span class="dv">2</span><span class="op">]))</span>
+    line<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="st">"missing glyphs:  [ · ]  [ — ]"</span><span class="op">)</span>
+    line<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="st">"present glyphs:  [ - ]  [ Ⓐ ]  [ Ⓑ ]"</span><span class="op">)</span>
+<span class="kw">end</span></code> The circled button glyphs Ⓐ and Ⓑ <em>are</em> present (they are how every game writes “press Ⓐ”), as are the ordinary hyphen and asterisk. The practical rule: separators in UI text are hyphens or spaces, and any string you did not type from muscle memory gets one look on the actual screen. Custom fonts, which solve this properly, are in <a href="05-images.html" class="quarto-xref"><span>Chapter 5</span></a>.</p>
+</section>
+<section id="same-named-files-silently-overwrite-at-staging" class="level3" data-number="2.7.3">
+<h3 data-number="2.7.3" class="anchored" data-anchor-id="same-named-files-silently-overwrite-at-staging"><span class="header-section-number">2.7.3</span> Same-named files silently overwrite at staging</h3>
+<p>Not a language trap but a build trap, and it belongs in this chapter because module-per-concern naming is the cure. Game projects here are staged before compiling: a shared library directory and the game’s own source are copied into one build directory, and <em>then</em> <code>pdc</code> runs. If the library has <code>util.lua</code> and the game has <code>util.lua</code>, one copy wins, silently, and the loser’s module simply never exists — the error surfaces as a nil call somewhere downstream, nowhere near the cause. <code>pdc</code> cannot warn you; by the time it runs, there is only one file. Name shared-library files distinctively (<code>vecutil.lua</code>, <code>tcam.lua</code>) and this never happens.</p>
+</section>
+<section id="sign0-is-not-a-direction" class="level3" data-number="2.7.4">
+<h3 data-number="2.7.4" class="anchored" data-anchor-id="sign0-is-not-a-direction"><span class="header-section-number">2.7.4</span> sign(0) is not a direction</h3>
+<p>A pure-Lua honorable mention. Every game grows a <code>sign(x)</code> helper, returning -1, 0, or 1, and every facing system stores -1 or 1. Feed a freshly spawned actor with zero velocity into <code>if Util.sign(vx) == facing</code> and the comparison is false in both facings — the actor is directionless until it first moves, and whatever depended on facing (sprite flip, attack direction) quietly does nothing. Decide at the call site what zero means: <code>vx &gt;= 0 and 1 or -1</code>.</p>
+</section>
+</section>
+<section id="what-you-know-now" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">2.8</span> What you know now</h2>
+<ul>
+<li>Playdate Lua is Lua 5.4 with 32-bit numbers, compiled by <code>pdc</code>, with <code>+=</code>-style operators and extra <code>table</code> functions added.</li>
+<li><code>import</code> replaces <code>require</code>: every file runs once, in one shared global environment, and return values are not how sharing works.</li>
+<li>The house convention is module-per-concern: one file, one global table (<code>Game</code>, <code>Draw</code>, <code>Input</code>…), everything else <code>local</code>.</li>
+<li>CoreLibs is optional, per-import Lua: <code>CoreLibs/object</code> provides <code>class(...).extends(...)</code> with <code>init</code>, <code>super</code>, and <code>isa</code>.</li>
+<li>Use <code>class()</code> for real hierarchies and sprite subclasses; plain tables for everything else. Never confuse <code>:</code> and <code>.</code> calls.</li>
+<li><code>local gfx &lt;const&gt; = playdate.graphics</code> is both a speed-up and a collision guard; it goes at the top of every file that draws.</li>
+<li>No <code>require</code>, no <code>os</code>, no <code>io</code>: files via <code>playdate.file</code> and the datastore, time via the <code>playdate</code> namespace.</li>
+<li>Traps with teeth: <code>assert</code> leaks its message into constructors and argument lists; <code>·</code> and <code>—</code> are boxes in the system font; staged files with equal names overwrite silently; <code>sign(0)</code> matches no facing.</li>
+</ul>
+<p>Next, <a href="03-modes.html" class="quarto-xref"><span>Chapter 3</span></a>: the update loop gets a fixed timestep, the globals get a single <code>G</code> state table, and the whole game becomes a mode machine — the skeleton every later example is built on.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/01-hello.html" class="pagination-link" aria-label="Hello, Playdate">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/03-modes.html" class="pagination-link" aria-label="The Update Loop and Game Modes">
+        <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

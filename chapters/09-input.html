@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>9&nbsp; Buttons: The Input Layer – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/10-crank.html" rel="next">
+<link href="../chapters/08-wireframe.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/09-input.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#six-buttons-two-questions" id="toc-six-buttons-two-questions" class="nav-link active" data-scroll-target="#six-buttons-two-questions"><span class="header-section-number">9.1</span> Six buttons, two questions</a></li>
+  <li><a href="#spending-six-buttons-well" id="toc-spending-six-buttons-well" class="nav-link" data-scroll-target="#spending-six-buttons-well"><span class="header-section-number">9.2</span> Spending six buttons well</a></li>
+  <li><a href="#seeing-the-difference" id="toc-seeing-the-difference" class="nav-link" data-scroll-target="#seeing-the-difference"><span class="header-section-number">9.3</span> Seeing the difference</a></li>
+  <li><a href="#polling-versus-input-handlers" id="toc-polling-versus-input-handlers" class="nav-link" data-scroll-target="#polling-versus-input-handlers"><span class="header-section-number">9.4</span> Polling versus input handlers</a></li>
+  <li><a href="#one-snapshot-per-frame-input.gather" id="toc-one-snapshot-per-frame-input.gather" class="nav-link" data-scroll-target="#one-snapshot-per-frame-input.gather"><span class="header-section-number">9.5</span> One snapshot per frame: Input.gather()</a>
+  <ul class="collapse">
+  <li><a href="#case-study-clam-jumpers-input-table" id="toc-case-study-clam-jumpers-input-table" class="nav-link" data-scroll-target="#case-study-clam-jumpers-input-table"><span class="header-section-number">9.5.1</span> Case study: Clam Jumper’s input table</a></li>
+  </ul></li>
+  <li><a href="#buffering-and-coyote-time" id="toc-buffering-and-coyote-time" class="nav-link" data-scroll-target="#buffering-and-coyote-time"><span class="header-section-number">9.6</span> Buffering and coyote time</a></li>
+  <li><a href="#the-scripted-thumb" id="toc-the-scripted-thumb" class="nav-link" data-scroll-target="#the-scripted-thumb"><span class="header-section-number">9.7</span> The scripted thumb</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">9.8</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/09-input.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-input" class="quarto-section-identifier"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The Playdate gives you eight physical inputs: a four-way d-pad, two face buttons, a crank, and (buried in the console body) an accelerometer. This chapter is about the six buttons — not because they are complicated, but because how you <em>read</em> them decides how your whole game is structured. Get the input layer right and every later chapter gets easier: your game becomes testable by a robot, your controls become tunable in one file, and subtle feel problems like eaten jump presses simply stop happening.</p>
+<p>The chapter’s example is an input visualizer: a set of on-screen lamps mirroring the real buttons, a logic-analyzer-style trace that separates <em>level</em> from <em>edge</em> — the one distinction that matters — and, along the bottom, a tiny auto-runner that demonstrates the two classic input-feel tricks, jump buffering and coyote time. The whole thing is driven by a scripted thumb rather than a human one, which is not a gimmick: it is the exact seam that all sixty of the shipped games in this book’s pedigree use for their autopilots, and the one Chapter 18 turns into a full test harness.</p>
+<p>You will leave this chapter with a reusable <code>Input.gather()</code> module and a working intuition for when a button state is a fact (“A is down”) and when it is an event (“A <em>went</em> down”).</p>
+<section id="six-buttons-two-questions" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="six-buttons-two-questions"><span class="header-section-number">9.1</span> Six buttons, two questions</h2>
+<p>Every button API in the SDK answers one of two questions. The first is about <strong>level</strong>: is the button down <em>right now</em>?</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonRight</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">x</span> <span class="op">=</span> <span class="va">x</span> <span class="op">+</span> <span class="va">speed</span> <span class="op">*</span> <span class="cn">DT</span>   <span class="co">-- runs every frame the button is held</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second is about <strong>edge</strong>: did the button <em>change</em> this frame?</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonJustPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    jump<span class="op">()</span>               <span class="co">-- runs once per physical press</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>playdate.buttonIsPressed(button)</code> returns true on every update while the button is held. <code>playdate.buttonJustPressed(button)</code> returns true for exactly one update cycle when the button goes down, and will not fire again until the button is released and pressed again. Its mirror image, <code>playdate.buttonJustReleased (button)</code>, returns true for one update when the button comes up — that one is how “release to fire” mechanics work, and we will lean on it in the crank chapter’s wind-and-release demo.</p>
+<p>All three take one of six constants:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Constant</th>
+<th>Button</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>playdate.kButtonUp</code></td>
+<td>d-pad up</td>
+</tr>
+<tr class="even">
+<td><code>playdate.kButtonDown</code></td>
+<td>d-pad down</td>
+</tr>
+<tr class="odd">
+<td><code>playdate.kButtonLeft</code></td>
+<td>d-pad left</td>
+</tr>
+<tr class="even">
+<td><code>playdate.kButtonRight</code></td>
+<td>d-pad right</td>
+</tr>
+<tr class="odd">
+<td><code>playdate.kButtonA</code></td>
+<td>A</td>
+</tr>
+<tr class="even">
+<td><code>playdate.kButtonB</code></td>
+<td>B</td>
+</tr>
+</tbody>
+</table>
+<p>The SDK also accepts the strings <code>"a"</code>, <code>"b"</code>, <code>"up"</code>, <code>"down"</code>, <code>"left"</code>, and <code>"right"</code> in place of the constants. Use the constants: they are bitmask values, so a typo’d constant is a <code>nil</code> that errors immediately, while a typo’d string fails silently.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Everything at once: getButtonState
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>playdate.getButtonState()</code> returns three bitmasks — <code>current</code>, <code>pressed</code>, <code>released</code> — covering all six buttons in one call. If the d-pad left and A are both down, <code>current</code> is <code>playdate.kButtonA | playdate.kButtonLeft</code>. It is occasionally handy for serializing input (a replay system can store one integer per frame), but for readable game code the per-button predicates are better.</p>
+</div>
+</div>
+<p>Level and edge sound interchangeable until you wire a jump to the wrong one. Wire <code>jump()</code> to <code>buttonIsPressed</code> and your character machine-guns off the floor thirty times a second while A is held. Wire <em>movement</em> to <code>buttonJustPressed</code> and the player has to hammer the d-pad like a woodpecker to cross the screen. The rule: <strong>continuous actions read levels, discrete actions read edges.</strong> Clam Jumper’s input table (quoted later in this chapter) shows both side by side on the same A button: the octopus dash <em>triggers</em> on the edge, but the ray’s glide <em>sustains</em> on the level.</p>
+</section>
+<section id="spending-six-buttons-well" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="spending-six-buttons-well"><span class="header-section-number">9.2</span> Spending six buttons well</h2>
+<p>Six inputs is not many, and the platform has conventions worth respecting before you spend them. <strong>A is the primary verb</strong> — confirm in menus, the main action in play. <strong>B is the secondary verb and always “back”</strong> in any menu context; a Playdate player’s thumb goes to B to retreat without reading your screen. The d-pad is movement or cursor, and diagonals are physically awkward on the device’s small cross, which is why grid games collapse the axes — Clam Jumper’s “vertical wins ties” line below is that decision in code. If you need more verbs than buttons, the standard tricks apply in this order of preference: context-sensitivity (A does the one thing that makes sense here), hold-versus-tap on the same button (an edge starts a charge, the release fires — Chapter 10’s lob panel), and only then chords like B+A, which players discover last and forget first.</p>
+<p>Two presentation details save you real confusion. First, when your HUD or tutorial text names a button, use the circled glyphs — the system font renders <code>Ⓐ</code> and <code>Ⓑ</code> correctly, and they read instantly. Second, know the font’s holes before you decorate.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Glyphs the system font does not have
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The system font is missing more characters than you expect: mid-dot <code>·</code> and em-dash <code>—</code> both render as error boxes, a bug that reliably ships because everything looks fine in your editor. The <code>Ⓐ</code> and <code>Ⓑ</code> button glyphs <em>do</em> work. When a label looks wrong on device or Simulator, suspect the character set before your drawing code — and prefer plain hyphens and spaces in HUD strings, as this chapter’s example does.</p>
+</div>
+</div>
+</section>
+<section id="seeing-the-difference" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="seeing-the-difference"><span class="header-section-number">9.3</span> Seeing the difference</h2>
+<p>The example makes the distinction visible. Lamps on the left mirror the d-pad, B, and A; every press edge spawns an expanding ring around its lamp for eight frames. On the right, a trace scrolls the last 110 frames of history like a logic analyzer: a low bar while a button’s level is high, a full-height tick at each press edge, and a short tick at each release edge.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+draw.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="draw.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The trace: one column per remembered frame, newest at the right.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- A short bar means "level high" (buttonIsPressed would be true);</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- a full-height tick marks the press edge; a half tick the release.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> traceRow<span class="op">(</span><span class="va">row</span><span class="op">,</span> <span class="va">name</span><span class="op">,</span> <span class="va">y</span><span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="fu">string.upper</span><span class="op">(</span><span class="fu">string.sub</span><span class="op">(</span><span class="va">name</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">)),</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cn">TRACE_X</span> <span class="op">-</span> <span class="dv">16</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="va">Game</span><span class="op">.</span><span class="cn">HISTORY</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">do</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">slot</span> <span class="op">=</span> <span class="op">(</span><span class="va">Game</span><span class="op">.</span><span class="va">head</span> <span class="op">-</span> <span class="va">i</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">%</span> <span class="va">Game</span><span class="op">.</span><span class="cn">HISTORY</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="va">Game</span><span class="op">.</span><span class="va">trace</span><span class="op">[</span><span class="va">slot</span><span class="op">]</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="va">s</span> <span class="cf">then</span> <span class="cf">break</span> <span class="cf">end</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="cn">TRACE_X</span> <span class="op">+</span> <span class="cn">TRACE_W</span> <span class="op">-</span> <span class="dv">2</span> <span class="op">-</span> <span class="va">i</span> <span class="op">*</span> <span class="dv">2</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="cn">ROW_H</span> <span class="op">-</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">6</span><span class="op">)</span> <span class="co">-- level bar</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span> <span class="op">..</span> <span class="st">"Just"</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="cn">ROW_H</span> <span class="op">-</span> <span class="dv">3</span><span class="op">)</span> <span class="co">-- press tick</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span> <span class="op">..</span> <span class="st">"Released"</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">8</span><span class="op">)</span>         <span class="co">-- release tick</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#fig-input-edge" class="quarto-xref">Figure&nbsp;<span>9.1</span></a> is the frame A went down: the lamp fills <em>and</em> the ring flares, and the caption line reports the edge. Twenty-six frames into a hold (<a href="#fig-input-held" class="quarto-xref">Figure&nbsp;<span>9.2</span></a>) the lamp is still lit — <code>buttonIsPressed</code> is still true — but there is no ring and no edge: <code>buttonJustPressed</code> returned true exactly once, back at the press.</p>
+<div id="fig-input-edge" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-input-edge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/09-input/input-edge.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-input-edge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.1: The press frame: level and edge are both true, so the lamp fills and the edge ring flares.
+</figcaption>
+</figure>
+</div>
+<div id="fig-input-held" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-input-held-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/09-input/input-held.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-input-held-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: Twenty-six frames later: the level is still high (lit lamp, caption counting the hold) but the edge is long gone.
+</figcaption>
+</figure>
+</div>
+<p>The trace in <a href="#fig-input-trace" class="quarto-xref">Figure&nbsp;<span>9.3</span></a> tells the same story horizontally. Held right on the d-pad is a thirty-frame bar bracketed by one press tick and one release tick; the two-frame taps are almost all tick and no bar. When an input bug has you baffled, five minutes of building a trace like this one pays for itself — it turns “the jump sometimes doesn’t fire” into “the press edge lands on the frame we were still in the pause menu.”</p>
+<div id="fig-input-trace" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-input-trace-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/09-input/input-trace.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-input-trace-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.3: The trace: bars are levels, tall ticks are press edges, short ticks are releases. A 30-frame hold and a 2-frame tap look identical to <code>buttonJustPressed</code> — one edge each.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="polling-versus-input-handlers" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="polling-versus-input-handlers"><span class="header-section-number">9.4</span> Polling versus input handlers</h2>
+<p>Everything above <strong>polls</strong>: each update asks the SDK for the state it cares about. The SDK also offers a push model, <code>playdate.inputHandlers</code>, in which you hand over a table of callbacks and the OS calls you:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- anti-pattern for a game loop; fine for modal UI (see text)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">handlers</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">AButtonDown</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="va">Menu</span><span class="op">.</span>confirm<span class="op">()</span> <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">upButtonDown</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="va">Menu</span><span class="op">.</span>move<span class="op">(-</span><span class="dv">1</span><span class="op">)</span> <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">downButtonDown</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="va">Menu</span><span class="op">.</span>move<span class="op">(</span><span class="dv">1</span><span class="op">)</span> <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">cranked</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">change</span><span class="op">,</span> <span class="va">accelChange</span><span class="op">)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">Menu</span><span class="op">.</span>scroll<span class="op">(</span><span class="va">change</span><span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">playdate</span><span class="op">.</span><span class="va">inputHandlers</span><span class="op">.</span>push<span class="op">(</span><span class="va">handlers</span><span class="op">,</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- ... later, when the menu closes:</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="va">playdate</span><span class="op">.</span><span class="va">inputHandlers</span><span class="op">.</span>pop<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A handler table is a plain Lua table — no subclassing — with any of the callbacks <code>AButtonDown</code>/<code>AButtonHeld</code>/<code>AButtonUp</code> (likewise for B), <code>upButtonDown</code>/<code>upButtonUp</code> (likewise for the other d-pad directions), and <code>cranked(change, acceleratedChange)</code>. Handlers stack: <code>push</code> adds a table, <code>pop</code> removes it, and input propagates down the stack to the first table that defines a given callback. The second argument to <code>push</code>, <code>masksPreviousHandlers</code>, stops that propagation — pass <code>true</code> and any callback you <em>didn’t</em> define is simply dropped instead of falling through to the handlers (and the default <code>playdate</code> table) below.</p>
+<p>That stacking is the feature. Input handlers are built for <strong>temporarily stealing focus</strong>: a pause overlay, a text prompt, a shop screen that must not leak d-pad presses into the game underneath. Push a masking handler when the overlay opens, pop it when it closes, and the game code under it needs no <code>if menuOpen</code> guards at all.</p>
+<p>Walk the scenario through. Your game polls in <code>playdate.update</code>. The player opens your in-game shop; you push the shop’s handler table with <code>masksPreviousHandlers = true</code>. From that frame, the shop’s <code>upButtonDown</code> fires on d-pad presses, the callbacks you did not define are swallowed rather than falling through — and, crucially, the <em>polling</em> functions keep answering honestly, so a game loop that still calls <code>buttonIsPressed</code> will see presses the handler already acted on. That is the one integration trap: the two models do not lock each other out. If you mix them, gate your polling on “is anything pushed above me,” or better, do not mix them — pause your simulation while an overlay owns the stack, and resume it on <code>pop</code>.</p>
+<p>For the core game loop, though, the sixty shipped games this book draws on poll — every one of them. Two reasons. First, determinism: a poll happens at a known point in <em>your</em> frame, so game logic sees one coherent input state; callbacks arrive whenever the OS pleases, which invites half-updated-state bugs. Second, and decisive for this book: a polling loop has one narrow place where input enters the game, and one narrow place is exactly what you need to replace a human with a script.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Missed presses at low frame rates
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Both models sample between updates. If your game dips below its target frame rate, a fast tap can go down <em>and</em> up inside one long frame — <code>buttonJustPressed</code> still catches that (the press is latched for the next update), but two taps in one frame collapse into one. If that matters (rhythm games, mash mechanics), see <code>playdate.setButtonQueueSize(size)</code>, which queues button events instead of coalescing them. At a steady 30 fps you will not need it.</p>
+</div>
+</div>
+</section>
+<section id="one-snapshot-per-frame-input.gather" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="one-snapshot-per-frame-input.gather"><span class="header-section-number">9.5</span> One snapshot per frame: Input.gather()</h2>
+<p>Here is the pattern the whole book builds on. The example’s <code>input.lua</code> maps logical names to buttons:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+input.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="input.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">pd</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="va">playdate</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- logical name -&gt; SDK button constant</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">MAP</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">up</span>    <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonUp</span><span class="op">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">down</span>  <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonDown</span><span class="op">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">left</span>  <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonLeft</span><span class="op">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">right</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonRight</span><span class="op">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">b</span>     <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonB</span><span class="op">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">a</span>     <span class="op">=</span> <span class="va">pd</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">,</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>and exposes a single function that produces <strong>one snapshot table per frame</strong>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+input.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="input.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Returns one table per frame: for each button, its level state</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- (`s.a`), its press edge (`s.aJust`), and its release edge</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- (`s.aReleased`).</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Input</span><span class="op">.</span>gather<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bot</span> <span class="op">=</span> <span class="va">Harness</span><span class="op">.</span>input<span class="op">(</span><span class="va">frame</span><span class="op">)</span>   <span class="co">-- nil for human play</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">name</span><span class="op">,</span> <span class="va">button</span> <span class="kw">in</span> <span class="fu">pairs</span><span class="op">(</span><span class="cn">MAP</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">bot</span> <span class="cf">then</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="op">=</span> <span class="va">bot</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="kw">or</span> <span class="kw">false</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">button</span><span class="op">)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- edge = level now, and not level a frame ago</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">[</span><span class="va">name</span> <span class="op">..</span> <span class="st">"Just"</span><span class="op">]</span> <span class="op">=</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="kw">and</span> <span class="kw">not</span> <span class="va">prev</span><span class="op">[</span><span class="va">name</span><span class="op">]</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">s</span><span class="op">[</span><span class="va">name</span> <span class="op">..</span> <span class="st">"Released"</span><span class="op">]</span> <span class="op">=</span> <span class="va">prev</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="kw">and</span> <span class="kw">not</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">prev</span><span class="op">[</span><span class="va">name</span><span class="op">]</span> <span class="op">=</span> <span class="va">s</span><span class="op">[</span><span class="va">name</span><span class="op">]</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">s</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Read the first line again, because it is the most important line in the chapter: <code>Harness.input(frame)</code> returns a table of synthetic button levels when a script is driving (in this book’s builds, the <code>shots.lua</code> figure script; in a shipped game, an autopilot), and <code>nil</code> when a human is playing. The bot is consulted <em>first</em>, and it feeds the <em>same fields</em> the human path fills. Everything downstream — game logic, the visualizer, the runner — consumes the snapshot and cannot tell the difference.</p>
+<p>Note what the snapshot does about edges: it derives them, <code>level now and not level last frame</code>. For a human we could have called <code>buttonJustPressed</code> instead — it computes exactly that — but the bot only supplies levels, and deriving edges in one place means scripted input gets <code>aJust</code> for free. That is the entire mechanism by which a ten-line figure script can “press” buttons.</p>
+<p>The game loop then consumes the snapshot:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>update<span class="op">()</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="va">Input</span><span class="op">.</span>gather<span class="op">(</span><span class="va">frame</span><span class="op">)</span> <span class="co">-- ONE snapshot per frame</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">Game</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">Draw</span><span class="op">.</span>frame<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Three properties make this pattern worth the small ceremony:</p>
+<ul>
+<li><strong>One read per frame.</strong> Every consumer sees the same input; no mode handler can double-handle an edge another already consumed, and no code path reads a button the frame after another path acted on it.</li>
+<li><strong>One vocabulary.</strong> Game code says <code>s.aJust</code>, not <code>playdate.buttonJustPressed(playdate.kButtonA)</code>. Rebinding controls (or supporting both B-jump and A-jump) is a one-file edit.</li>
+<li><strong>One injection point.</strong> A test script, a demo-mode attract loop, and a debugging “replay last 300 frames” tool are all the same five lines.</li>
+</ul>
+<p>This is the seam Chapter 18 drives a truck through: the harness that captured every figure in this book is nothing more than a <code>Harness.input</code> that reads from a script instead of returning <code>nil</code>.</p>
+<section id="case-study-clam-jumpers-input-table" class="level3" data-number="9.5.1">
+<h3 data-number="9.5.1" class="anchored" data-anchor-id="case-study-clam-jumpers-input-table"><span class="header-section-number">9.5.1</span> Case study: Clam Jumper’s input table</h3>
+<p>Clam Jumper — a port of the 1982 arcade game <em>Claim Jumper</em> to an ocean floor — needs both kinds of button read on the <em>same</em> button, which makes its <code>Input.gather</code> a compact tour of everything above:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- clamjumper/source/input.lua:15</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonLeft</span><span class="op">)</span> <span class="cf">then</span> <span class="va">mvx</span> <span class="op">=</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonRight</span><span class="op">)</span> <span class="cf">then</span> <span class="va">mvx</span> <span class="op">=</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonUp</span><span class="op">)</span> <span class="cf">then</span> <span class="va">mvy</span> <span class="op">=</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonDown</span><span class="op">)</span> <span class="cf">then</span> <span class="va">mvy</span> <span class="op">=</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- one axis at a time on a grid; vertical wins ties</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">mvy</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">mvx</span> <span class="op">=</span> <span class="dv">0</span> <span class="cf">end</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">mvx</span> <span class="op">=</span> <span class="va">mvx</span><span class="op">,</span> <span class="va">mvy</span> <span class="op">=</span> <span class="va">mvy</span><span class="op">,</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">ability</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>buttonJustPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">),</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">abilityHeld</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">playdate</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">),</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">crank</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>getCrankChange<span class="op">(),</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Movement is levels, collapsed to a grid direction. The species ability is <em>two fields from one button</em>: <code>ability</code> is the edge (the sea star’s clamp and the octopus’s dash trigger once), while <code>abilityHeld</code> is the level (the ray keeps gliding only while A stays down). And directly above this code — lines 11–13 of the file — sits the seam: <code>if Harness.enabled and Harness.autopilot then return Harness.autopilot() end</code>. The autopilot that smoke-tested all three species returns this same table shape, <code>ability</code> edges and all, exactly as our <code>bot</code> does.</p>
+<p>The same file holds one more pattern worth stealing: alongside the main <code>Input.gather()</code>, it exports tiny per-context helpers — <code>Input.confirm()</code> for “advance this screen” and <code>Input.menuLR()</code> for the species-select cursor. Title screens and menus want a <em>different, smaller</em> vocabulary than gameplay, and giving them their own two-line functions keeps the gameplay snapshot from growing <code>confirm</code>/<code>menuMove</code> fields that only matter two seconds per session. Note that <code>Input.confirm()</code> carries its own bot branch (<code>if Harness.enabled then return G.t &gt; 0.7 end</code> — “the bot confirms any screen after 0.7 seconds”), so even the title screen is scriptable. Every input entry point gets a seam, or the robot gets stuck at the first “PRESS A” it meets.</p>
+</section>
+</section>
+<section id="buffering-and-coyote-time" class="level2" data-number="9.6">
+<h2 data-number="9.6" class="anchored" data-anchor-id="buffering-and-coyote-time"><span class="header-section-number">9.6</span> Buffering and coyote time</h2>
+<p>Edges give you <em>correct</em> input. Two small tricks give you <em>kind</em> input. Both live in the runner strip along the bottom of the example, and both are forgiveness windows measured in frames:</p>
+<ul>
+<li><strong>Input buffering</strong>: the player presses jump a few frames <em>before</em> landing. A literal engine drops the press — the character was airborne, jumping was illegal — and the player swears they pressed the button. A buffered engine remembers the press briefly and fires it the instant landing makes it legal.</li>
+<li><strong>Coyote time</strong>: the player presses jump a few frames <em>after</em> running off a ledge, like Wile E. Coyote treading air. A literal engine says “not grounded, no jump” and the player falls, cheated. A forgiving engine keeps the jump legal for a handful of frames past the edge.</li>
+</ul>
+<p>The implementation is two countdown timers:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+game.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="game.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">FLOOR</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">222</span>  <span class="co">-- resting bottom edge, in pixels</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">GAP_L</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">230</span>  <span class="co">-- the pit in the floor</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">GAP_R</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">270</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">BUFFER</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">6</span>   <span class="co">-- frames a too-early press is remembered</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">COYOTE</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">6</span>   <span class="co">-- frames of grace after leaving a ledge</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Runner</span><span class="op">.</span>reset<span class="op">()</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="dv">20</span><span class="op">,</span> <span class="cn">FLOOR</span> <span class="co">-- y is the runner's bottom edge</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">=</span> <span class="dv">0</span>  <span class="co">-- press stored while airborne</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">=</span> <span class="dv">0</span>  <span class="co">-- grace left after walking off the ledge</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">label</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">labelT</span> <span class="op">=</span> <span class="kw">nil</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> overGap<span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">cx</span> <span class="op">=</span> <span class="va">x</span> <span class="op">+</span> <span class="dv">6</span> <span class="co">-- runner is 12 px wide; support at the centre</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">cx</span> <span class="op">&gt;</span> <span class="cn">GAP_L</span> <span class="kw">and</span> <span class="va">cx</span> <span class="op">&lt;</span> <span class="cn">GAP_R</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> jump<span class="op">(</span><span class="va">label</span><span class="op">)</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="op">-</span><span class="dv">5.5</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">label</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">labelT</span> <span class="op">=</span> <span class="va">label</span><span class="op">,</span> <span class="dv">30</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="va">label</span><span class="op">)</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Runner</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">labelT</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Runner</span><span class="op">.</span><span class="va">labelT</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">labelT</span> <span class="op">-</span> <span class="dv">1</span> <span class="cf">end</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">wasGrounded</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">&gt;=</span> <span class="cn">FLOOR</span> <span class="kw">and</span> <span class="kw">not</span> overGap<span class="op">(</span><span class="va">Runner</span><span class="op">.</span><span class="va">x</span><span class="op">)</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the jump button: act now, or remember the press</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">bJust</span> <span class="cf">then</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">wasGrounded</span> <span class="cf">then</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>            jump<span class="op">(</span><span class="st">"jump"</span><span class="op">)</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>            jump<span class="op">(</span><span class="st">"coyote jump"</span><span class="op">)</span>     <span class="co">-- just off the ledge: allow it</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>            <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">=</span> <span class="cn">BUFFER</span> <span class="co">-- too early: queue the press</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">x</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">x</span> <span class="op">+</span> <span class="dv">2</span></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">x</span> <span class="op">&gt;</span> <span class="dv">400</span> <span class="cf">then</span> <span class="va">Runner</span><span class="op">.</span><span class="va">x</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">x</span> <span class="op">-</span> <span class="dv">400</span> <span class="cf">end</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">+</span> <span class="dv">0.4</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>    <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">+</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">&gt;=</span> <span class="cn">FLOOR</span> <span class="kw">and</span> <span class="kw">not</span> overGap<span class="op">(</span><span class="va">Runner</span><span class="op">.</span><span class="va">x</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>            <span class="va">Runner</span><span class="op">.</span><span class="va">y</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="cn">FLOOR</span><span class="op">,</span> <span class="dv">0</span>    <span class="co">-- landed</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">bufferT</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>                jump<span class="op">(</span><span class="st">"buffered jump"</span><span class="op">)</span>         <span class="co">-- flush the queue</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> <span class="va">wasGrounded</span> <span class="kw">and</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>        <span class="va">Runner</span><span class="op">.</span><span class="va">coyoteT</span> <span class="op">=</span> <span class="cn">COYOTE</span> <span class="co">-- walked off (not a jump): grace</span></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span> <span class="op">&gt;</span> <span class="dv">260</span> <span class="cf">then</span> <span class="co">-- fell into the pit: back to the start</span></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>        <span class="va">Runner</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">y</span><span class="op">,</span> <span class="va">Runner</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="dv">20</span><span class="op">,</span> <span class="cn">FLOOR</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>        <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"falls"</span><span class="op">)</span></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Walk through the press branch. On a <code>bJust</code> edge: if grounded, jump — the normal case. If airborne but the coyote clock is still running, jump anyway; the clock only starts when the runner <em>walks</em> off a ledge (the <code>wasGrounded and vy &gt; 0</code> branch — a jump must not grant a second jump). Otherwise the press was genuinely too early, so it is <em>remembered</em> in <code>bufferT</code> instead of dropped, and the landing code flushes it. Six frames is a fifth of a second at 30 fps: generous enough to absorb human timing error, tight enough that nobody perceives the game acting on its own.</p>
+<p><a href="#fig-input-coyote" class="quarto-xref">Figure&nbsp;<span>9.4</span></a> catches the coyote case: the runner is over the pit, already past the ledge, and the jump still fired. <a href="#fig-input-buffer" class="quarto-xref">Figure&nbsp;<span>9.5</span></a> is the buffered press: B went down four frames before touchdown (you can find the tick on the trace), and the runner is rising again on the very frame it landed.</p>
+<div id="fig-input-coyote" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-input-coyote-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/09-input/input-coyote.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-input-coyote-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.4: Coyote time: the press came after the ledge, inside the six-frame grace window, and the jump fired anyway.
+</figcaption>
+</figure>
+</div>
+<div id="fig-input-buffer" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-input-buffer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/09-input/input-buffer.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-input-buffer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.5: A buffered jump: the press landed four frames early, was queued, and fired on touchdown.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Forgiveness must not stack into cheating
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Clear both timers whenever a jump fires (<code>jump()</code> zeroes them above). If you forget, a buffered press can fire on landing <em>and</em> leave a live coyote window, letting a pressed-once player jump twice. Symmetrically, only start the coyote clock on a <em>walk-off</em> — gating it on <code>vy &gt; 0</code> with <code>wasGrounded</code> is what stops a rising jump from re-arming it.</p>
+</div>
+</div>
+<p>How wide should the windows be? There is no universal number, but the shipped games cluster tightly, and the reasoning generalizes:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Window</th>
+<th>Frames at 30 fps</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Jump buffer</td>
+<td>4–8</td>
+<td>absorbs thumb-early error; above ~10 the game visibly acts “on its own”</td>
+</tr>
+<tr class="even">
+<td>Coyote time</td>
+<td>4–8</td>
+<td>covers the eye’s lag noticing the ledge; above ~10 jumps look airborne</td>
+</tr>
+<tr class="odd">
+<td>Hold-vs-tap split</td>
+<td>8–12</td>
+<td>below ~8, deliberate taps register as holds</td>
+</tr>
+</tbody>
+</table>
+<p>Tune them as <code>&lt;const&gt;</code> frame counts, not seconds — they are feel constants pinned to your fixed 30 fps timestep, and expressing them in frames keeps them honest when you read a trace. And if a tester says your jump “feels unresponsive” while your input code is provably correct, widen these before touching anything else; nine times out of ten the physics is fine and the forgiveness is missing.</p>
+<p>Neither trick requires the snapshot pattern, but notice how cheap they became on top of it: <code>Runner.update(s)</code> reads <code>s.bJust</code> and never touches the SDK, so the scripted thumb in <code>shots.lua</code> exercised both forgiveness windows — and the figures prove they work — without the Simulator’s keyboard ever being touched.</p>
+</section>
+<section id="the-scripted-thumb" class="level2" data-number="9.7">
+<h2 data-number="9.7" class="anchored" data-anchor-id="the-scripted-thumb"><span class="header-section-number">9.7</span> The scripted thumb</h2>
+<p>For completeness, here is the entire script that drove every figure in this chapter — the <code>Shots</code> table’s <code>script</code> function is called once per frame and returns the bot table that <code>Input.gather</code> reads:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+shots.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="shots.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Figure script: a scripted thumb. Holds and taps paint the trace,</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- then B exercises the runner: a coyote jump off the ledge at 105,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- a plain jump at 150, and a press at 174 that lands in the buffer</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- window and fires on touchdown at ~177.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="va">Shots</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">seed</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">last</span> <span class="op">=</span> <span class="dv">240</span><span class="op">,</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">shots</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"input-edge"</span><span class="op">]</span>   <span class="op">=</span> <span class="dv">50</span><span class="op">,</span>  <span class="co">-- A's press frame: lamp + blip</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"input-held"</span><span class="op">]</span>   <span class="op">=</span> <span class="dv">95</span><span class="op">,</span>  <span class="co">-- A held 26 frames: lamp, no blip</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"input-trace"</span><span class="op">]</span>  <span class="op">=</span> <span class="dv">112</span><span class="op">,</span> <span class="co">-- the full level-vs-edge timeline</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"input-coyote"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">115</span><span class="op">,</span> <span class="co">-- mid-air over the pit, label up</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="st">"input-buffer"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">182</span><span class="op">,</span> <span class="co">-- rising off the buffered press</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">script</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">{</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>            <span class="va">right</span> <span class="op">=</span> <span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">10</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">40</span><span class="op">,</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">up</span>    <span class="op">=</span> <span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">45</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">46</span><span class="op">,</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">down</span>  <span class="op">=</span> <span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">58</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">59</span><span class="op">,</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>            <span class="va">left</span>  <span class="op">=</span> <span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">63</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">64</span><span class="op">,</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>            <span class="va">a</span>     <span class="op">=</span> <span class="op">(</span><span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">50</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">51</span><span class="op">)</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>                <span class="kw">or</span> <span class="op">(</span><span class="va">f</span> <span class="op">&gt;=</span> <span class="dv">70</span> <span class="kw">and</span> <span class="va">f</span> <span class="op">&lt;=</span> <span class="dv">100</span><span class="op">),</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>            <span class="va">b</span>     <span class="op">=</span> <span class="va">f</span> <span class="op">==</span> <span class="dv">105</span> <span class="kw">or</span> <span class="va">f</span> <span class="op">==</span> <span class="dv">150</span> <span class="kw">or</span> <span class="va">f</span> <span class="op">==</span> <span class="dv">174</span><span class="op">,</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Holds are frame ranges, taps are one- or two-frame ranges, and the three B presses at 105, 150, and 174 are aimed at the runner: one inside the coyote window just past the ledge, one plain jump on flat ground, and one four frames before a landing so it buffers.</p>
+<p>Aiming a press at frame 174 only works because the whole run is <strong>deterministic</strong>: the RNG is seeded (<code>seed = 1</code>), the script is indexed by frame number rather than wall-clock time, and the runner’s physics is a pure function of its inputs. That discipline is why the harness can run the game unthrottled — hundreds of frames a second — and the presses still land on the same frames. Determinism is also what makes the counters meaningful: the code in this chapter calls <code>Harness.count("coyote jump")</code> and friends at each interesting event, and the harness folds those tallies into a heartbeat file a test script can grep.</p>
+<p>When you build your own games on this pattern (and Chapter 18 will insist), scripts like this become your regression suite: if a refactor breaks coyote time, the <code>"coyote jump"</code> counter drops to zero on the next scripted run and the failure is caught before any human notices anything. The shipped games learned to count <em>everything</em> — shots, kills, deaths, mode changes — because a missing counter in the heartbeat is the fastest bug signal there is.</p>
+</section>
+<section id="what-you-know-now" class="level2" data-number="9.8">
+<h2 data-number="9.8" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">9.8</span> What you know now</h2>
+<ul>
+<li><code>buttonIsPressed</code> reads a <strong>level</strong> (continuous actions); <code>buttonJustPressed</code>/<code>buttonJustReleased</code> read an <strong>edge</strong> (discrete actions). An edge is just “level now, not level last frame.”</li>
+<li>The six <code>playdate.kButton*</code> constants name the buttons; <code>getButtonState()</code> returns all of them as bitmasks.</li>
+<li><code>playdate.inputHandlers.push/pop</code> is a callback stack made for modal focus-stealing; the game loop itself should poll.</li>
+<li><code>Input.gather()</code> builds <strong>one snapshot table per frame</strong>, with the bot consulted first — the injection seam every shipped game uses and Chapter 18 industrializes.</li>
+<li>Jump buffering remembers early presses; coyote time honors late ones; both are little countdown timers, and both must be cleared when the jump fires.</li>
+</ul>
+<p>Next: the input device no other handheld has. The crank gets a chapter of its own — absolute position, deltas, detents, and the catalog of mappings that sixty games proved fun.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/08-wireframe.html" class="pagination-link" aria-label="Vector Graphics and Faking 3D">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/10-crank.html" class="pagination-link" aria-label="The Crank">
+        <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

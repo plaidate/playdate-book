@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>5&nbsp; Images, Imagetables, and Fonts – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/06-sprites.html" rel="next">
+<link href="../chapters/04-dither.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-dither.html">Graphics</a></li><li class="breadcrumb-item"><a href="../chapters/05-images.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#two-ways-to-make-an-image" id="toc-two-ways-to-make-an-image" class="nav-link active" data-scroll-target="#two-ways-to-make-an-image"><span class="header-section-number">5.1</span> Two ways to make an image</a></li>
+  <li><a href="#drawing-into-an-image-pushcontext" id="toc-drawing-into-an-image-pushcontext" class="nav-link" data-scroll-target="#drawing-into-an-image-pushcontext"><span class="header-section-number">5.2</span> Drawing into an image: pushContext</a></li>
+  <li><a href="#stamping-draw-flips-scaled-rotated" id="toc-stamping-draw-flips-scaled-rotated" class="nav-link" data-scroll-target="#stamping-draw-flips-scaled-rotated"><span class="header-section-number">5.3</span> Stamping: draw, flips, scaled, rotated</a></li>
+  <li><a href="#imagetables-and-the-animation-loop" id="toc-imagetables-and-the-animation-loop" class="nav-link" data-scroll-target="#imagetables-and-the-animation-loop"><span class="header-section-number">5.4</span> Imagetables and the animation loop</a></li>
+  <li><a href="#draw-modes-one-image-many-inkings" id="toc-draw-modes-one-image-many-inkings" class="nav-link" data-scroll-target="#draw-modes-one-image-many-inkings"><span class="header-section-number">5.5</span> Draw modes: one image, many inkings</a></li>
+  <li><a href="#text-as-images-and-fonts" id="toc-text-as-images-and-fonts" class="nav-link" data-scroll-target="#text-as-images-and-fonts"><span class="header-section-number">5.6</span> Text as images, and fonts</a></li>
+  <li><a href="#tilemaps-many-stamps-one-object" id="toc-tilemaps-many-stamps-one-object" class="nav-link" data-scroll-target="#tilemaps-many-stamps-one-object"><span class="header-section-number">5.7</span> Tilemaps: many stamps, one object</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">5.8</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-dither.html">Graphics</a></li><li class="breadcrumb-item"><a href="../chapters/05-images.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-images" class="quarto-section-identifier"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a> drew straight onto the screen, one primitive at a time. That is fine when a shape costs a handful of calls, but a detailed creature redrawn from thirty primitives every frame is money spent thirty times on the same picture. The fix is the <code>playdate.graphics.image</code>: draw the picture <em>once</em>, keep it, and stamp it wherever you need it. Images are also the unit of animation (imagetables), of text effects (a string rendered to an image scales; a string on its own does not), and of whole pre-rendered worlds (1).</p>
+<p>This chapter’s example, <code>05-images</code>, ships with <strong>no image files at all</strong>. Every asset — a four-frame walking robot, a three-tile terrain set, a scalable title — is generated <em>in code at boot</em> by drawing into offscreen images with <code>pushContext</code>. That is the house specialty across the case-study games: <em>Blood and Whine</em> and <em>Fightin’ Chitin</em> have zero bitmap assets between them. You will still learn the loading path (most games use both), but generating your first assets teaches the image APIs faster than any PNG can, and it keeps this book’s examples self-contained.</p>
+<section id="two-ways-to-make-an-image" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="two-ways-to-make-an-image"><span class="header-section-number">5.1</span> Two ways to make an image</h2>
+<p><code>gfx.image.new</code> has two personalities, distinguished by their arguments:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="st">"images/hero"</span><span class="op">)</span>     <span class="co">-- load from the pdx</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="dv">32</span><span class="op">,</span> <span class="dv">32</span><span class="op">)</span>            <span class="co">-- blank 32x32</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <strong>load form</strong> takes a path relative to the bundle root, no extension: <code>pdc</code> compiles <code>source/images/hero.png</code> into <code>images/hero.pdi</code>, and this call finds it. It returns <code>nil</code> plus an error string if the file is missing — worth an <code>assert</code> in development, because a <code>nil</code> image fails later and further from the cause.</p>
+<p>The <strong>size form</strong> makes a blank image, transparent by default; an optional third argument (<code>gfx.kColorWhite</code>, <code>kColorBlack</code>, <code>kColorClear</code>) pre-fills it. A blank image is a canvas, and that is where <code>pushContext</code> comes in.</p>
+</section>
+<section id="drawing-into-an-image-pushcontext" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="drawing-into-an-image-pushcontext"><span class="header-section-number">5.2</span> Drawing into an image: pushContext</h2>
+<p><code>gfx.pushContext(img)</code> reroutes every drawing call — all of <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>, primitives, dithers, text — into <code>img</code> instead of the screen, until the matching <code>gfx.popContext()</code>. Here is the example’s walker being built, one frame per leg phase:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+gen.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="gen.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> walkerFrame<span class="op">(</span><span class="va">phase</span><span class="op">)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="dv">32</span><span class="op">,</span> <span class="dv">32</span><span class="op">)</span>   <span class="co">-- transparent</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>pushContext<span class="op">(</span><span class="va">img</span><span class="op">)</span>                <span class="co">-- draws now hit img</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- legs: two lines swinging in opposite phase</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">swing</span> <span class="op">=</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">phase</span><span class="op">)</span> <span class="op">*</span> <span class="dv">7</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setLineWidth<span class="op">(</span><span class="dv">3</span><span class="op">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawLine<span class="op">(</span><span class="dv">16</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">16</span> <span class="op">-</span> <span class="va">swing</span><span class="op">,</span> <span class="dv">31</span><span class="op">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawLine<span class="op">(</span><span class="dv">16</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">16</span> <span class="op">+</span> <span class="va">swing</span><span class="op">,</span> <span class="dv">31</span><span class="op">)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setLineWidth<span class="op">(</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- body and eye</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>fillRoundRect<span class="op">(</span><span class="dv">8</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="dv">18</span><span class="op">,</span> <span class="dv">4</span><span class="op">)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>fillCircleAtPoint<span class="op">(</span><span class="dv">19</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>fillCircleAtPoint<span class="op">(</span><span class="dv">20</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>popContext<span class="op">()</span>                    <span class="co">-- back to the screen</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">img</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Gen</span><span class="op">.</span>walker<span class="op">()</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">table</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">imagetable</span><span class="op">.</span>new<span class="op">(</span><span class="dv">4</span><span class="op">)</span> <span class="co">-- empty, 4 slots</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">4</span> <span class="cf">do</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">phase</span> <span class="op">=</span> <span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">/</span> <span class="dv">4</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">*</span> <span class="va">math.pi</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">table</span><span class="op">:</span>setImage<span class="op">(</span><span class="va">i</span><span class="op">,</span> walkerFrame<span class="op">(</span><span class="va">phase</span><span class="op">))</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">table</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Everything between push and pop is ordinary Chapter 4 drawing; the only new idea is that the “screen” is 32 pixels wide and belongs to us. Draw state (color, dither, draw mode) is part of the pushed context, so leaks are contained — one more reason the procedural-asset games love this pattern.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Balance your contexts
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Every <code>pushContext</code> needs exactly one <code>popContext</code>, on every code path — an early <code>return</code> between them leaves all subsequent drawing silently rerouted into your image, and the screen goes dark or stale. If a generator function can bail, pop before the return. The symptom (“the game froze but the music kept going”) looks nothing like the cause.</p>
+</div>
+</div>
+<p>The same trick generates terrain tiles — note the tiles use <code>gray</code>-style dither fills from <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>, so the terrain inherits the book’s palette:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+gen.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="gen.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> tile<span class="op">(</span><span class="va">fn</span><span class="op">)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="dv">16</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>pushContext<span class="op">(</span><span class="va">img</span><span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    fn<span class="op">()</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>popContext<span class="op">()</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">img</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Gen</span><span class="op">.</span>tiles<span class="op">()</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">t</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">imagetable</span><span class="op">.</span>new<span class="op">(</span><span class="dv">3</span><span class="op">)</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">t</span><span class="op">:</span>setImage<span class="op">(</span><span class="dv">1</span><span class="op">,</span> tile<span class="op">(</span><span class="kw">function</span><span class="op">()</span> <span class="kw">end</span><span class="op">))</span>          <span class="co">-- sky: white</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">t</span><span class="op">:</span>setImage<span class="op">(</span><span class="dv">2</span><span class="op">,</span> tile<span class="op">(</span><span class="kw">function</span><span class="op">()</span>                <span class="co">-- grass</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setDitherPattern<span class="op">(</span><span class="dv">0.75</span><span class="op">,</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span><span class="va">kDitherTypeBayer4x4</span><span class="op">)</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="dv">16</span><span class="op">)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">))</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">t</span><span class="op">:</span>setImage<span class="op">(</span><span class="dv">3</span><span class="op">,</span> tile<span class="op">(</span><span class="kw">function</span><span class="op">()</span>                <span class="co">-- dirt</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setDitherPattern<span class="op">(</span><span class="dv">0.4</span><span class="op">,</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span><span class="va">kDitherTypeBayer8x8</span><span class="op">)</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="dv">16</span><span class="op">)</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">))</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">t</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Case study: a fully procedural tileset
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <em>Tiles</em> engine (<code>tiles/core/tmap.lua:32</code>) defines every tile type as a pattern fill plus a 16×16 grid of characters — <code>#</code> for black, <code>o</code> for white, <code>.</code> for skip — rendered to an image once, at definition time, inside a <code>pushContext</code>. Sixteen strings of sixteen characters in the source file <em>are</em> the artwork. Four games shipped on that tileset without a drawing tool ever being opened.</p>
+</div>
+</div>
+</section>
+<section id="stamping-draw-flips-scaled-rotated" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="stamping-draw-flips-scaled-rotated"><span class="header-section-number">5.3</span> Stamping: draw, flips, scaled, rotated</h2>
+<p>Once you have an image, <code>img:draw(x, y)</code> stamps its top-left corner at (x, y). The variants:</p>
+<ul>
+<li><code>img:draw(x, y, flip)</code> — the third argument mirrors the stamp: <code>gfx.kImageUnflipped</code>, <code>kImageFlippedX</code>, <code>kImageFlippedY</code>, <code>kImageFlippedXY</code>. A walker facing both directions is one imagetable plus a flip flag, not two tables.</li>
+<li><code>img:drawCentered(x, y)</code> and <code>img:drawAnchored(x, y, ax, ay)</code> place the image by its center or by a fractional anchor — handy when a sprite’s “position” is its feet.</li>
+<li><code>img:drawIgnoringOffset(x, y)</code> bypasses the camera offset
+<ol class="example" type="1">
+<li>for HUD elements.</li>
+</ol></li>
+<li><code>img:drawScaled(x, y, scale, [yscale])</code> and <code>img:drawRotated(x, y, angle, [scale])</code> resample the image on the way out. <code>drawRotated</code> draws <em>centered</em> on (x, y) — unlike plain <code>draw</code> — which surprises everyone once.</li>
+</ul>
+<p>The example’s main scene exercises all of them: the animated walker crosses a tilemap floor while stamped copies hang in the sky — one doubled, one spinning, one mirrored, and a title image at 3× scale:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> scene<span class="op">()</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>clear<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">tilemap</span><span class="op">:</span>draw<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">192</span><span class="op">)</span>                 <span class="co">-- one call, 75 tiles</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the animation loop picks the frame; we place it</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">walkerX</span> <span class="op">=</span> <span class="va">walkerX</span> <span class="op">+</span> <span class="dv">2</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">walkerX</span> <span class="op">&gt;</span> <span class="dv">400</span> <span class="cf">then</span> <span class="va">walkerX</span> <span class="op">=</span> <span class="op">-</span><span class="dv">32</span> <span class="cf">end</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">walkLoop</span><span class="op">:</span>draw<span class="op">(</span><span class="va">walkerX</span><span class="op">,</span> <span class="dv">160</span><span class="op">)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the same frame stamped scaled and rotated</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">tw</span> <span class="op">=</span> <span class="va">titleImg</span><span class="op">:</span>getSize<span class="op">()</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">titleImg</span><span class="op">:</span>drawScaled<span class="op">(</span><span class="dv">200</span> <span class="op">-</span> <span class="va">tw</span> <span class="op">*</span> <span class="dv">1.5</span><span class="op">,</span> <span class="dv">16</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">stampImg</span><span class="op">:</span>drawScaled<span class="op">(</span><span class="dv">40</span><span class="op">,</span> <span class="dv">84</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">stampImg</span><span class="op">:</span>drawRotated<span class="op">(</span><span class="dv">200</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="va">frame</span> <span class="op">*</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">stampImg</span><span class="op">:</span>drawRotated<span class="op">(</span><span class="dv">310</span><span class="op">,</span> <span class="dv">96</span><span class="op">,</span> <span class="op">-</span><span class="va">frame</span> <span class="op">*</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">1.5</span><span class="op">)</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">stampImg</span><span class="op">:</span>draw<span class="op">(</span><span class="dv">120</span><span class="op">,</span> <span class="dv">96</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kImageFlippedX</span><span class="op">)</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-scene-a" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scene-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/05-images/scene-a.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scene-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: The scene early in the run: the walker mid-stride, stamps scaled, rotated and flipped, the title image at 3×.
+</figcaption>
+</figure>
+</div>
+<div id="fig-scene-b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scene-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/05-images/scene-b.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scene-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.2: Twelve frames later: the loop has advanced the walk cycle and every rotated stamp has turned — same code, no per-frame asset work.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Scaling and rotation are per-call costs
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>drawScaled</code> and <code>drawRotated</code> resample every pixel, every call, every frame — a rotated stamp can cost an order of magnitude more than a plain <code>draw</code>. Fine for a few stamps; ruinous for a field of them. If an image rotates to a fixed set of angles (compass facings, clock hands), pre-render the rotations into an imagetable at boot — pay once, stamp cheap forever. The same goes for scaled text: render once into an image at final size, then <code>draw</code> it.</p>
+</div>
+</div>
+</section>
+<section id="imagetables-and-the-animation-loop" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="imagetables-and-the-animation-loop"><span class="header-section-number">5.4</span> Imagetables and the animation loop</h2>
+<p>An <strong>imagetable</strong> is an ordered collection of same-size images. From disk, <code>gfx.imagetable.new("images/walker")</code> loads a sequence exported as <code>walker-table-32-32.png</code>; frames are indexed from 1 via <code>table:getImage(i)</code>, and <code>table:getLength()</code> counts them. Built in code, the constructor takes a frame count — <code>gfx.imagetable.new(4)</code> — and <code>table:setImage(i, img)</code> fills the slots, which is exactly what <code>Gen.walker</code> did above.</p>
+<p>You could animate by indexing frames off your own clock. CoreLibs ships the standard shortcut:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>import <span class="st">"CoreLibs/animation"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">loop</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">animation</span><span class="op">.</span><span class="va">loop</span><span class="op">.</span>new<span class="op">(</span><span class="dv">100</span><span class="op">,</span> <span class="va">walkerTable</span><span class="op">,</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- later, every frame:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="va">loop</span><span class="op">:</span>draw<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>gfx.animation.loop.new(frameTime, imagetable, shouldLoop)</code> advances on <em>wall-clock milliseconds</em> (here 100 ms a frame), not on update calls, so animation speed survives frame drops. The loop’s <code>:draw(x, y)</code> stamps the current frame; <code>loop.frame</code> is readable and writable; for one-shot animations pass <code>false</code> and poll <code>loop:isValid()</code>, which goes false when the last frame has shown. The example wires it up in half a dozen lines:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">walkerTable</span> <span class="op">=</span> <span class="va">Gen</span><span class="op">.</span>walker<span class="op">()</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">walkLoop</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">animation</span><span class="op">.</span><span class="va">loop</span><span class="op">.</span>new<span class="op">(</span><span class="dv">100</span><span class="op">,</span> <span class="va">walkerTable</span><span class="op">,</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">titleImg</span> <span class="op">=</span> <span class="va">Gen</span><span class="op">.</span>title<span class="op">(</span><span class="st">"*IMAGES*"</span><span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">stampImg</span> <span class="op">=</span> <span class="va">walkerTable</span><span class="op">:</span>getImage<span class="op">(</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">tilemap</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">tilemap</span><span class="op">.</span>new<span class="op">()</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>setImageTable<span class="op">(</span><span class="va">Gen</span><span class="op">.</span>tiles<span class="op">())</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>setSize<span class="op">(</span><span class="dv">25</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="va">x</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">25</span> <span class="cf">do</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">tilemap</span><span class="op">:</span>setTileAtPosition<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span>   <span class="co">-- grass row</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">tilemap</span><span class="op">:</span>setTileAtPosition<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span>   <span class="co">-- dirt rows</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">tilemap</span><span class="op">:</span>setTileAtPosition<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Comparing <a href="#fig-scene-a" class="quarto-xref">Figure&nbsp;<span>5.1</span></a> and <a href="#fig-scene-b" class="quarto-xref">Figure&nbsp;<span>5.2</span></a>: the walker’s legs have swapped phase and it has moved on — the loop picked the frame, our code only chose <em>where</em> to stamp it.</p>
+</section>
+<section id="draw-modes-one-image-many-inkings" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="draw-modes-one-image-many-inkings"><span class="header-section-number">5.5</span> Draw modes: one image, many inkings</h2>
+<p><a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a> introduced <code>kDrawModeFillWhite</code> for knockout text. The full set applies to every image stamp, and the example’s gallery screen (B toggles it) draws the same walker frame under five modes, each cell half black so you can see both behaviors:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">MODES</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="st">"copy"</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeCopy</span> <span class="op">},</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="st">"fillWhite"</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillWhite</span> <span class="op">},</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="st">"fillBlack"</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillBlack</span> <span class="op">},</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="st">"XOR"</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeXOR</span> <span class="op">},</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="st">"inverted"</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeInverted</span> <span class="op">},</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> modesGallery<span class="op">()</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>clear<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"*setImageDrawMode*"</span><span class="op">,</span> <span class="dv">200</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span><span class="op">,</span> <span class="va">m</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="cn">MODES</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="dv">12</span> <span class="op">+</span> <span class="op">(</span><span class="va">i</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="dv">78</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- half the cell is black so both halves are visible</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="dv">60</span><span class="op">,</span> <span class="dv">64</span><span class="op">,</span> <span class="dv">32</span><span class="op">)</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="dv">60</span><span class="op">,</span> <span class="dv">64</span><span class="op">,</span> <span class="dv">64</span><span class="op">)</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="dv">2</span><span class="op">])</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">stampImg</span><span class="op">:</span>drawScaled<span class="op">(</span><span class="va">x</span> <span class="op">+</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">62</span><span class="op">,</span> <span class="dv">1.8</span><span class="op">)</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeCopy</span><span class="op">)</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">x</span> <span class="op">+</span> <span class="dv">32</span><span class="op">,</span> <span class="dv">132</span><span class="op">,</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>            <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"same image, five modes, half-black background"</span><span class="op">,</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>        <span class="dv">200</span><span class="op">,</span> <span class="dv">200</span><span class="op">,</span> <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-modes" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-modes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/05-images/modes.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-modes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.3: One image, five draw modes, against half-white, half-black cells. Copy is faithful; fillWhite/fillBlack re-ink opaque pixels; XOR and inverted react to the destination.
+</figcaption>
+</figure>
+</div>
+<p>The catalog, all values of <code>gfx.setImageDrawMode</code>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>Effect on opaque pixels</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>kDrawModeCopy</code></td>
+<td>drawn as-is (default)</td>
+</tr>
+<tr class="even">
+<td><code>kDrawModeFillWhite</code></td>
+<td>all drawn white</td>
+</tr>
+<tr class="odd">
+<td><code>kDrawModeFillBlack</code></td>
+<td>all drawn black</td>
+</tr>
+<tr class="even">
+<td><code>kDrawModeXOR</code></td>
+<td>white where image and destination differ</td>
+</tr>
+<tr class="odd">
+<td><code>kDrawModeNXOR</code></td>
+<td>white where they match</td>
+</tr>
+<tr class="even">
+<td><code>kDrawModeInverted</code></td>
+<td>image colors swapped</td>
+</tr>
+<tr class="odd">
+<td><code>kDrawModeWhiteTransparent</code></td>
+<td>white pixels skipped</td>
+</tr>
+<tr class="even">
+<td><code>kDrawModeBlackTransparent</code></td>
+<td>black pixels skipped</td>
+</tr>
+</tbody>
+</table>
+<p>Transparent pixels are never drawn in any mode. <code>FillWhite</code> and <code>FillBlack</code> earn their keep instantly — a hit-flash is one frame of your enemy drawn <code>FillWhite</code>, no second asset needed. <code>WhiteTransparent</code> rescues loaded art whose background baked in as white. And as in <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>: <strong>reset to <code>kDrawModeCopy</code></strong> when you are done; the mode applies to all subsequent images <em>and text</em>.</p>
+</section>
+<section id="text-as-images-and-fonts" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="text-as-images-and-fonts"><span class="header-section-number">5.6</span> Text as images, and fonts</h2>
+<p>The system font comes in three variants — <code>gfx.getSystemFont()</code>, plus <code>playdate.graphics.font.kVariantBold</code> and <code>kVariantItalic</code> as arguments to it — and you have already used the inline markup (<code>*bold*</code>, <code>_italic_</code>). Custom fonts are <code>.fnt</code> files: <code>local f = gfx.font.new("fonts/pixel")</code>, then <code>gfx.setFont(f)</code>, or <code>f:drawText(str, x, y)</code> directly. <code>f:getHeight()</code> and <code>f:getTextWidth(str)</code> do the measuring.</p>
+<p>What no font will do is <em>scale</em> — glyphs are bitmaps with one size. The idiom, used by the example’s title and by nearly every case-study title screen, is text-into-image:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+gen.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="gen.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Gen</span><span class="op">.</span>title<span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">w</span><span class="op">,</span> <span class="va">h</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span>getTextSize<span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="va">w</span><span class="op">,</span> <span class="va">h</span><span class="op">)</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>pushContext<span class="op">(</span><span class="va">img</span><span class="op">)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="va">text</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>popContext<span class="op">()</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">img</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><em>Molt</em> caches exactly this — note the image is built lazily, once, then stamped scaled every frame thereafter:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- molt/source/draw.lua:324</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">titleImg</span> <span class="cf">then</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">w</span><span class="op">,</span> <span class="va">h</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span>getTextSize<span class="op">(</span><span class="st">"*MOLT*"</span><span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">titleImg</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="va">w</span><span class="op">,</span> <span class="va">h</span><span class="op">)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>pushContext<span class="op">(</span><span class="va">titleImg</span><span class="op">)</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="st">"*MOLT*"</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>popContext<span class="op">()</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillWhite</span><span class="op">)</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">tw</span> <span class="op">=</span> <span class="va">titleImg</span><span class="op">:</span>getSize<span class="op">()</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">titleImg</span><span class="op">:</span>drawScaled<span class="op">(</span><span class="cn">C</span><span class="op">.</span><span class="cn">W</span> <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="va">tw</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">42</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Scaled bitmap text goes blocky, of course — 3× is chunky by design. When <em>Phosphor</em>’s vector games needed titles at any size with clean strokes, they skipped fonts entirely and shipped a stroke font: every glyph a set of polylines on a 4×6 grid, drawn with <code>drawLine</code> at whatever height the screen calls for:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- phosphor/vec/beams.lua:1</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- Phosphor core: a vector stroke font, so HUDs and titles are</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- real beam lines like the cabinets drew — scalable and</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- weightable, no raster font.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">--</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- Glyphs live on a 4x6 grid, each as one or more polylines</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- ("x,y x,y ..." strings, parsed once at load). Beams.print</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- draws at any pixel height.</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">DEFS</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cn">A</span> <span class="op">=</span> <span class="op">{</span> <span class="st">"0,6 0,2 2,0 4,2 4,6"</span><span class="op">,</span> <span class="st">"0,4 4,4"</span> <span class="op">},</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cn">B</span> <span class="op">=</span> <span class="op">{</span> <span class="st">"0,0 0,6"</span><span class="op">,</span> <span class="st">"0,0 3,0 4,1 4,2 3,3 0,3"</span><span class="op">,</span> <span class="op">...</span> <span class="op">},</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Forty glyph definitions replaced every font asset in twelve games — an extreme point on the same procedural-asset spectrum this chapter has been walking.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Missing glyphs render as error boxes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The system font lacks more characters than you might expect — the middle dot <code>·</code> and em dash <code>—</code> among them — and they render as hollow error boxes, not blanks. The circled button glyphs Ⓐ and Ⓑ <em>are</em> present and are the conventional way to write control hints. Test any punctuation you care about.</p>
+</div>
+</div>
+</section>
+<section id="tilemaps-many-stamps-one-object" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="tilemaps-many-stamps-one-object"><span class="header-section-number">5.7</span> Tilemaps: many stamps, one object</h2>
+<p>When the same small set of images tiles a grid — terrain, dungeon floors — <code>gfx.tilemap</code> packages the whole arrangement as one drawable object:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">tilemap</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">tilemap</span><span class="op">.</span>new<span class="op">()</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>setImageTable<span class="op">(</span><span class="va">Gen</span><span class="op">.</span>tiles<span class="op">())</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>setSize<span class="op">(</span><span class="dv">25</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>setTileAtPosition<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">index</span><span class="op">)</span>   <span class="co">-- 1-based cells</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="va">tilemap</span><span class="op">:</span>draw<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">192</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The example’s ground strip is 75 cells drawn by a single <code>tilemap:draw</code> call — visible along the bottom of <a href="#fig-scene-a" class="quarto-xref">Figure&nbsp;<span>5.1</span></a>. <code>getTileAtPosition</code> reads cells back, so a tilemap can double as the collision grid’s visual layer. Against making your own loop over <code>imagetable:drawImage</code>, the tilemap wins on tidiness at small sizes and performance at large ones — though 1 shows the case-study games’ preferred alternative for truly static terrain: render the whole map into <em>one big image</em> once, and stamp that.</p>
+<div id="fig-scene-c" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scene-c-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/05-images/scene-c.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scene-c-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.4: Later in the run: the walker has wrapped around, the spinning stamps sit at new angles, and the tilemap strip is unchanged — it never redraws a cell.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="what-you-know-now" class="level2" data-number="5.8">
+<h2 data-number="5.8" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">5.8</span> What you know now</h2>
+<ul>
+<li><code>gfx.image.new(path)</code> loads compiled assets; <code>gfx.image.new(w, h)</code> makes a canvas; <code>pushContext(img)</code> / <code>popContext()</code> turns all of <a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a> into an asset generator — balance them on every code path.</li>
+<li>Stamping: <code>draw</code> (with flips), <code>drawCentered</code>/<code>drawAnchored</code>, <code>drawScaled</code>, <code>drawRotated</code> (centered!) — and that scaling and rotation are per-call resampling costs to pre-render away when hot.</li>
+<li>Imagetables hold frames; <code>gfx.animation.loop</code> advances them on wall-clock time and <code>loop:draw</code> stamps the current one.</li>
+<li>The eight image draw modes, with <code>FillWhite</code>/<code>FillBlack</code> as free recolors and a mandatory reset to <code>Copy</code>.</li>
+<li>Fonts have one size; scalable text is text drawn into an image (<em>Molt</em>’s cached title), and the fully procedural endpoint is a stroke font (<em>Phosphor</em>’s beams).</li>
+<li><code>gfx.tilemap</code> draws a whole grid of imagetable cells as one object.</li>
+</ul>
+<p>Next, <a href="06-sprites.html" class="quarto-xref"><span>Chapter 6</span></a> covers the SDK’s sprite system — the retained-mode alternative to everything these last two chapters did by hand — and is honest about why the case-study games chose the hand.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/04-dither.html" class="pagination-link" aria-label="Drawing in One Bit">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/06-sprites.html" class="pagination-link" aria-label="The Sprite System">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

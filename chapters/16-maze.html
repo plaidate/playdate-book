@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>16&nbsp; Enemies, Pathfinding, and Bots – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/17-save.html" rel="next">
+<link href="../chapters/15-juice.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/14-platformer.html">Building Games</a></li><li class="breadcrumb-item"><a href="../chapters/16-maze.html"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#grid-bfs-from-first-principles" id="toc-grid-bfs-from-first-principles" class="nav-link active" data-scroll-target="#grid-bfs-from-first-principles"><span class="header-section-number">16.1</span> Grid BFS from first principles</a>
+  <ul class="collapse">
+  <li><a href="#one-field-many-queries" id="toc-one-field-many-queries" class="nav-link" data-scroll-target="#one-field-many-queries"><span class="header-section-number">16.1.1</span> One field, many queries</a></li>
+  </ul></li>
+  <li><a href="#flood-fill-connectivity-as-a-guarantee" id="toc-flood-fill-connectivity-as-a-guarantee" class="nav-link" data-scroll-target="#flood-fill-connectivity-as-a-guarantee"><span class="header-section-number">16.2</span> Flood fill: connectivity as a guarantee</a></li>
+  <li><a href="#the-sdks-pathfinder-a-for-free" id="toc-the-sdks-pathfinder-a-for-free" class="nav-link" data-scroll-target="#the-sdks-pathfinder-a-for-free"><span class="header-section-number">16.3</span> The SDK’s pathfinder: A* for free</a></li>
+  <li><a href="#cells-for-logic-pixels-for-eyes" id="toc-cells-for-logic-pixels-for-eyes" class="nav-link" data-scroll-target="#cells-for-logic-pixels-for-eyes"><span class="header-section-number">16.4</span> Cells for logic, pixels for eyes</a></li>
+  <li><a href="#steering-enemies-off-the-grid" id="toc-steering-enemies-off-the-grid" class="nav-link" data-scroll-target="#steering-enemies-off-the-grid"><span class="header-section-number">16.5</span> Steering: enemies off the grid</a></li>
+  <li><a href="#waves-and-ramps" id="toc-waves-and-ramps" class="nav-link" data-scroll-target="#waves-and-ramps"><span class="header-section-number">16.6</span> Waves and ramps</a></li>
+  <li><a href="#autopilot-design-the-same-ai-pointed-at-the-chair" id="toc-autopilot-design-the-same-ai-pointed-at-the-chair" class="nav-link" data-scroll-target="#autopilot-design-the-same-ai-pointed-at-the-chair"><span class="header-section-number">16.7</span> Autopilot design: the same AI, pointed at the chair</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">16.8</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/14-platformer.html">Building Games</a></li><li class="breadcrumb-item"><a href="../chapters/16-maze.html"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-maze" class="quarto-section-identifier"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>An enemy that walks into walls is scenery. An enemy that corners you in a dead end you chose badly is a <em>game</em>. The distance between the two is pathfinding, and this chapter covers both ways to get it on a Playdate: a hand-rolled breadth-first search you will understand down to the last table index, and the SDK’s built-in A* in <code>playdate.pathfinder</code>. Then it turns the same machinery around and points it at the player’s chair — because the autopilots that smoke-test every game in this book (and captured every figure in it) are enemies AI with the controller in their hands, and they fail in instructive ways that sixty shipped games have already paid for.</p>
+<p>The example is a maze chase. A random-but-connected maze fills the screen; a player bot vacuums pellets, plotting its route with BFS; two ghosts hunt it — one on hand-rolled BFS, one on <code>playdate.pathfinder</code>’s A* — and a moth glides <em>over</em> the walls on steering behaviors, for the enemies that don’t live on a grid. The critical feature: both ghosts <strong>draw their current plan on the maze</strong>, dots for BFS and rings for A* (<a href="#fig-maze-paths" class="quarto-xref">Figure&nbsp;<span>16.1</span></a>). Watching two pathfinders think in public teaches more than any diagram of one.</p>
+<section id="grid-bfs-from-first-principles" class="level2" data-number="16.1">
+<h2 data-number="16.1" class="anchored" data-anchor-id="grid-bfs-from-first-principles"><span class="header-section-number">16.1</span> Grid BFS from first principles</h2>
+<p>Breadth-first search answers “what is the shortest route from here to there?” on any grid where steps cost the same. It explores outward from the start in rings — all cells one step away, then two, then three — so the first time it touches the goal, it got there by a shortest path. Three ingredients:</p>
+<ul>
+<li>a <strong>queue</strong> of cells to visit, oldest first;</li>
+<li>a <strong>parent map</strong> recording, for each visited cell, which cell first reached it (this doubles as the visited set);</li>
+<li>a <strong>walk-back</strong>: once the goal is found, follow parents from goal back to start, and you have the path in reverse.</li>
+</ul>
+<p>Here is the example’s implementation, complete:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+path.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="path.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- BFS from (sc, sr) to the nearest cell where goalfn is true.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- A queue with a head index (no removals), a parent map for</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- the walk-back, and early exit on the first goal reached.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Path</span><span class="op">.</span>bfs<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">,</span> <span class="va">goalfn</span><span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="kw">function</span> key<span class="op">(</span><span class="va">c</span><span class="op">,</span> <span class="va">r</span><span class="op">)</span> <span class="cf">return</span> <span class="va">r</span> <span class="op">*</span> <span class="dv">100</span> <span class="op">+</span> <span class="va">c</span> <span class="kw">end</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">parent</span> <span class="op">=</span> <span class="op">{</span> <span class="op">[</span>key<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">)]</span> <span class="op">=</span> <span class="op">-</span><span class="dv">1</span> <span class="op">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">q</span><span class="op">,</span> <span class="va">head</span> <span class="op">=</span> <span class="op">{</span> <span class="op">{</span> <span class="va">sc</span><span class="op">,</span> <span class="va">sr</span> <span class="op">}</span> <span class="op">},</span> <span class="dv">1</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">goal</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">]</span> <span class="cf">do</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">cc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">=</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">][</span><span class="dv">1</span><span class="op">],</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">][</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">head</span> <span class="op">=</span> <span class="va">head</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> goalfn<span class="op">(</span><span class="va">cc</span><span class="op">,</span> <span class="va">cr</span><span class="op">)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">and</span> <span class="kw">not</span> <span class="op">(</span><span class="va">cc</span> <span class="op">==</span> <span class="va">sc</span> <span class="kw">and</span> <span class="va">cr</span> <span class="op">==</span> <span class="va">sr</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">goal</span> <span class="op">=</span> <span class="op">{</span> <span class="va">cc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">}</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">d</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="cn">DIRS</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">=</span> <span class="va">cc</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">cr</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">Maze</span><span class="op">.</span>isOpen<span class="op">(</span><span class="va">nc</span><span class="op">,</span> <span class="va">nr</span><span class="op">)</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> <span class="kw">not</span> <span class="va">parent</span><span class="op">[</span>key<span class="op">(</span><span class="va">nc</span><span class="op">,</span> <span class="va">nr</span><span class="op">)]</span> <span class="cf">then</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                <span class="va">parent</span><span class="op">[</span>key<span class="op">(</span><span class="va">nc</span><span class="op">,</span> <span class="va">nr</span><span class="op">)]</span> <span class="op">=</span> key<span class="op">(</span><span class="va">cc</span><span class="op">,</span> <span class="va">cr</span><span class="op">)</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                <span class="va">q</span><span class="op">[#</span><span class="va">q</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">goal</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- walk the parent chain back to build the full path</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">path</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">k</span> <span class="op">=</span> key<span class="op">(</span><span class="va">goal</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">goal</span><span class="op">[</span><span class="dv">2</span><span class="op">])</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">k</span> <span class="op">~=</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">do</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="fu">table.insert</span><span class="op">(</span><span class="va">path</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">{</span> <span class="va">k</span> <span class="op">%</span> <span class="dv">100</span><span class="op">,</span> <span class="va">k</span> <span class="op">//</span> <span class="dv">100</span> <span class="op">})</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        <span class="va">k</span> <span class="op">=</span> <span class="va">parent</span><span class="op">[</span><span class="va">k</span><span class="op">]</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">path</span>       <span class="co">-- path[1] = start, path[2] = first step</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Details that matter, in order of how often their absence has caused bugs. The queue uses a <strong>head index</strong> instead of <code>table.remove(q, 1)</code> — removing from the front of a Lua array shifts every element, turning a linear search quadratic; bumping <code>head</code> is free, and the “dead” front entries are garbage-collected with the queue. Cells are marked in <code>parent</code> <strong>when enqueued</strong>, not when visited, or the same cell enters the queue from every neighbor. And the goal test takes a <em>function</em>, so the same BFS serves “reach the player,” “reach any pellet,” or “reach any cell where X” without modification — the same pluggable-predicate move as <code>isSolid</code> in <a href="14-platformer.html" class="quarto-xref"><span>Chapter 14</span></a>.</p>
+<p>The key encoding trick is one integer per cell: <code>r * 100 + c</code> packs both coordinates into a table key that is cheap to hash and trivial to unpack (<code>% 100</code> and <code>// 100</code>). The rival AI and the smoke autopilot in <em>Clam Jumper</em> share exactly this BFS; its version returns the first step directly, unpacking as it walks back:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- clamjumper/source/util.lua:32 (Util.pathNext, abridged)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> <span class="va">goal</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- walk parents back until the step off the start tile</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">cc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">=</span> <span class="va">goal</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">goal</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">true</span> <span class="cf">do</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">p</span> <span class="op">=</span> <span class="va">parent</span><span class="op">[</span>key<span class="op">(</span><span class="va">cc</span><span class="op">,</span> <span class="va">cr</span><span class="op">)]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">p</span> <span class="op">==</span> key<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">)</span> <span class="kw">or</span> <span class="va">p</span> <span class="op">==</span> <span class="op">-</span><span class="dv">1</span> <span class="cf">then</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">cc</span> <span class="op">-</span> <span class="va">sc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">-</span> <span class="va">sr</span><span class="op">,</span> <span class="va">goal</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">goal</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">cc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">=</span> <span class="va">p</span> <span class="op">%</span> <span class="cn">COLS</span><span class="op">,</span> <span class="va">p</span> <span class="op">//</span> <span class="cn">COLS</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That is the <strong>first-step extraction</strong>: an actor re-plans every time it reaches a cell, so it only ever needs step one of the plan. Returning the whole path (as the example does) costs a little more and buys the overlay figures; in a game, return whichever your consumers need.</p>
+<section id="one-field-many-queries" class="level3" data-number="16.1.1">
+<h3 data-number="16.1.1" class="anchored" data-anchor-id="one-field-many-queries"><span class="header-section-number">16.1.1</span> One field, many queries</h3>
+<p>There is a third shape of BFS worth knowing: run it from a source with <em>no goal at all</em> and keep the whole distance table. The tiles engine does exactly this — <code>Phys.bfs</code> (<code>tiles/core/tphys.lua:104</code>) returns <code>dist[ty][tx]</code> for every reachable cell, and its header comment tells you why: “Shared by enemy chase AI and every autopilot.” Root the field at the <em>player</em> once per frame, and then any number of enemies answer their movement question with four table lookups each:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- tiles/core/tphys.lua:148</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- first step from (sx,sy) toward smaller values in a BFS</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- field rooted at the target</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Phys</span><span class="op">.</span>descend<span class="op">(</span><span class="va">dist</span><span class="op">,</span> <span class="va">sx</span><span class="op">,</span> <span class="va">sy</span><span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">best</span> <span class="op">=</span> <span class="va">dist</span><span class="op">[</span><span class="va">sy</span><span class="op">]</span> <span class="kw">and</span> <span class="va">dist</span><span class="op">[</span><span class="va">sy</span><span class="op">][</span><span class="va">sx</span><span class="op">]</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">best</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bx</span><span class="op">,</span> <span class="va">by</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">dirs</span> <span class="op">=</span> <span class="op">{</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span> <span class="op">{</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span> <span class="op">},</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">4</span> <span class="cf">do</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">nx</span><span class="op">,</span> <span class="va">ny</span> <span class="op">=</span> <span class="va">sx</span> <span class="op">+</span> <span class="va">dirs</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">1</span><span class="op">],</span> <span class="va">sy</span> <span class="op">+</span> <span class="va">dirs</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">d</span> <span class="op">=</span> <span class="va">dist</span><span class="op">[</span><span class="va">ny</span><span class="op">]</span> <span class="kw">and</span> <span class="va">dist</span><span class="op">[</span><span class="va">ny</span><span class="op">][</span><span class="va">nx</span><span class="op">]</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">d</span> <span class="kw">and</span> <span class="va">d</span> <span class="op">&lt;</span> <span class="va">best</span> <span class="cf">then</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">best</span><span class="op">,</span> <span class="va">bx</span><span class="op">,</span> <span class="va">by</span> <span class="op">=</span> <span class="va">d</span><span class="op">,</span> <span class="va">dirs</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">1</span><span class="op">],</span> <span class="va">dirs</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">bx</span><span class="op">,</span> <span class="va">by</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Chasing is “step to a neighbor with a smaller distance.” Fleeing is the same function with the comparison flipped — step to a <em>larger</em> distance and you get credible Pac-Man scatter behavior for free. One search, rooted at the target, serves ten enemies for the price of one; ten searches rooted at ten enemies is how grid AI gets expensive. When your enemy count grows past two or three, flip the search around.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>BFS is cheap enough to spam
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This maze is 25×13 = 325 cells. A full BFS touches each open cell once — a few hundred table operations, tens of microseconds on the device. The example re-plans <em>three</em> searches per cell-arrival (player and both ghosts… one of them via the C-side pathfinder) and does not register on the frame budget. Grid pathfinding earns its reputation for cost at thousands of cells with dozens of agents; at Playdate scales, re-plan freely and keep the code simple.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="flood-fill-connectivity-as-a-guarantee" class="level2" data-number="16.2">
+<h2 data-number="16.2" class="anchored" data-anchor-id="flood-fill-connectivity-as-a-guarantee"><span class="header-section-number">16.2</span> Flood fill: connectivity as a guarantee</h2>
+<p>Run BFS with no goal until the queue empties and you get a <strong>flood fill</strong>: the set of every cell reachable from the start. That turns “is this maze solvable?” from a prayer into a post-processing step — generate walls randomly, flood from the player’s corner, and <em>seal anything the flood never reached</em>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+maze.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="maze.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- flood fill from (sc, sr): which open cells are reachable?</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> floodFrom<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">seen</span> <span class="op">=</span> <span class="op">{</span> <span class="op">[</span><span class="va">sr</span> <span class="op">*</span> <span class="dv">100</span> <span class="op">+</span> <span class="va">sc</span><span class="op">]</span> <span class="op">=</span> <span class="kw">true</span> <span class="op">}</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">q</span><span class="op">,</span> <span class="va">head</span> <span class="op">=</span> <span class="op">{</span> <span class="op">{</span> <span class="va">sc</span><span class="op">,</span> <span class="va">sr</span> <span class="op">}</span> <span class="op">},</span> <span class="dv">1</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">dirs</span> <span class="op">=</span> <span class="op">{</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span> <span class="op">{</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span> <span class="op">},</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">]</span> <span class="cf">do</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">cc</span><span class="op">,</span> <span class="va">cr</span> <span class="op">=</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">][</span><span class="dv">1</span><span class="op">],</span> <span class="va">q</span><span class="op">[</span><span class="va">head</span><span class="op">][</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">head</span> <span class="op">=</span> <span class="va">head</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">d</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">dirs</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">=</span> <span class="va">cc</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">cr</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">Maze</span><span class="op">.</span>isOpen<span class="op">(</span><span class="va">nc</span><span class="op">,</span> <span class="va">nr</span><span class="op">)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> <span class="kw">not</span> <span class="va">seen</span><span class="op">[</span><span class="va">nr</span> <span class="op">*</span> <span class="dv">100</span> <span class="op">+</span> <span class="va">nc</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                <span class="va">seen</span><span class="op">[</span><span class="va">nr</span> <span class="op">*</span> <span class="dv">100</span> <span class="op">+</span> <span class="va">nc</span><span class="op">]</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                <span class="va">q</span><span class="op">[#</span><span class="va">q</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">}</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">seen</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+maze.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="maze.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Scatter walls, then SEAL any open cell the player can't</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- reach. The surviving open set is always one connected region,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- so no actor or pellet can ever be walled off.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Maze</span><span class="op">.</span>generate<span class="op">()</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">attempt</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">20</span> <span class="cf">do</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">grid</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">r</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">ROWS</span> <span class="cf">do</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">grid</span><span class="op">[</span><span class="va">r</span><span class="op">]</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">COLS</span> <span class="cf">do</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                <span class="kw">local</span> <span class="va">border</span> <span class="op">=</span> <span class="op">(</span><span class="va">r</span> <span class="op">==</span> <span class="dv">1</span> <span class="kw">or</span> <span class="va">r</span> <span class="op">==</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">ROWS</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">or</span> <span class="va">c</span> <span class="op">==</span> <span class="dv">1</span> <span class="kw">or</span> <span class="va">c</span> <span class="op">==</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">COLS</span><span class="op">)</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                <span class="va">grid</span><span class="op">[</span><span class="va">r</span><span class="op">][</span><span class="va">c</span><span class="op">]</span> <span class="op">=</span> <span class="kw">not</span> <span class="va">border</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">and</span> <span class="fu">math.random</span><span class="op">()</span> <span class="op">&gt;=</span> <span class="dv">0.24</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- force the spawn corners (and elbows) open</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">s</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">Maze</span><span class="op">.</span><span class="va">spawns</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">grid</span><span class="op">[</span><span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">]][</span><span class="va">s</span><span class="op">[</span><span class="dv">1</span><span class="op">]]</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">grid</span><span class="op">[</span><span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">]][</span><span class="va">s</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">s</span><span class="op">[</span><span class="dv">3</span><span class="op">]]</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>            <span class="va">grid</span><span class="op">[</span><span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">+</span> <span class="va">s</span><span class="op">[</span><span class="dv">4</span><span class="op">]][</span><span class="va">s</span><span class="op">[</span><span class="dv">1</span><span class="op">]]</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">seen</span> <span class="op">=</span> floodFrom<span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">r</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">ROWS</span> <span class="cf">do</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">COLS</span> <span class="cf">do</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="va">grid</span><span class="op">[</span><span class="va">r</span><span class="op">][</span><span class="va">c</span><span class="op">]</span> <span class="kw">and</span> <span class="kw">not</span> <span class="va">seen</span><span class="op">[</span><span class="va">r</span> <span class="op">*</span> <span class="dv">100</span> <span class="op">+</span> <span class="va">c</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                    <span class="va">grid</span><span class="op">[</span><span class="va">r</span><span class="op">][</span><span class="va">c</span><span class="op">]</span> <span class="op">=</span> <span class="kw">false</span>   <span class="co">-- seal it off</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>                <span class="cf">end</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">ok</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">s</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">Maze</span><span class="op">.</span><span class="va">spawns</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> <span class="va">grid</span><span class="op">[</span><span class="va">s</span><span class="op">[</span><span class="dv">2</span><span class="op">]][</span><span class="va">s</span><span class="op">[</span><span class="dv">1</span><span class="op">]]</span> <span class="cf">then</span> <span class="va">ok</span> <span class="op">=</span> <span class="kw">false</span> <span class="cf">end</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">ok</span> <span class="cf">then</span> <span class="cf">break</span> <span class="cf">end</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="va">Maze</span><span class="op">.</span>prerender<span class="op">()</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>After sealing, the open set is one connected region <em>by construction</em>: every pellet is reachable, every ghost can reach the player, and no actor can be born walled-in. <em>Clam Jumper</em> introduced this pattern (<code>clamjumper/source/maze.lua:21</code>, <code>floodFrom</code>) after its coral reefs kept generating pockets that trapped clams the player could never collect — the autopilot found the flaw, and the flood fill fixed the generator rather than patching the symptom.</p>
+</section>
+<section id="the-sdks-pathfinder-a-for-free" class="level2" data-number="16.3">
+<h2 data-number="16.3" class="anchored" data-anchor-id="the-sdks-pathfinder-a-for-free"><span class="header-section-number">16.3</span> The SDK’s pathfinder: A* for free</h2>
+<p><code>playdate.pathfinder</code> is the SDK’s graph-search module — A* running in C, which finds the same shortest paths as BFS but explores far fewer cells by using a heuristic (default: manhattan distance) to push toward the goal first. The convenience constructor maps perfectly onto tile games:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+path.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="path.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Build the SDK graph once per maze: one node per cell, walls</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- excluded via the 1/0 includedNodes array (row-major).</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Path</span><span class="op">.</span>buildGraph<span class="op">()</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">included</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">r</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">ROWS</span> <span class="cf">do</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">COLS</span> <span class="cf">do</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>            <span class="va">included</span><span class="op">[#</span><span class="va">included</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                <span class="va">Maze</span><span class="op">.</span>isOpen<span class="op">(</span><span class="va">c</span><span class="op">,</span> <span class="va">r</span><span class="op">)</span> <span class="kw">and</span> <span class="dv">1</span> <span class="kw">or</span> <span class="dv">0</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">Path</span><span class="op">.</span><span class="va">graph</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">pathfinder</span><span class="op">.</span><span class="va">graph</span><span class="op">.</span>new2DGrid<span class="op">(</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">Maze</span><span class="op">.</span><span class="cn">COLS</span><span class="op">,</span> <span class="va">Maze</span><span class="op">.</span><span class="cn">ROWS</span><span class="op">,</span> <span class="kw">false</span><span class="op">,</span> <span class="va">included</span><span class="op">)</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>new2DGrid(width, height, allowDiagonals, includedNodes)</code> builds one node per cell, numbered 1 to <code>width*height</code> in row-major order, with x, y set to the grid position. <code>includedNodes</code> is a flat array of 1s and 0s — walls get 0 and receive no connections, though the node still exists, which makes later edits easy. Two costs to know about: connection weights default to 10 for orthogonal moves and 14 for diagonal (≈ 10√2, so diagonals price honestly), and the graph is built once per maze, <em>not</em> per query.</p>
+<p>Querying it:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+path.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="path.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- A* between two cells. findPath returns pathfinder.node</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- objects carrying x, y -- convert back to our {c, r} form.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Path</span><span class="op">.</span>astar<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">,</span> <span class="va">tc</span><span class="op">,</span> <span class="va">tr</span><span class="op">)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">g</span> <span class="op">=</span> <span class="va">Path</span><span class="op">.</span><span class="va">graph</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">a</span> <span class="op">=</span> <span class="va">g</span><span class="op">:</span>nodeWithXY<span class="op">(</span><span class="va">sc</span><span class="op">,</span> <span class="va">sr</span><span class="op">)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">b</span> <span class="op">=</span> <span class="va">g</span><span class="op">:</span>nodeWithXY<span class="op">(</span><span class="va">tc</span><span class="op">,</span> <span class="va">tr</span><span class="op">)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">a</span> <span class="kw">or</span> <span class="kw">not</span> <span class="va">b</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">nodes</span> <span class="op">=</span> <span class="va">g</span><span class="op">:</span>findPath<span class="op">(</span><span class="va">a</span><span class="op">,</span> <span class="va">b</span><span class="op">)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">nodes</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">path</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span><span class="op">,</span> <span class="va">n</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">nodes</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">path</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">n</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">n</span><span class="op">.</span><span class="va">y</span> <span class="op">}</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">path</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>findPath</code> returns an array of <code>pathfinder.node</code> objects — read <code>.x</code>/<code>.y</code> straight off them — or <code>nil</code> when no path exists, and the example converts immediately back into its own <code>{c, r}</code> form so the rest of the game has exactly one path representation. The optional extras: a custom heuristic function <code>(startNode, goalNode) -&gt; estimate</code> (the default manhattan estimate needs the nodes’ x, y set, which <code>new2DGrid</code> does for you), <code>findPathToGoalAdjacentNodes</code> (stop <em>next to</em> the goal — right for melee chasers, and the only way to path to a target standing on an excluded node), an ID-flavored twin <code>findPathWithIDs</code> if you’d rather track integers than node objects, and a whole mutation API (<code>addConnections</code>, <code>removeNodeWithXY</code>, <code>node:addConnection</code> with per-edge weights) for doors that open and bridges that collapse. Weights are worth a second look even on a static map: A* prefers a longer path of lighter edges, so pricing the edges <em>into</em> a hazard tile at 30 instead of 10 gives you enemies that walk around fire — and through it when there’s no other way — without a line of new logic.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Graphs go stale
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The pathfinder graph is a <em>copy</em> of your map, and nothing keeps them in sync. Open a gate in your tile grid and the A* ghost still walks around it — or worse, a wall you added is still walkable — with no error anywhere. Rebuild the graph (or edit the affected node’s connections) in the same function that mutates the map, exactly as the example’s <code>rebuild()</code> regenerates both together. If your ghosts ignore new walls, this is why.</p>
+</div>
+</div>
+<p>So which one? <strong>BFS</strong> when you want zero dependencies, a goal-predicate (“nearest pellet”) rather than a fixed target, or the distance-field variants that answer many queries at once. <strong>The SDK pathfinder</strong> when you want weighted edges, diagonals, big maps, or C speed without writing C. In the example the ghosts’ overlays lie on top of each other most frames — on an unweighted grid the algorithms agree on length and differ only in tie-breaking, which is exactly what <a href="#fig-maze-paths" class="quarto-xref">Figure&nbsp;<span>16.1</span></a> shows.</p>
+<div id="fig-maze-paths" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-maze-paths-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/16-maze/maze-paths.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-maze-paths-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16.1: Both plans drawn at once, seconds after spawn: the BFS ghost’s dotted route and the A* ghost’s ringed route converge on the player from opposite corners.
+</figcaption>
+</figure>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+actors.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="actors.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Draw each ghost's CURRENT plan on the maze: solid dots for</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- the BFS ghost, hollow rings for the A* ghost. Watching the</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- two overlays diverge and reconverge is the whole figure.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> drawPath<span class="op">(</span><span class="va">path</span><span class="op">,</span> <span class="va">hollow</span><span class="op">)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">path</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">2</span><span class="op">,</span> <span class="op">#</span><span class="va">path</span> <span class="cf">do</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">=</span> <span class="va">Maze</span><span class="op">.</span>px<span class="op">(</span><span class="va">path</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">1</span><span class="op">],</span> <span class="va">path</span><span class="op">[</span><span class="va">i</span><span class="op">][</span><span class="dv">2</span><span class="op">])</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">hollow</span> <span class="cf">then</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>drawCircleAtPoint<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillCircleAtPoint<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The chase logic itself is symmetric — each ghost re-plans on every cell arrival, stores its full path for drawing, and takes step two (step one is the cell it is standing on):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+actors.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="actors.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> ghostNext<span class="op">(</span><span class="va">g</span><span class="op">,</span> <span class="va">useAstar</span><span class="op">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">useAstar</span> <span class="cf">then</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">g</span><span class="op">.</span><span class="va">path</span> <span class="op">=</span> <span class="va">Path</span><span class="op">.</span>astar<span class="op">(</span><span class="va">g</span><span class="op">.</span><span class="va">c</span><span class="op">,</span> <span class="va">g</span><span class="op">.</span><span class="va">r</span><span class="op">,</span> <span class="va">player</span><span class="op">.</span><span class="va">c</span><span class="op">,</span> <span class="va">player</span><span class="op">.</span><span class="va">r</span><span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">g</span><span class="op">.</span><span class="va">path</span> <span class="op">=</span> <span class="va">Path</span><span class="op">.</span>bfs<span class="op">(</span><span class="va">g</span><span class="op">.</span><span class="va">c</span><span class="op">,</span> <span class="va">g</span><span class="op">.</span><span class="va">r</span><span class="op">,</span> <span class="kw">function</span><span class="op">(</span><span class="va">c</span><span class="op">,</span> <span class="va">r</span><span class="op">)</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">c</span> <span class="op">==</span> <span class="va">player</span><span class="op">.</span><span class="va">c</span> <span class="kw">and</span> <span class="va">r</span> <span class="op">==</span> <span class="va">player</span><span class="op">.</span><span class="va">r</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span><span class="op">)</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">g</span><span class="op">.</span><span class="va">path</span> <span class="kw">and</span> <span class="va">g</span><span class="op">.</span><span class="va">path</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="cf">then</span> <span class="cf">return</span> <span class="va">g</span><span class="op">.</span><span class="va">path</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="cf">end</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">nil</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="cells-for-logic-pixels-for-eyes" class="level2" data-number="16.4">
+<h2 data-number="16.4" class="anchored" data-anchor-id="cells-for-logic-pixels-for-eyes"><span class="header-section-number">16.4</span> Cells for logic, pixels for eyes</h2>
+<p>One structural decision makes everything above simpler than it looks: actors in the example live on <em>cells</em>, not pixels. An actor is “at (c, r), heading to (nc, nr), <code>prog</code> frames into the trip”; all AI — pathfinding, pellet eating, catch detection — operates on the integer cell coordinates, and the pixel position is derived cosmetically by interpolating between the two cell centers at draw time. Decisions happen only at cell arrival, which means an actor can never be halfway into a wall, “which cell am I in?” never needs rounding rules, and catches compare two pairs of integers. The alternative — pixel-positioned actors constantly re-deriving their grid cell — works, as <a href="14-platformer.html" class="quarto-xref"><span>Chapter 14</span></a> showed for physics-driven movement, but for grid AI it reintroduces every alignment bug the grid was supposed to prevent.</p>
+<p>Speed then becomes <em>frames per cell</em>, and the pursuit dynamics fall out of one ratio: the player crosses a cell in 5 frames, the ghosts in 7. The player escapes down straightaways, the ghosts gain in corners (re-planning is free; running is not), and a two-ghost pinch is genuinely dangerous — all from two integers. Tune chase games here first; a speed ratio does more than any cleverness in the planner.</p>
+</section>
+<section id="steering-enemies-off-the-grid" class="level2" data-number="16.5">
+<h2 data-number="16.5" class="anchored" data-anchor-id="steering-enemies-off-the-grid"><span class="header-section-number">16.5</span> Steering: enemies off the grid</h2>
+<p>Not everything lives on tiles. For enemies that fly, drift, or swim, the classic <strong>steering behaviors</strong> produce organic motion from three tiny rules, each computing a desired direction and turning the actor <em>gradually</em> toward it:</p>
+<ul>
+<li><strong>seek</strong>: turn toward the target;</li>
+<li><strong>flee</strong>: seek with the vector reversed;</li>
+<li><strong>wander</strong>: add a little random jitter to the heading.</li>
+</ul>
+<p>The gradual turn — a capped radians-per-frame budget — is the entire trick. An actor that can only bend its path sweeps into curves, overshoots, and circles; it reads as alive because, like anything alive, it has momentum. The example’s moth seeks the player, spooks and flees when it gets close, and wanders throughout:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+actors.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="actors.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Steering for non-grid enemies: the moth ignores walls and</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- flies by heading. Seek = turn toward the target, capped at</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- a max turn rate; flee = seek with the vector reversed;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- wander = random jitter on top so the flight looks alive.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">MOTH_SPD</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">55</span>    <span class="co">-- px/s</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">TURN</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="dv">0.09</span>      <span class="co">-- max turn, radians per frame</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> steerMoth<span class="op">()</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">px</span><span class="op">,</span> <span class="va">py</span> <span class="op">=</span> actorPx<span class="op">(</span><span class="va">player</span><span class="op">)</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">dx</span><span class="op">,</span> <span class="va">dy</span> <span class="op">=</span> <span class="va">px</span> <span class="op">-</span> <span class="va">moth</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">py</span> <span class="op">-</span> <span class="va">moth</span><span class="op">.</span><span class="va">y</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">moth</span><span class="op">.</span><span class="va">flee</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">moth</span><span class="op">.</span><span class="va">flee</span> <span class="op">=</span> <span class="va">moth</span><span class="op">.</span><span class="va">flee</span> <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">dx</span><span class="op">,</span> <span class="va">dy</span> <span class="op">=</span> <span class="op">-</span><span class="va">dx</span><span class="op">,</span> <span class="op">-</span><span class="va">dy</span>      <span class="co">-- flee: seek, reversed</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> <span class="va">dx</span> <span class="op">*</span> <span class="va">dx</span> <span class="op">+</span> <span class="va">dy</span> <span class="op">*</span> <span class="va">dy</span> <span class="op">&lt;</span> <span class="dv">900</span> <span class="cf">then</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">moth</span><span class="op">.</span><span class="va">flee</span> <span class="op">=</span> <span class="dv">45</span>         <span class="co">-- spooked: run for 1.5s</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"spooks"</span><span class="op">)</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">want</span> <span class="op">=</span> <span class="fu">math.atan</span><span class="op">(</span><span class="va">dy</span><span class="op">,</span> <span class="va">dx</span><span class="op">)</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">diff</span> <span class="op">=</span> <span class="va">want</span> <span class="op">-</span> <span class="va">moth</span><span class="op">.</span><span class="va">h</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- wrap to [-pi, pi] so it turns the short way round</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">diff</span> <span class="op">&gt;</span> <span class="va">math.pi</span> <span class="cf">do</span> <span class="va">diff</span> <span class="op">=</span> <span class="va">diff</span> <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> <span class="va">math.pi</span> <span class="cf">end</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">diff</span> <span class="op">&lt;</span> <span class="op">-</span><span class="va">math.pi</span> <span class="cf">do</span> <span class="va">diff</span> <span class="op">=</span> <span class="va">diff</span> <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> <span class="va">math.pi</span> <span class="cf">end</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="va">diff</span> <span class="op">=</span> <span class="fu">math.max</span><span class="op">(-</span><span class="cn">TURN</span><span class="op">,</span> <span class="fu">math.min</span><span class="op">(</span><span class="cn">TURN</span><span class="op">,</span> <span class="va">diff</span><span class="op">))</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    <span class="va">moth</span><span class="op">.</span><span class="va">h</span> <span class="op">=</span> <span class="va">moth</span><span class="op">.</span><span class="va">h</span> <span class="op">+</span> <span class="va">diff</span> <span class="op">+</span> <span class="op">(</span><span class="fu">math.random</span><span class="op">()</span> <span class="op">-</span> <span class="dv">0.5</span><span class="op">)</span> <span class="op">*</span> <span class="dv">0.06</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="va">moth</span><span class="op">.</span><span class="va">x</span> <span class="op">=</span> <span class="va">moth</span><span class="op">.</span><span class="va">x</span> <span class="op">+</span> <span class="fu">math.cos</span><span class="op">(</span><span class="va">moth</span><span class="op">.</span><span class="va">h</span><span class="op">)</span> <span class="op">*</span> <span class="cn">MOTH_SPD</span> <span class="op">*</span> <span class="cn">DT</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    <span class="va">moth</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="va">moth</span><span class="op">.</span><span class="va">y</span> <span class="op">+</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">moth</span><span class="op">.</span><span class="va">h</span><span class="op">)</span> <span class="op">*</span> <span class="cn">MOTH_SPD</span> <span class="op">*</span> <span class="cn">DT</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="va">moth</span><span class="op">.</span><span class="va">x</span> <span class="op">=</span> <span class="fu">math.max</span><span class="op">(</span><span class="dv">10</span><span class="op">,</span> <span class="fu">math.min</span><span class="op">(</span><span class="dv">390</span><span class="op">,</span> <span class="va">moth</span><span class="op">.</span><span class="va">x</span><span class="op">))</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="va">moth</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="fu">math.max</span><span class="op">(</span><span class="dv">10</span><span class="op">,</span> <span class="fu">math.min</span><span class="op">(</span><span class="dv">198</span><span class="op">,</span> <span class="va">moth</span><span class="op">.</span><span class="va">y</span><span class="op">))</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The angle-wrapping loop is the classic trap: without normalizing <code>want - heading</code> into [−π, π], an actor at heading 179° chasing a target at −179° turns 358° the long way round. Every steering bug you will ever write is this bug. The shipped games use steering for their off-grid hunters — <em>Peckish</em>’s gull circles its mark before committing to a dive, and the crabs wander the wet sand between sprints — while grid logic drives anything that must respect walls.</p>
+</section>
+<section id="waves-and-ramps" class="level2" data-number="16.6">
+<h2 data-number="16.6" class="anchored" data-anchor-id="waves-and-ramps"><span class="header-section-number">16.6</span> Waves and ramps</h2>
+<p>Enemy <em>placement over time</em> is a system too, though a small one. The proven shape from the arcade-style games: spawn enemies in <strong>waves</strong> — a data table per wave holding a count, a spawn interval, and a composition (<code>{ crabs = 4, gulls = 1, every = 45 }</code> reads better than any code that computes it) — consumed by a single spawn timer that counts frames and pops the next entry. Keep three rules. Spawn <em>off-screen or far from the player</em> (the flood-fill’s reachable set doubles as a legal-spawn list; filter it by distance). Announce the wave (a one-second banner is cheap and turns raw difficulty into drama). And ramp by deriving the numbers from a wave index — never by mutating global state in place. <em>Clam Jumper</em>’s generator shows the pattern in miniature: each new reef derives its wall density as <code>C.CORAL_DENSITY + math.min(reef * 0.01, 0.1)</code> — a function of the level number, <em>capped</em>, so the ramp has a ceiling the design was actually tested at. Derive, cap, and keep the difficulty function in one place; a ramp scattered across five files cannot be tuned.</p>
+</section>
+<section id="autopilot-design-the-same-ai-pointed-at-the-chair" class="level2" data-number="16.7">
+<h2 data-number="16.7" class="anchored" data-anchor-id="autopilot-design-the-same-ai-pointed-at-the-chair"><span class="header-section-number">16.7</span> Autopilot design: the same AI, pointed at the chair</h2>
+<p>Here is this book’s recurring move: the player bot in this example is not test scaffolding bolted on afterward — it <em>is</em> an AI agent built from the chapter’s own parts (BFS to the nearest pellet), wired in through the input seam from <a href="09-input.html" class="quarto-xref"><span>Chapter 9</span></a>. Three lessons, each learned the hard way across the shipped catalog and recorded in the development guide, separate autopilots that find bugs from autopilots that <em>are</em> bugs.</p>
+<p><strong>Detect stuckness by goal progress, not movement.</strong> The obvious stuck check — “has the bot moved lately?” — fails exactly when you need it: a bot grinding along a wall, or orbiting an unreachable goal, moves constantly while achieving nothing. Track the thing that matters instead: best distance-to-goal reached, or best x attained in a runner. The example’s player does precisely this, and answers stuckness with the third lesson:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+actors.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="actors.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Goal-progress stuck detection (the PLAYDATE-GUIDE lesson):</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- movement-based checks fail for wall-followers, so track the</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- best path length seen instead. No improvement for eight</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- decisions = boxed in = take a random wander burst.</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">bestLen</span><span class="op">,</span> <span class="va">staleCount</span><span class="op">,</span> <span class="va">wander</span> <span class="op">=</span> <span class="fu">math.huge</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> playerNext<span class="op">()</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">wander</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">wander</span> <span class="op">=</span> <span class="va">wander</span> <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">opts</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">d</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">({</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span> <span class="op">{</span> <span class="op">-</span><span class="dv">1</span><span class="op">,</span> <span class="dv">0</span> <span class="op">},</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span> <span class="op">},</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span> <span class="op">}</span> <span class="op">})</span> <span class="cf">do</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">=</span> <span class="va">player</span><span class="op">.</span><span class="va">c</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="va">player</span><span class="op">.</span><span class="va">r</span> <span class="op">+</span> <span class="va">d</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">Maze</span><span class="op">.</span>isOpen<span class="op">(</span><span class="va">nc</span><span class="op">,</span> <span class="va">nr</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                <span class="va">opts</span><span class="op">[#</span><span class="va">opts</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">nc</span><span class="op">,</span> <span class="va">nr</span> <span class="op">}</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">opts</span><span class="op">[</span><span class="fu">math.random</span><span class="op">(#</span><span class="va">opts</span><span class="op">)]</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">path</span> <span class="op">=</span> <span class="va">Path</span><span class="op">.</span>bfs<span class="op">(</span><span class="va">player</span><span class="op">.</span><span class="va">c</span><span class="op">,</span> <span class="va">player</span><span class="op">.</span><span class="va">r</span><span class="op">,</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">function</span><span class="op">(</span><span class="va">c</span><span class="op">,</span> <span class="va">r</span><span class="op">)</span> <span class="cf">return</span> <span class="va">pellets</span><span class="op">[</span><span class="va">r</span><span class="op">][</span><span class="va">c</span><span class="op">]</span> <span class="kw">end</span><span class="op">)</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">path</span> <span class="cf">then</span> <span class="cf">return</span> <span class="kw">nil</span> <span class="cf">end</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">#</span><span class="va">path</span> <span class="op">&lt;</span> <span class="va">bestLen</span> <span class="cf">then</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        <span class="va">bestLen</span><span class="op">,</span> <span class="va">staleCount</span> <span class="op">=</span> <span class="op">#</span><span class="va">path</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>        <span class="va">staleCount</span> <span class="op">=</span> <span class="va">staleCount</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">staleCount</span> <span class="op">&gt;=</span> <span class="dv">8</span> <span class="cf">then</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>            <span class="va">staleCount</span><span class="op">,</span> <span class="va">bestLen</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="fu">math.huge</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>            <span class="va">wander</span> <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>            <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"wanders"</span><span class="op">)</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">path</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>When boxed in, wander-burst.</strong> A stuck bot that keeps re-running the same deterministic logic re-makes the same decision forever. A short burst of <em>random</em> moves — three cells here — breaks the symmetry cheaply, after which normal planning resumes from somewhere new. (Grinding at the wall harder is what the deterministic logic already tried.)</p>
+<p><strong>Give area weapons a stand-off distance.</strong> Not applicable to pellets, but paid for in blood elsewhere: an autopilot with a bomb, a lob, or any area-of-effect tool must check for friendlies (itself included) inside the blast radius and hold distance from its own target, or it will clear the level by dying — a lesson the shipped bombers and lobbers each paid for before the stand-off check became house style.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Bots find design flaws, not just crashes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The point of an autopilot is to exercise code paths, not to win. But when a competent bot <em>cannot</em> reach the objective, ask whether a human could: the goal-progress metric that keeps the bot honest also measures your level design. Unreachable collectibles and doors-without-keys in the shipped games were found exactly this way — the bot’s failure was the bug report.</p>
+</div>
+</div>
+<p><a href="#fig-maze-chase" class="quarto-xref">Figure&nbsp;<span>16.2</span></a> shows the full system mid-game: pellets thinned out where the player has swept, both ghost plans converging, the moth mid-flutter, and the HUD counting catches.</p>
+<div id="fig-maze-chase" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-maze-chase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/16-maze/maze-chase.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-maze-chase-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16.2: The chase in progress: the player bot (white, outlined) mid-sweep, both path overlays live, the moth gliding over walls at the top.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="what-you-know-now" class="level2" data-number="16.8">
+<h2 data-number="16.8" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">16.8</span> What you know now</h2>
+<ul>
+<li>BFS is a head-indexed queue, a parent map keyed by packed coordinates, and a walk-back; mark cells when <em>enqueued</em>, and take a goal predicate instead of a fixed target.</li>
+<li>First-step extraction (<code>clamjumper</code>’s <code>Util.pathNext</code>) is all a re-planning actor needs; full paths are for overlays and debug draws.</li>
+<li>Flood fill turns maze generation into a guarantee: seal what the flood can’t reach and the open set is connected by construction.</li>
+<li><code>playdate.pathfinder.graph.new2DGrid</code> builds a C-speed A* grid (weights 10/14, <code>includedNodes</code> for walls); <code>findPath</code> returns nodes or <code>nil</code> — and the graph must be rebuilt when the map changes.</li>
+<li>Steering is seek/flee/wander under a capped turn rate; normalize your angle differences or turn the long way round.</li>
+<li>Autopilots are enemy AI pointed at the chair: measure goal progress (not movement), wander-burst when boxed in, and give area weapons a stand-off distance.</li>
+<li>Both halves scale up in Part VII: the shared BFS field — one flood fill that every chaser reads — in <a href="22-tiles.html" class="quarto-xref"><span>Chapter 22</span></a>, and the autopilot as a written <em>walkthrough</em> rather than a steering behavior in <a href="25-lore.html" class="quarto-xref"><span>Chapter 25</span></a>.</li>
+</ul>
+<p>The ghosts can hunt, the bot can play all night — but the moment the Playdate powers down, everything it earned evaporates. <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a> makes progress stick.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/15-juice.html" class="pagination-link" aria-label="Game Feel: Timers, Animators, and Effects">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/17-save.html" class="pagination-link" aria-label="Saving and Data">
+        <span class="nav-page-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

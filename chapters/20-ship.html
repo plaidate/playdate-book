@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>20&nbsp; Polish and Release – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/21-phosphor.html" rel="next">
+<link href="../chapters/19-perf.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/18-harness.html">Shipping</a></li><li class="breadcrumb-item"><a href="../chapters/20-ship.html"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#crankshot" id="toc-crankshot" class="nav-link active" data-scroll-target="#crankshot"><span class="header-section-number">20.1</span> Crankshot</a></li>
+  <li><a href="#pdxinfo-the-full-reference" id="toc-pdxinfo-the-full-reference" class="nav-link" data-scroll-target="#pdxinfo-the-full-reference"><span class="header-section-number">20.2</span> pdxinfo: the full reference</a></li>
+  <li><a href="#launcher-assets-the-face-of-the-game" id="toc-launcher-assets-the-face-of-the-game" class="nav-link" data-scroll-target="#launcher-assets-the-face-of-the-game"><span class="header-section-number">20.3</span> Launcher assets: the face of the game</a>
+  <ul class="collapse">
+  <li><a href="#cards-from-screenshots" id="toc-cards-from-screenshots" class="nav-link" data-scroll-target="#cards-from-screenshots"><span class="header-section-number">20.3.1</span> Cards from screenshots</a></li>
+  </ul></li>
+  <li><a href="#the-staging-trap" id="toc-the-staging-trap" class="nav-link" data-scroll-target="#the-staging-trap"><span class="header-section-number">20.4</span> The staging trap</a></li>
+  <li><a href="#the-repository-face" id="toc-the-repository-face" class="nav-link" data-scroll-target="#the-repository-face"><span class="header-section-number">20.5</span> The repository face</a></li>
+  <li><a href="#releasing-it" id="toc-releasing-it" class="nav-link" data-scroll-target="#releasing-it"><span class="header-section-number">20.6</span> Releasing it</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">20.7</span> What you know now</a></li>
+  <li><a href="#go-make-something" id="toc-go-make-something" class="nav-link" data-scroll-target="#go-make-something"><span class="header-section-number">20.8</span> Go make something</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/18-harness.html">Shipping</a></li><li class="breadcrumb-item"><a href="../chapters/20-ship.html"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-ship" class="quarto-section-identifier"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A game is not finished when it plays well on your desk. It is finished when a stranger can find it in their launcher — with a card, an icon, and a loading screen — play it, quit, come back to their high score, and install your next update without your help. The distance between “works in the Simulator” and that sentence is this chapter: the <code>pdxinfo</code> metadata in full, the launcher art the system expects, a packaging trap that has silently eaten more release builds than any bug in this book, and the release channels themselves.</p>
+<p>The example is <strong>Crankshot</strong>, and it is different in kind from every example before it: not a demonstration but a complete, small, <em>finished</em> game. Crank-aimed turret, descending targets, three modes, synth sound, a saved high score, a difficulty ramp — and a full launcher asset set in its source tree. It is around three hundred lines, and every pattern in it is one you already own: the <a href="03-modes.html" class="quarto-xref"><span>Chapter 3</span></a> skeleton, the <a href="10-crank.html" class="quarto-xref"><span>Chapter 10</span></a> 1:1 aim, <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a> voices, the <a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a> datastore, the <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a> bot that captured this chapter’s figures. This is the book’s stack, assembled.</p>
+<section id="crankshot" class="level2" data-number="20.1">
+<h2 data-number="20.1" class="anchored" data-anchor-id="crankshot"><span class="header-section-number">20.1</span> Crankshot</h2>
+<p>The game in one breath: targets fall from the sky; your turret sits at the bottom center; the crank is the barrel, one-to-one; A fires; every target destroyed scores a point and makes the sky meaner; one target touching the ground ends the run. <a href="#fig-crankshot-title" class="quarto-xref">Figure&nbsp;<span>20.1</span></a>, <a href="#fig-crankshot-play" class="quarto-xref">Figure&nbsp;<span>20.2</span></a>, and <a href="#fig-crankshot-over" class="quarto-xref">Figure&nbsp;<span>20.3</span></a> are the whole arc, played by the figure bot.</p>
+<div id="fig-crankshot-title" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crankshot-title-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/20-ship/crankshot-title.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crankshot-title-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20.1: Crankshot’s title: name, record, blinking prompt — and the turret already answering the crank.
+</figcaption>
+</figure>
+</div>
+<p>The mode machine, state table, and input snapshot are the <a href="03-modes.html" class="quarto-xref"><span>Chapter 3</span></a> skeleton so exactly that they need no re-explanation — that was the point of building the skeleton once. Three pieces deserve a look. The aim mapping folds the crank’s absolute position into a clamped arc, so the barrel is the crank but can never point at the floor:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+game.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="game.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- 1:1 aim: crank angle -&gt; barrel angle, clamped to the sky.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- getCrankPosition() reads 0 at straight up, so pos 0 aims the</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- barrel straight up and cranking right leans it right.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Game</span><span class="op">.</span>aim<span class="op">(</span><span class="va">pos</span><span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">a</span> <span class="op">=</span> <span class="op">((</span><span class="va">pos</span> <span class="op">+</span> <span class="dv">180</span><span class="op">)</span> <span class="op">%</span> <span class="dv">360</span><span class="op">)</span> <span class="op">-</span> <span class="dv">180</span>    <span class="co">-- -180..180, 0 = up</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">a</span> <span class="op">&gt;</span> <span class="cn">C</span><span class="op">.</span><span class="cn">ARC</span> <span class="cf">then</span> <span class="va">a</span> <span class="op">=</span> <span class="cn">C</span><span class="op">.</span><span class="cn">ARC</span> <span class="cf">end</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">a</span> <span class="op">&lt;</span> <span class="op">-</span><span class="cn">C</span><span class="op">.</span><span class="cn">ARC</span> <span class="cf">then</span> <span class="va">a</span> <span class="op">=</span> <span class="op">-</span><span class="cn">C</span><span class="op">.</span><span class="cn">ARC</span> <span class="cf">end</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">G</span><span class="op">.</span><span class="va">aim</span> <span class="op">=</span> <span class="va">a</span> <span class="op">-</span> <span class="dv">90</span>                         <span class="co">-- degrees; -90 = up</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The difficulty ramp is two functions of the score — fall speed climbs, the spawn gap shrinks toward a floor. Every knob lives in <code>config.lua</code> where playtesting can reach it:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+game.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="game.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The whole difficulty curve: two numbers that move with score.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> fallSpeed<span class="op">()</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="cn">C</span><span class="op">.</span><span class="cn">FALL</span> <span class="op">+</span> <span class="cn">C</span><span class="op">.</span><span class="cn">FALL_RAMP</span> <span class="op">*</span> <span class="cn">G</span><span class="op">.</span><span class="va">score</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> spawnGap<span class="op">()</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">math.max</span><span class="op">(</span><span class="cn">C</span><span class="op">.</span><span class="cn">SPAWN_MIN</span><span class="op">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cn">C</span><span class="op">.</span><span class="cn">SPAWN_T</span> <span class="op">-</span> <span class="cn">C</span><span class="op">.</span><span class="cn">SPAWN_RAMP</span> <span class="op">*</span> <span class="cn">G</span><span class="op">.</span><span class="va">score</span><span class="op">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>And the ending does the two things every finished game’s ending must do: freeze the field the player died on, and settle up with the record <em>immediately</em>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+game.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="game.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Game over is where the datastore earns its keep: persist the</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- record the moment it is set, not "sometime later".</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Game</span><span class="op">.</span>over<span class="op">()</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="cn">G</span><span class="op">.</span><span class="va">score</span> <span class="op">&gt;</span> <span class="cn">G</span><span class="op">.</span><span class="va">best</span> <span class="cf">then</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="cn">G</span><span class="op">.</span><span class="va">best</span> <span class="op">=</span> <span class="cn">G</span><span class="op">.</span><span class="va">score</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cn">G</span><span class="op">.</span><span class="va">newBest</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">Save</span><span class="op">.</span>store<span class="op">()</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">Sfx</span><span class="op">.</span>best<span class="op">()</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">Sfx</span><span class="op">.</span>lose<span class="op">()</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="cn">G</span><span class="op">.</span>setMode<span class="op">(</span><span class="st">"gameover"</span><span class="op">)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"gameovers"</span><span class="op">)</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+save.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="save.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The whole persistence layer (Chapter 17): one record.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">Save</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Save</span><span class="op">.</span>load<span class="op">()</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">d</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">datastore</span><span class="op">.</span>read<span class="op">(</span><span class="st">"save"</span><span class="op">)</span> <span class="kw">or</span> <span class="op">{}</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cn">G</span><span class="op">.</span><span class="va">best</span> <span class="op">=</span> <span class="va">d</span><span class="op">.</span><span class="va">best</span> <span class="kw">or</span> <span class="dv">0</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Save</span><span class="op">.</span>store<span class="op">()</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">playdate</span><span class="op">.</span><span class="va">datastore</span><span class="op">.</span>write<span class="op">({</span> <span class="va">best</span> <span class="op">=</span> <span class="cn">G</span><span class="op">.</span><span class="va">best</span> <span class="op">},</span> <span class="st">"save"</span><span class="op">)</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"saves"</span><span class="op">)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fig-crankshot-play" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crankshot-play-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/20-ship/crankshot-play.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crankshot-play-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20.2: Mid-run under the figure bot: barrel tracking the lowest target, rounds in flight, the ramp already climbing.
+</figcaption>
+</figure>
+</div>
+<div id="fig-crankshot-over" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-crankshot-over-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/20-ship/crankshot-over.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-crankshot-over-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20.3: The run ends. The field is frozen under the panel, and the record was written to the datastore the moment it broke.
+</figcaption>
+</figure>
+</div>
+<p>Worth noting: the figure bot for this chapter aims a <em>crank</em>. The input snapshot carries the crank position as a plain number, so the bot supplies its own — it computes the angle to the lowest target and hands it over, no hardware involved:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+input.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="input.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- One snapshot per frame. `pos` is the absolute crank position</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- in degrees; the bot supplies its own, which is all it takes</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- to automate a crank game.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="va">Input</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">pd</span> <span class="at">&lt;const&gt;</span> <span class="op">=</span> <span class="va">playdate</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Input</span><span class="op">.</span>gather<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bot</span> <span class="op">=</span> <span class="va">Harness</span><span class="op">.</span>input<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">bot</span> <span class="cf">then</span> <span class="cf">return</span> <span class="va">bot</span> <span class="cf">end</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">pos</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>getCrankPosition<span class="op">(),</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">fire</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>buttonIsPressed<span class="op">(</span><span class="va">pd</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">),</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">confirm</span> <span class="op">=</span> <span class="va">pd</span><span class="op">.</span>buttonJustPressed<span class="op">(</span><span class="va">pd</span><span class="op">.</span><span class="va">kButtonA</span><span class="op">),</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>At frame 260 the script stops firing and lets a target land, because the game-over screen has to earn its figure too — the verify-both-endings rule from <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>, applied to a book.</p>
+</section>
+<section id="pdxinfo-the-full-reference" class="level2" data-number="20.2">
+<h2 data-number="20.2" class="anchored" data-anchor-id="pdxinfo-the-full-reference"><span class="header-section-number">20.2</span> pdxinfo: the full reference</h2>
+<p>You have carried a minimal <code>pdxinfo</code> since <a href="01-hello.html" class="quarto-xref"><span>Chapter 1</span></a>. Here is Crankshot’s — one line away from minimal, and that line is this chapter’s hinge:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+pdxinfo
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="pdxinfo"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="va">name</span><span class="op">=</span><span class="va">Crankshot</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="va">author</span><span class="op">=</span><span class="va">Simon</span> <span class="va">Frost</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="va">description</span><span class="op">=</span><span class="va">Aim</span> <span class="va">with</span> <span class="va">the</span> <span class="va">crank</span><span class="op">,</span> <span class="va">hold</span> <span class="va">the</span> <span class="va">line</span><span class="op">.</span> <span class="va">The</span> book<span class="st">'s finished game.</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="er">bundleID</span><span class="op">=</span><span class="va">com</span><span class="op">.</span><span class="va">sdwfrost</span><span class="op">.</span><span class="va">book</span><span class="dv">.20</span><span class="er">ship</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="va">version</span><span class="op">=</span><span class="dv">1.0</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="va">buildNumber</span><span class="op">=</span><span class="dv">1</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="va">imagePath</span><span class="op">=</span><span class="va">launcher</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The complete field list, per the SDK’s game metadata reference (<em>Inside Playdate</em>, §4.6). Everything in it is readable at runtime via <code>playdate.metadata</code>:</p>
+<dl>
+<dt><code>name</code>, <code>author</code>, <code>description</code></dt>
+<dd>
+What players see — in the launcher, and on your game’s page when it is distributed. Write them like store copy, because they are.
+</dd>
+<dt><code>bundleID</code></dt>
+<dd>
+Reverse-DNS unique identifier: <code>com.yourname.gamename</code>. Fixed at first release, forever — it names the save-data directory (<a href="01-hello.html" class="quarto-xref"><span>Chapter 1</span></a>), so changing it orphans every player’s progress.
+</dd>
+<dt><code>version</code></dt>
+<dd>
+A display string for humans. The system attaches no meaning to it; <code>1.0</code>, <code>1.0.1</code>, <code>2.0-halloween</code> are all fine.
+</dd>
+<dt><code>buildNumber</code></dt>
+<dd>
+A monotonically increasing integer, and the field that does the work. <strong>For sideloaded games it is required</strong>: a device decides whether a newer upload exists by comparing buildNumbers, full stop. Ship an update with the same number and every player’s device will politely conclude there is nothing new. Bump it for <em>every</em> public build — wire it to your release script or CI so forgetting is impossible.
+</dd>
+<dt><code>imagePath</code></dt>
+<dd>
+The directory (relative to <code>source/</code>) holding your launcher art — the subject of the next section. Without it your game shows the system default card, which reads as “unfinished” from across the room.
+</dd>
+<dt><code>launchSoundPath</code></dt>
+<dd>
+Optional; a short audio file played during the launch animation.
+</dd>
+<dt><code>contentWarning</code>, <code>contentWarning2</code></dt>
+<dd>
+Optional; shown on first launch with a back-out option. The second screen only appears if the first is set. Keep them short — long strings truncate with an ellipsis.
+</dd>
+</dl>
+</section>
+<section id="launcher-assets-the-face-of-the-game" class="level2" data-number="20.3">
+<h2 data-number="20.3" class="anchored" data-anchor-id="launcher-assets-the-face-of-the-game"><span class="header-section-number">20.3</span> Launcher assets: the face of the game</h2>
+<p>The Playdate launcher displays games as animated cards, and the system composes that presentation from a directory of images named by convention — the directory <code>imagePath</code> points at. Crankshot uses <code>imagePath=launcher</code> and ships four files, which is the practical minimum for a finished game (the SDK’s own floor is card + icon + launchImage):</p>
+<ul>
+<li><strong><code>card.png</code> — 350x155.</strong> The game’s face in the launcher, and also what your game’s page on <code>play.date</code> shows for sideloads. This image <em>is</em> your game to a browsing player.</li>
+<li><strong><code>card-pressed.png</code> — 350x155.</strong> Shown while A is held on your card. An inverted copy of the card is the house style — cheap and reads as tactile feedback.</li>
+<li><strong><code>icon.png</code> — 32x32.</strong> The list-view icon. At this size, a monogram or one bold silhouette; detail becomes noise.</li>
+<li><strong><code>launchImage.png</code> — 400x240, opaque.</strong> Displayed while your game loads. No transparency — the SDK requires a full frame. A title-screen lookalike makes the load feel instant.</li>
+</ul>
+<p>Beyond the minimum, the same directory can hold <code>card-highlighted/</code> and <code>icon-highlighted/</code> folders of numbered frames (with an optional <code>animation.txt</code> declaring <code>loopCount</code>, <code>frames</code>, and <code>introFrames</code>) that animate while your game is selected; <code>launchImages/</code> for a 20 fps launch transition; <code>launchImage-list.png</code> for list view; and <code>wrapping-pattern.png</code>, a 400x240 tile used as the wrapping paper on newly downloaded, not-yet-unwrapped games. All are worth doing for a Catalog release; none gate a sideload.</p>
+<p><a href="#fig-card" class="quarto-xref">Figure&nbsp;<span>20.4</span></a> is Crankshot’s card at 2x — three targets, the shot about to land, and the name in a title band.</p>
+<div id="fig-card" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-card-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/20-ship/card-2x.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-card-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20.4: Crankshot’s <code>card.png</code> (shown at 2x). 350x155, 1-bit, drawn by an ImageMagick script — the launcher’s card view and the play.date sideload page both show exactly this image.
+</figcaption>
+</figure>
+</div>
+<section id="cards-from-screenshots" class="level3" data-number="20.3.1">
+<h3 data-number="20.3.1" class="anchored" data-anchor-id="cards-from-screenshots"><span class="header-section-number">20.3.1</span> Cards from screenshots</h3>
+<p>You do not need to be an artist to have a credible card, because you already have gameplay screenshots — <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a> generates them on every smoke run. The launcher draws the card into the rect <code>(25, 43, 350, 155)</code> of the 400x240 screen, so a 350x155 crop of a screenshot <em>at offset +25+43</em> is pixel-perfect 1-bit with no resampling — the exact geometry, straight from the system. The shipped games’ release tooling automates this; the heart of it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># launcher_assets.sh (the card, from a smoke-run screenshot)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">magick</span> <span class="st">"</span><span class="va">$SHOT</span><span class="st">"</span> <span class="at">-filter</span> point <span class="at">-resize</span> 400x240! <span class="dt">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-crop</span> 350x155+25+43 +repage <span class="dt">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">\(</span> <span class="at">-background</span> black <span class="at">-fill</span> white <span class="at">-font</span> Helvetica-Bold <span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">-size</span> 330x24 <span class="at">-gravity</span> center label:<span class="st">"</span><span class="va">$NAME</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">-background</span> black <span class="at">-extent</span> 350x34 <span class="dt">\)</span> <span class="dt">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-gravity</span> south <span class="at">-composite</span> <span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-threshold</span> 50% <span class="at">-alpha</span> off <span class="dt">\</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-stroke</span> white <span class="at">-strokewidth</span> 1 <span class="at">-fill</span> none <span class="dt">\</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">-draw</span> <span class="st">"rectangle 0,0 349,154"</span> <span class="at">-draw</span> <span class="st">"line 0,120 349,120"</span> <span class="dt">\</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">$L</span><span class="st">/card.png"</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="ex">magick</span> <span class="st">"</span><span class="va">$L</span><span class="st">/card.png"</span> <span class="at">-negate</span> <span class="st">"</span><span class="va">$L</span><span class="st">/card-pressed.png"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Crop, composite a black title band with the game’s name, force to 1-bit, and invert for the pressed variant. That script produced the cards for nineteen released games in an afternoon. Crankshot’s art is a hand-tuned cousin of the same approach — committed as PNGs in <code>source/launcher/</code> so the project builds anywhere. Two rules regardless of tooling: <strong>threshold to pure 1-bit</strong> (<code>-threshold 50% -alpha off</code>) so the launcher never dithers your art for you, and keep the name legible at arm’s length — the card competes in a grid of other cards.</p>
+</section>
+</section>
+<section id="the-staging-trap" class="level2" data-number="20.4">
+<h2 data-number="20.4" class="anchored" data-anchor-id="the-staging-trap"><span class="header-section-number">20.4</span> The staging trap</h2>
+<p>Now the trap. Real projects do not run <code>pdc</code> on their working source; a Makefile stages files into a build directory first — injecting the smoke flag (<a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>), stripping READMEs, merging a shared core. And the single most dangerous line a Playdate Makefile can contain is this one:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> source/<span class="pp">*</span> build/staging/source/    <span class="co"># the trap</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An unadorned <code>cp</code> <strong>silently skips directories</strong>. <code>launcher/</code> never arrives in staging. And here is why it eats release builds: <em>nothing fails</em>. <code>pdc</code> does not require launcher art, so it builds a perfectly valid pdx with no card; the Simulator runs it; every test passes; you ship it — and players get the default gray card and a load screen of nothing. The plaidate release sweep hit exactly this: the games looked done for weeks while every staged build was quietly cardless.</p>
+<p>The fix is one flag, and this book’s own <code>example.mk</code> carries the warning label:</p>
+<pre class="make"><code># example.mk
+# Staging always uses `cp -r`: a bare `cp source/*` silently skips
+# subdirectories and pdc will happily build the incomplete bundle.
+cp -r source/* $(STAGE)/book/source/</code></pre>
+<p>And because the failure is silent, the <em>verification</em> must be explicit. <code>pdc</code> compiles every PNG to a <code>.pdi</code>, launcher art included, so look inside the built bundle:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ls build/20-ship/book/CrankshotBook.pdx/launcher/</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">card-pressed.pdi</span>  card.pdi  icon.pdi  launchImage.pdi</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Four <code>.pdi</code> files, or your card did not ship. Put that <code>ls</code> in your release script next to the buildNumber bump — the two silent failures of Playdate shipping, both made loud.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The pre-flight checklist
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Before any public build: <code>buildNumber</code> bumped (or the update will not install); <code>ls</code> the pdx for <code>launcher/*.pdi</code> (or the card did not stage); run the release — not smoke — build once, because release is the configuration you never otherwise play; and delete your local save data and boot it cold, because your dev machine has a save file and your players do not (<a href="17-save.html" class="quarto-xref"><span>Chapter 17</span></a>’s first-launch path gets exactly one chance to matter).</p>
+</div>
+</div>
+</section>
+<section id="the-repository-face" class="level2" data-number="20.5">
+<h2 data-number="20.5" class="anchored" data-anchor-id="the-repository-face"><span class="header-section-number">20.5</span> The repository face</h2>
+<p>The launcher card is the game’s face on the device; the README is its face everywhere else. The convention across the shipped games is minimal and has survived nineteen releases: a <code>README.md</code> with the one-line pitch, the controls (crank first — it is why people bought the console), the rules in a paragraph, and a <code>screenshot.png</code> taken from a smoke run — the same screenshots your harness already makes, one more reason the pipeline pays rent. Keep both out of the pdx: they are repository files, not game assets, so the staging Makefile strips them (or simply never copies them — another point for explicit staging over <code>cp</code> of everything).</p>
+</section>
+<section id="releasing-it" class="level2" data-number="20.6">
+<h2 data-number="20.6" class="anchored" data-anchor-id="releasing-it"><span class="header-section-number">20.6</span> Releasing it</h2>
+<p>Three channels, in increasing order of ceremony:</p>
+<p><strong>Sideload.</strong> Zip the release pdx, upload it at <code>play.date/account/sideload</code>, and it appears in the owner’s launcher via Wi-Fi like any purchased game — your <code>card.png</code> fronting it on the sideload page. This is how you ship to yourself, playtesters, and friends, and it is where <code>buildNumber</code> discipline bites first: the device checks it to offer updates.</p>
+<p><strong>itch.io.</strong> The de facto storefront for independent Playdate games. Upload the zipped pdx, mark it as Playdate, reuse your card art at itch’s cover size, and put your smoke-run screenshots on the page. Players sideload what they download, so everything above still applies.</p>
+<p><strong>Catalog.</strong> Panic’s curated store, with real revenue and real review. A Catalog submission is a pitch: the full launcher asset set including the animated cards, polished metadata, and a game that survives a stranger playing it cold. Everything in this chapter is the entry fee.</p>
+<p>Whatever the channel, version with discipline: <code>version</code> is marketing, <code>buildNumber</code> is law. A release script that bumps the number, rebuilds clean, verifies the launcher <code>.pdi</code>s, zips, and tags the commit turns shipping from a ritual into a command.</p>
+</section>
+<section id="what-you-know-now" class="level2" data-number="20.7">
+<h2 data-number="20.7" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">20.7</span> What you know now</h2>
+<ul>
+<li><code>pdxinfo</code> in full: <code>name</code>/<code>author</code>/<code>description</code> are store copy; <code>bundleID</code> is permanent identity (and the save directory); <code>version</code> is for humans; <strong><code>buildNumber</code> must increase or sideload updates never install</strong>; <code>imagePath</code> names the launcher art directory; <code>launchSoundPath</code> and the two <code>contentWarning</code> fields are optional.</li>
+<li>Launcher assets: <code>card.png</code> 350x155 (also the play.date sideload face), <code>card-pressed.png</code>, <code>icon.png</code> 32x32, <code>launchImage.png</code> 400x240 opaque — plus optional highlighted/launch animations and wrapping paper. The launcher draws cards at rect (25, 43, 350, 155), so a +25+43 crop of a 400x240 screenshot is a pixel-perfect card base.</li>
+<li>The staging trap: bare <code>cp</code> skips <code>launcher/</code> and <code>pdc</code> builds green without it. Always <code>cp -r</code>; always verify with <code>ls</code> that the pdx contains <code>launcher/*.pdi</code>.</li>
+<li>A repository face: README with pitch, controls, rules, and a smoke-run <code>screenshot.png</code> — stripped from the pdx.</li>
+<li>Channels: sideload (play.date, buildNumber-gated updates), itch.io (zipped pdx, same rules), Catalog (the full asset set and a game that survives strangers).</li>
+<li>Crankshot: ~300 lines, every one of them a pattern from this book — the skeleton, the crank, the synths, the save, the bot, the card. A complete game is not big; it is <em>finished</em>.</li>
+</ul>
+</section>
+<section id="go-make-something" class="level2" data-number="20.8">
+<h2 data-number="20.8" class="anchored" data-anchor-id="go-make-something"><span class="header-section-number">20.8</span> Go make something</h2>
+<p>That is the whole path: from a bouncing “Hello, Playdate!” to a game with a card in the launcher — drawing in one bit, reading a crank, making noise, saving progress, testing itself while you sleep, holding 30 frames on real hardware, and shipping with its buildNumber bumped. None of the sixty-odd games behind this book started as more than one strange idea and an empty <code>main.lua</code>; the machine on your desk is small, sharp, joyful, and completely knowable, and you now know it.</p>
+<p>What follows is not more path. Part VII reads five of the fleet’s shipped engines end to end — vectors, the grid, volume, shade, story state over a world — and every one of them is nothing but the habits of the last twenty chapters, compounded until a package of sixteen games weighs a thousand lines. Read them when you want to see how far this scales. Or don’t, and start now. Pick the idea that has been circling while you read. Make the folder. Write the update loop.</p>
+<p>Crank on.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/19-perf.html" class="pagination-link" aria-label="Performance and the Device">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/21-phosphor.html" class="pagination-link" aria-label="Inside Phosphor: A Vector Engine">
+        <span class="nav-page-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

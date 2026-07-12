@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>13&nbsp; Music: Sequences and Step Clocks – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/14-platformer.html" rel="next">
+<link href="../chapters/12-sfx.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/12-sfx.html">Sound</a></li><li class="breadcrumb-item"><a href="../chapters/13-music.html"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-song-is-data-the-engine-is-a-choice" id="toc-the-song-is-data-the-engine-is-a-choice" class="nav-link active" data-scroll-target="#the-song-is-data-the-engine-is-a-choice"><span class="header-section-number">13.1</span> The song is data; the engine is a choice</a></li>
+  <li><a href="#engine-one-the-sdk-sequencer" id="toc-engine-one-the-sdk-sequencer" class="nav-link" data-scroll-target="#engine-one-the-sdk-sequencer"><span class="header-section-number">13.2</span> Engine one: the SDK sequencer</a></li>
+  <li><a href="#engine-two-the-step-clock" id="toc-engine-two-the-step-clock" class="nav-link" data-scroll-target="#engine-two-the-step-clock"><span class="header-section-number">13.3</span> Engine two: the step clock</a></li>
+  <li><a href="#why-the-games-chose-the-clock" id="toc-why-the-games-chose-the-clock" class="nav-link" data-scroll-target="#why-the-games-chose-the-clock"><span class="header-section-number">13.4</span> Why the games chose the clock</a></li>
+  <li><a href="#growing-the-pattern-sections-count-ins-arrangement" id="toc-growing-the-pattern-sections-count-ins-arrangement" class="nav-link" data-scroll-target="#growing-the-pattern-sections-count-ins-arrangement"><span class="header-section-number">13.5</span> Growing the pattern: sections, count-ins, arrangement</a></li>
+  <li><a href="#files-fileplayer-and-sampleplayer" id="toc-files-fileplayer-and-sampleplayer" class="nav-link" data-scroll-target="#files-fileplayer-and-sampleplayer"><span class="header-section-number">13.6</span> Files: fileplayer and sampleplayer</a></li>
+  <li><a href="#ducking-the-music-channel-earns-its-keep" id="toc-ducking-the-music-channel-earns-its-keep" class="nav-link" data-scroll-target="#ducking-the-music-channel-earns-its-keep"><span class="header-section-number">13.7</span> Ducking: the music channel earns its keep</a></li>
+  <li><a href="#the-ab-switch" id="toc-the-ab-switch" class="nav-link" data-scroll-target="#the-ab-switch"><span class="header-section-number">13.8</span> The A/B switch</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">13.9</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/12-sfx.html">Sound</a></li><li class="breadcrumb-item"><a href="../chapters/13-music.html"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-music" class="quarto-section-identifier"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>There are two respectable ways to make music on a Playdate in Lua, and this chapter builds the same song with both so you can judge them side by side. The first is the SDK’s own sequencer — <code>playdate.sound.sequence</code>, <code>track</code>, and <code>instrument</code> — a small MIDI engine that runs your notes on the audio thread, independent of your frame rate. The second is the house method from the shipped games: a <strong>clock-driven step sequencer</strong>, about twenty lines of Lua that accumulate elapsed time and fire a step every time the clock crosses a boundary. It cannot drift, and — decisively for rhythm gameplay — your game logic can read the <em>same clock</em> the music plays from.</p>
+<p>The example is one eight-bar chiptune loop (a I–V–vi–IV progression in C: bass, lead, and a noise hi-hat) implemented twice over the same data. The B button swaps engines mid-run; the screen shows a 16-column step grid with a moving playhead and the name of the engine currently playing, which is how a silent page gets to show you music: the figures capture the grid under each engine. The A button plays a gameplay blip and <em>ducks</em> the music under it, using the channel-volume knob from <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a>.</p>
+<p>Along the way: why <code>setTempo</code> does not take BPM, why note lengths are in steps rather than seconds, when to stream audio from disk with <code>fileplayer</code> instead of synthesizing it, and why “accumulate and fire” beats every timer-based scheduling scheme you will be tempted to write.</p>
+<section id="the-song-is-data-the-engine-is-a-choice" class="level2" data-number="13.1">
+<h2 data-number="13.1" class="anchored" data-anchor-id="the-song-is-data-the-engine-is-a-choice"><span class="header-section-number">13.1</span> The song is data; the engine is a choice</h2>
+<p>Both engines in this chapter read the same three arrays. That is the design decision to copy even if you copy nothing else: keep the <em>music</em> out of the <em>machinery</em>, and you can swap machinery freely. The song itself is small enough to read in one screen:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+song.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="song.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">Song</span><span class="op">.</span><span class="va">bpm</span> <span class="op">=</span> <span class="dv">112</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">Song</span><span class="op">.</span><span class="va">steps</span> <span class="op">=</span> <span class="dv">128</span>         <span class="co">-- 8 bars x 16 sixteenth-note steps</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- Two bars per chord: C, G, Am, F. Roots are MIDI notes; tones are</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- the chord notes the lead melody is allowed to sing.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="va">Song</span><span class="op">.</span><span class="va">chords</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"C"</span><span class="op">,</span>  <span class="va">root</span> <span class="op">=</span> <span class="dv">36</span><span class="op">,</span> <span class="va">tones</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">72</span><span class="op">,</span> <span class="dv">76</span><span class="op">,</span> <span class="dv">79</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"G"</span><span class="op">,</span>  <span class="va">root</span> <span class="op">=</span> <span class="dv">43</span><span class="op">,</span> <span class="va">tones</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">71</span><span class="op">,</span> <span class="dv">74</span><span class="op">,</span> <span class="dv">79</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"Am"</span><span class="op">,</span> <span class="va">root</span> <span class="op">=</span> <span class="dv">45</span><span class="op">,</span> <span class="va">tones</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">69</span><span class="op">,</span> <span class="dv">72</span><span class="op">,</span> <span class="dv">76</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"F"</span><span class="op">,</span>  <span class="va">root</span> <span class="op">=</span> <span class="dv">41</span><span class="op">,</span> <span class="va">tones</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">69</span><span class="op">,</span> <span class="dv">72</span><span class="op">,</span> <span class="dv">77</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">-- One bar of rhythm per voice. Bass plays the root (1) or the</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">-- fifth (5); the lead indexes into the chord tones (0 = rest);</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">-- the hat clicks on the offbeats.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">BASS</span>   <span class="op">=</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">5</span><span class="op">,</span><span class="dv">0</span> <span class="op">}</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">LEAD_A</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">2</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span> <span class="op">}</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">LEAD_B</span> <span class="op">=</span> <span class="op">{</span> <span class="dv">3</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">3</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">0</span> <span class="op">}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">HAT</span>    <span class="op">=</span> <span class="op">{</span> <span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Eight bars, two per chord, at 112 BPM. The compact per-bar patterns expand into flat 128-entry arrays of MIDI note numbers, with 0 meaning rest — the same convention <code>playNote</code> itself uses for note-off (<a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a>):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+song.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="song.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Expand the compact patterns into flat per-step arrays of MIDI</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- notes (0 = rest). Everything downstream reads only these.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">,</span> <span class="va">Song</span><span class="op">.</span><span class="va">lead</span><span class="op">,</span> <span class="va">Song</span><span class="op">.</span><span class="va">hat</span> <span class="op">=</span> <span class="op">{},</span> <span class="op">{},</span> <span class="op">{}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="va">bar</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">7</span> <span class="cf">do</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ch</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">chords</span><span class="op">[</span><span class="va">bar</span> <span class="op">//</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">leadPat</span> <span class="op">=</span> <span class="op">(</span><span class="va">bar</span> <span class="op">%</span> <span class="dv">2</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="kw">and</span> <span class="cn">LEAD_A</span> <span class="kw">or</span> <span class="cn">LEAD_B</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">16</span> <span class="cf">do</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="va">bar</span> <span class="op">*</span> <span class="dv">16</span> <span class="op">+</span> <span class="va">i</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">b</span> <span class="op">=</span> <span class="cn">BASS</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">b</span> <span class="op">==</span> <span class="dv">0</span> <span class="cf">then</span> <span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="va">b</span> <span class="op">==</span> <span class="dv">5</span> <span class="cf">then</span> <span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">=</span> <span class="va">ch</span><span class="op">.</span><span class="va">root</span> <span class="op">+</span> <span class="dv">7</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">=</span> <span class="va">ch</span><span class="op">.</span><span class="va">root</span> <span class="cf">end</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">l</span> <span class="op">=</span> <span class="va">leadPat</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">Song</span><span class="op">.</span><span class="va">lead</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">=</span> <span class="op">(</span><span class="va">l</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="kw">and</span> <span class="dv">0</span> <span class="kw">or</span> <span class="va">ch</span><span class="op">.</span><span class="va">tones</span><span class="op">[</span><span class="va">l</span><span class="op">]</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">Song</span><span class="op">.</span><span class="va">hat</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">=</span> <span class="op">(</span><span class="cn">HAT</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="kw">and</span> <span class="dv">0</span> <span class="kw">or</span> <span class="dv">96</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Song</span><span class="op">.</span>stepsPerSecond<span class="op">()</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">Song</span><span class="op">.</span><span class="va">bpm</span> <span class="op">/</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">4</span>   <span class="co">-- four sixteenths per beat</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Song</span><span class="op">.</span>midihz<span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">440</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">^</span> <span class="op">((</span><span class="va">n</span> <span class="op">-</span> <span class="dv">69</span><span class="op">)</span> <span class="op">/</span> <span class="dv">12</span><span class="op">)</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Two helpers at the bottom do the unit conversions both engines need. <code>Song.stepsPerSecond()</code> turns BPM into steps per second: at 112 BPM there are 112 quarter notes a minute, each holding four sixteenth-note steps, so <code>112 / 60 * 4 ≈ 7.47</code> steps per second. And <code>Song.midihz(n)</code> is the standard equal-temperament formula — 440 Hz at MIDI note 69 (A4), doubling every 12 semitones. Molt carries the identical function under the name <code>f</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- molt/source/music.lua:12-14</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> f<span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="co">-- midi -&gt; Hz</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">440</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">^</span> <span class="op">((</span><span class="va">n</span> <span class="op">-</span> <span class="dv">69</span><span class="op">)</span> <span class="op">/</span> <span class="dv">12</span><span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Storing MIDI numbers instead of Hertz keeps the data musical — you can see that 72 → 76 → 79 is a C-major arpeggio — and postpones floating point until the moment a note is actually played.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Keeping the loop tasteful
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The progression is I–V–vi–IV (C, G, Am, F), pop music’s load-bearing wall. The craft is mostly restraint: the bass plays roots on the beat and offers the fifth only at the bar’s tail; the lead sings chord tones exclusively, alternating two shapes so bars feel related but not identical; the hat clicks the offbeats. Melody built from chord tones cannot hit a wrong note — a useful property when the composer is a programmer.</p>
+</div>
+</div>
+</section>
+<section id="engine-one-the-sdk-sequencer" class="level2" data-number="13.2">
+<h2 data-number="13.2" class="anchored" data-anchor-id="engine-one-the-sdk-sequencer"><span class="header-section-number">13.2</span> Engine one: the SDK sequencer</h2>
+<p>The SDK way is <em>declarative</em>: you load every note into tracks up front, wire each track to an instrument, and hand the whole thing to the audio engine, which plays it in its own thread regardless of what your update loop does. Four objects cooperate:</p>
+<ul>
+<li><strong><code>playdate.sound.sequence</code></strong> — the song: tempo, loop range, and a list of tracks. <code>sequence.new([midi_path])</code> creates one, or loads an entire MIDI file if you pass a path.</li>
+<li><strong><code>playdate.sound.track</code></strong> — one part (our bass, lead, hat): a list of note events plus the instrument that renders them.</li>
+<li><strong><code>playdate.sound.instrument</code></strong> — a wrapper that turns one or more synths into a polyphonic, sequencer-driven voice.</li>
+<li><strong><code>playdate.sound.synth</code></strong> — exactly the synths of <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a>.</li>
+</ul>
+<p>Here is the whole build, three tracks from the three arrays:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+seqengine.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="seqengine.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">SeqEngine</span><span class="op">.</span>build<span class="op">(</span><span class="va">channel</span><span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">seq</span> <span class="op">=</span> <span class="va">snd</span><span class="op">.</span><span class="va">sequence</span><span class="op">.</span>new<span class="op">()</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">seq</span><span class="op">:</span>setTempo<span class="op">(</span><span class="va">Song</span><span class="op">.</span>stepsPerSecond<span class="op">())</span>  <span class="co">-- steps/sec, NOT bpm</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="kw">function</span> addTrack<span class="op">(</span><span class="va">notes</span><span class="op">,</span> <span class="va">synth</span><span class="op">,</span> <span class="va">vel</span><span class="op">,</span> <span class="fu">len</span><span class="op">)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">track</span> <span class="op">=</span> <span class="va">snd</span><span class="op">.</span><span class="va">track</span><span class="op">.</span>new<span class="op">()</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">inst</span> <span class="op">=</span> <span class="va">snd</span><span class="op">.</span><span class="va">instrument</span><span class="op">.</span>new<span class="op">(</span><span class="va">synth</span><span class="op">)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">channel</span><span class="op">:</span>addSource<span class="op">(</span><span class="va">inst</span><span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">track</span><span class="op">:</span>setInstrument<span class="op">(</span><span class="va">inst</span><span class="op">)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">s</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">Song</span><span class="op">.</span><span class="va">steps</span> <span class="cf">do</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">notes</span><span class="op">[</span><span class="va">s</span><span class="op">]</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                <span class="va">track</span><span class="op">:</span>addNote<span class="op">(</span><span class="va">s</span><span class="op">,</span> <span class="va">notes</span><span class="op">[</span><span class="va">s</span><span class="op">],</span> <span class="fu">len</span><span class="op">,</span> <span class="va">vel</span><span class="op">)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">seq</span><span class="op">:</span>addTrack<span class="op">(</span><span class="va">track</span><span class="op">)</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    addTrack<span class="op">(</span><span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">,</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        patch<span class="op">(</span><span class="va">snd</span><span class="op">.</span><span class="va">kWaveTriangle</span><span class="op">,</span> <span class="dv">.002</span><span class="op">,</span> <span class="dv">.06</span><span class="op">,</span> <span class="dv">.6</span><span class="op">,</span> <span class="dv">.10</span><span class="op">,</span> <span class="dv">.50</span><span class="op">),</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    addTrack<span class="op">(</span><span class="va">Song</span><span class="op">.</span><span class="va">lead</span><span class="op">,</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        patch<span class="op">(</span><span class="va">snd</span><span class="op">.</span><span class="va">kWaveSquare</span><span class="op">,</span> <span class="dv">.002</span><span class="op">,</span> <span class="dv">.05</span><span class="op">,</span> <span class="dv">.5</span><span class="op">,</span> <span class="dv">.08</span><span class="op">,</span> <span class="dv">.28</span><span class="op">),</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    addTrack<span class="op">(</span><span class="va">Song</span><span class="op">.</span><span class="va">hat</span><span class="op">,</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        patch<span class="op">(</span><span class="va">snd</span><span class="op">.</span><span class="va">kWaveNoise</span><span class="op">,</span> <span class="dv">.001</span><span class="op">,</span> <span class="dv">.03</span><span class="op">,</span> <span class="dv">.1</span><span class="op">,</span> <span class="dv">.03</span><span class="op">,</span> <span class="dv">.50</span><span class="op">),</span> <span class="dv">0.5</span><span class="op">,</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">seq</span><span class="op">:</span>setLoops<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="va">Song</span><span class="op">.</span><span class="va">steps</span><span class="op">,</span> <span class="dv">0</span><span class="op">)</span>   <span class="co">-- loopCount 0 = forever</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span> <span class="op">=</span> <span class="va">seq</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Reading it from the inside out:</p>
+<p><code>track:addNote(step, note, length, [velocity])</code> places one note. <code>step</code> is the sequencer position, <strong>1-based</strong> — the SDK’s own Drum Machine example writes step 1 as the downbeat and loops <code>setLoops(1, 16, 0)</code>, and this example follows it. <code>note</code> is a MIDI note number or a name string like <code>"Db3"</code>. <code>length</code> is <strong>in steps, not seconds</strong> — it follows the sequence’s tempo, so the same track data played faster produces proportionally shorter notes, exactly as sheet music would. <code>velocity</code> (default 1.0) scales the note’s volume; the hat uses 0.5 to sit behind the melody. For bulk work there is <code>track:setNotes(list)</code>, which takes an array of <code>{step=, note=, length=, velocity=}</code> tables, and <code>getNotes()</code> / <code>clearNotes()</code> / <code>removeNote(step, note)</code> to edit live.</p>
+<p><code>instrument.new(synth)</code> wraps a synth as a track’s voice, set with <code>track:setInstrument(inst)</code>. An instrument with one synth is monophonic, like the synth itself; give it several voices with <code>instrument:addVoice(synth)</code> and the sequencer distributes overlapping notes among them — that is how a chord track works (<code>track:getPolyphony()</code> reports what a track needs). <code>addVoice</code> can also map voices to key ranges — <code>addVoice(v, note, rangeend, transpose)</code> assigns a synth to the notes <code>note..rangeend</code>, the foundation of drum-kit instruments where each MIDI note is a different drum. Instruments are sound <em>sources</em>, so <code>channel:addSource(inst)</code> routes them like any synth; ours join the <code>music</code> channel so they can be ducked later. Our melody keeps single-voice instruments honest by never overlapping more than one lead note (the tightest spacing is two steps, matching the note length of 2).</p>
+<p><code>seq:setTempo(Song.stepsPerSecond())</code> sets playback speed, and <code>seq:setLoops(1, Song.steps, 0)</code> loops the full range forever (a <code>loopCount</code> of 0 means endless; there is also the one-argument form <code>setLoops(loopCount)</code> covering the whole sequence).</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>setTempo wants steps per second, not BPM
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>sequence:setTempo(stepsPerSecond)</code> is the most common trap in this API. It takes <em>steps per second</em>, where a step is whatever your grid resolution is — sixteenth notes here. Feed it <code>112</code> intending 112 BPM with sixteenth-note steps and your song plays fifteen times too fast: a comedy on first listen, a head-scratcher in a smoke log. Keep one conversion function (<code>Song.stepsPerSecond</code>) and call it everywhere a tempo is needed; both engines here share it.</p>
+</div>
+</div>
+<p>Running the sequence is trivial, and the example wraps the few calls it needs behind a start/stop/step interface so the two engines are interchangeable from the main loop’s point of view:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+seqengine.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="seqengine.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">SeqEngine</span><span class="op">.</span>start<span class="op">()</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span><span class="op">:</span>play<span class="op">()</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">SeqEngine</span><span class="op">.</span>stop<span class="op">()</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span><span class="op">:</span>stop<span class="op">()</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span><span class="op">:</span>allNotesOff<span class="op">()</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Current step, wrapped into the loop: always 1..Song.steps.</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">SeqEngine</span><span class="op">.</span>step<span class="op">()</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> <span class="fu">math.floor</span><span class="op">(</span><span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span><span class="op">:</span>getCurrentStep<span class="op">())</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span><span class="va">s</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">%</span> <span class="va">Song</span><span class="op">.</span><span class="va">steps</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">SeqEngine</span><span class="op">.</span>seek<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">SeqEngine</span><span class="op">.</span><span class="va">seq</span><span class="op">:</span>goToStep<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>sequence:play([finishCallback])</code> starts it (the callback fires when a non-looping sequence ends or <code>stop()</code> is called); <code>sequence:stop()</code> halts it, and <code>allNotesOff()</code> silences anything still ringing — without it, a note whose release tail is long can hang over the engine swap. <code>getCurrentStep()</code> reports the playhead for the grid display, and <code>goToStep(step, [play])</code> moves it; the figure script uses that to pin the playhead to a known step so the captured figures are deterministic. <code>isPlaying()</code>, <code>getLength()</code>, and <code>getTrackAtIndex(n)</code> round out the inspection API.</p>
+<p><a href="#fig-music-sequence" class="quarto-xref">Figure&nbsp;<span>13.1</span></a> shows the result: the grid mid-loop under the SDK engine, playhead boxed on the current column.</p>
+<div id="fig-music-sequence" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-music-sequence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/13-music/music-sequence.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-music-sequence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13.1: The sequence engine, seeked to step 27 for the shot: bar 2 of the C chord, playhead on column 11.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>MIDI files, for free
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>playdate.sound.sequence.new("song.mid")</code> loads a standard MIDI file into tracks, which you then bind to instruments — <code>getTrackCount()</code> tells you how many parts arrived, and <code>getTrackAtIndex(n):setInstrument(...)</code> gives each one a voice. If your music comes from a composer with a DAW rather than from tables in code, this is your import path: they ship <code>.mid</code> files, you ship synth patches. One of the case-study projects, midiplayer, is an entire General-MIDI-flavored player grown from exactly this entry point.</p>
+</div>
+</div>
+</section>
+<section id="engine-two-the-step-clock" class="level2" data-number="13.3">
+<h2 data-number="13.3" class="anchored" data-anchor-id="engine-two-the-step-clock"><span class="header-section-number">13.3</span> Engine two: the step clock</h2>
+<p>The SDK sequencer is fine machinery, and the games do not use it. Every shipped game with music — molt’s six zone motifs, Weasel War Dance’s entire rhythm-game score, Squirl, AnEnemy — runs the same twenty-line pattern instead: a <strong>step clock</strong>. Accumulate elapsed game time; divide by the step duration; fire every step boundary you have crossed. Weasel War Dance’s conductor is the canonical statement, and its update is nine lines:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- weaselwardance/source/conductor.lua:85-93</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Conductor</span><span class="op">.</span>update<span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">playing</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">t</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">t</span> <span class="op">+</span> <span class="va">dt</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">step</span> <span class="op">=</span> <span class="fu">math.floor</span><span class="op">(</span><span class="va">Conductor</span><span class="op">.</span><span class="va">t</span> <span class="op">/</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">stepDur</span><span class="op">)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">&lt;</span> <span class="va">step</span> <span class="cf">do</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">Conductor</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        trigger<span class="op">(</span><span class="va">Conductor</span><span class="op">.</span><span class="va">lastStep</span><span class="op">)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Study the <code>while</code> loop, because it is the entire trick. The current step is computed <em>from total elapsed time</em> — <code>floor(t / stepDur)</code> — not by counting frames or chaining timers. If a frame runs long and the clock crosses two boundaries, the loop fires both steps, in order, this frame. Nothing accumulates rounding error, because nothing is incremental: step number is a pure function of <code>t</code>. Timer-based scheduling (“play a note, set a 133 ms timer, repeat”) drifts by a little every callback and by a lot every dropped frame; frame counting breaks the moment the frame rate hiccups. The accumulate-and-fire loop is immune to both, which is why it earned the description <em>zero drift</em> in the game notes.</p>
+<p>The example’s version is the same loop wearing this book’s names, plus start/stop/seek to match the sequence engine’s interface:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+stepclock.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="stepclock.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">StepClock</span><span class="op">.</span>start<span class="op">()</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">StepClock</span><span class="op">.</span><span class="va">t</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">StepClock</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">=</span> <span class="op">-</span><span class="dv">1</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">StepClock</span><span class="op">.</span><span class="va">playing</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">StepClock</span><span class="op">.</span>stop<span class="op">()</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">StepClock</span><span class="op">.</span><span class="va">playing</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">StepClock</span><span class="op">.</span>update<span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">StepClock</span><span class="op">.</span><span class="va">playing</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">StepClock</span><span class="op">.</span><span class="va">t</span> <span class="op">=</span> <span class="va">StepClock</span><span class="op">.</span><span class="va">t</span> <span class="op">+</span> <span class="va">dt</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">step</span> <span class="op">=</span> <span class="fu">math.floor</span><span class="op">(</span><span class="va">StepClock</span><span class="op">.</span><span class="va">t</span> <span class="op">/</span> <span class="va">stepDur</span><span class="op">)</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">StepClock</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">&lt;</span> <span class="va">step</span> <span class="cf">do</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">StepClock</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">=</span> <span class="va">StepClock</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        trigger<span class="op">(</span><span class="va">StepClock</span><span class="op">.</span><span class="va">lastStep</span> <span class="op">%</span> <span class="va">Song</span><span class="op">.</span><span class="va">steps</span> <span class="op">+</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>trigger</code> is where the arrays turn into sound — three <code>playNote</code> calls on the synths of <a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a>, with note lengths phrased as multiples of the step duration (1.8 steps of bass legato, a short half-step tick of hat):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+stepclock.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="stepclock.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> trigger<span class="op">(</span><span class="va">s</span><span class="op">)</span>   <span class="co">-- s is a song step, 1..Song.steps</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">b</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">bass</span><span class="op">[</span><span class="va">s</span><span class="op">]</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">b</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">bass</span><span class="op">:</span>playNote<span class="op">(</span><span class="va">Song</span><span class="op">.</span>midihz<span class="op">(</span><span class="va">b</span><span class="op">),</span> <span class="dv">0.5</span><span class="op">,</span> <span class="va">stepDur</span> <span class="op">*</span> <span class="dv">1.8</span><span class="op">)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">l</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">lead</span><span class="op">[</span><span class="va">s</span><span class="op">]</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">l</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">lead</span><span class="op">:</span>playNote<span class="op">(</span><span class="va">Song</span><span class="op">.</span>midihz<span class="op">(</span><span class="va">l</span><span class="op">),</span> <span class="dv">0.28</span><span class="op">,</span> <span class="va">stepDur</span> <span class="op">*</span> <span class="dv">1.6</span><span class="op">)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">h</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">hat</span><span class="op">[</span><span class="va">s</span><span class="op">]</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">h</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">hat</span><span class="op">:</span>playNote<span class="op">(</span><span class="va">Song</span><span class="op">.</span>midihz<span class="op">(</span><span class="va">h</span><span class="op">),</span> <span class="dv">0.25</span><span class="op">,</span> <span class="va">stepDur</span> <span class="op">*</span> <span class="dv">0.5</span><span class="op">)</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span> <span class="op">%</span> <span class="dv">16</span> <span class="op">==</span> <span class="dv">1</span> <span class="cf">then</span> <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"clockBars"</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Molt’s zone music is the same loop with one variation — it subtracts <code>stepDur</code> from the accumulator instead of keeping absolute time, which also works and wraps the numbers small:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- molt/source/music.lua:59-73 (excerpt)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Music</span><span class="op">.</span>update<span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">cur</span> <span class="kw">or</span> <span class="kw">not</span> <span class="va">Music</span><span class="op">.</span><span class="va">on</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">stepDur</span> <span class="op">=</span> <span class="dv">60</span> <span class="op">/</span> <span class="va">cur</span><span class="op">.</span><span class="va">bpm</span> <span class="op">/</span> <span class="dv">4</span> <span class="co">-- sixteenth notes</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">clock</span> <span class="op">=</span> <span class="va">clock</span> <span class="op">+</span> <span class="va">dt</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">clock</span> <span class="op">&gt;=</span> <span class="va">stepDur</span> <span class="cf">do</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">clock</span> <span class="op">=</span> <span class="va">clock</span> <span class="op">-</span> <span class="va">stepDur</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">stepI</span> <span class="op">=</span> <span class="va">stepI</span> <span class="op">%</span> <span class="dv">16</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">b</span> <span class="op">=</span> <span class="va">cur</span><span class="op">.</span><span class="va">bass</span><span class="op">[</span><span class="va">stepI</span><span class="op">]</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">b</span> <span class="kw">and</span> <span class="va">b</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">bass</span><span class="op">:</span>playNote<span class="op">(</span>f<span class="op">(</span><span class="va">b</span><span class="op">),</span> <span class="dv">0.13</span><span class="op">,</span> <span class="va">stepDur</span> <span class="op">*</span> <span class="dv">1.8</span><span class="op">)</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">-- ...lead and pad follow the same test</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep absolute time (as Weasel and this chapter’s example do) when anything else wants to <em>read</em> the clock; subtract (as molt does) when the music is fire-and-forget. <a href="#fig-music-conductor" class="quarto-xref">Figure&nbsp;<span>13.2</span></a> shows the step-clock engine holding the same grid — as it should: same data, same picture, different machinery.</p>
+<div id="fig-music-conductor" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-music-conductor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/13-music/music-conductor.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-music-conductor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13.2: The step clock playing the identical loop. Only the engine label changes.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="why-the-games-chose-the-clock" class="level2" data-number="13.4">
+<h2 data-number="13.4" class="anchored" data-anchor-id="why-the-games-chose-the-clock"><span class="header-section-number">13.4</span> Why the games chose the clock</h2>
+<p>The sequence engine plays on the audio thread: steady, efficient, and <em>elsewhere</em>. The step clock plays inside <code>playdate.update</code>: every note is triggered by your code, on your clock. That difference decides which one you want.</p>
+<p><strong>Choose the step clock when gameplay and music must agree.</strong> Weasel War Dance is a rhythm game; its hit judgment is a comparison against <code>Conductor.t</code> — the same accumulator that triggers the notes. Audio and judgment cannot disagree because they are not two clocks; they are one. The conductor even starts <code>t</code> negative to give a count-in bar of clicks, and exposes the beat directly to the renderer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- weaselwardance/source/conductor.lua:95-101</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- 1 on the beat decaying to 0, for squash-and-stretch</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Conductor</span><span class="op">.</span>beatPulse<span class="op">()</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">playing</span> <span class="cf">then</span> <span class="cf">return</span> <span class="dv">0</span> <span class="cf">end</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">beatDur</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span><span class="va">stepDur</span> <span class="op">*</span> <span class="dv">4</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ph</span> <span class="op">=</span> <span class="op">(</span><span class="va">Conductor</span><span class="op">.</span><span class="va">t</span> <span class="op">%</span> <span class="va">beatDur</span><span class="op">)</span> <span class="op">/</span> <span class="va">beatDur</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">math.max</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span> <span class="op">-</span> <span class="va">ph</span> <span class="op">*</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Every dancer in that game squashes on the kick because the drawing code asks the <em>music clock</em> what the beat is doing. With the SDK sequencer you can approximate this by polling <code>getCurrentStep()</code>, but the phase within a step is not exposed, and your game clock and the audio clock will disagree by a frame or two — fatal at rhythm-game tolerances, merely untidy elsewhere.</p>
+<p><strong>Choose the step clock when the music must react.</strong> Molt switches motifs per zone with <code>Music.set(name)</code> — instant, because next step’s notes are read from whatever table <code>cur</code> points at. Boss music at 148 BPM takes effect at the very next step. Mutating a playing SDK sequence means editing track objects while the audio thread reads them; possible, but you are negotiating with a black box.</p>
+<p><strong>Choose the SDK sequencer when the music is fixed and long.</strong> A three-minute MIDI arrangement with six polyphonic tracks is a data problem, not a loop problem: <code>sequence.new("song.mid")</code>, bind instruments, <code>play()</code>. It costs zero lines of update-loop code and keeps perfect time while your game lags, because the C engine — not your Lua — is doing the counting.</p>
+<p>There is one more argument for the clock that is invisible until you test the way this book does (<a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>): the step clock runs on <code>DT</code>, so a headless capture run at unthrottled refresh rate plays it <em>faster but identically</em> — bar counters land on the same frames every run. The SDK sequence keeps wall-clock time no matter what the frame rate does, so this chapter’s figure script pins its playhead with <code>goToStep</code> right before each shot. Determinism is a feature you buy by keeping things on the game clock.</p>
+</section>
+<section id="growing-the-pattern-sections-count-ins-arrangement" class="level2" data-number="13.5">
+<h2 data-number="13.5" class="anchored" data-anchor-id="growing-the-pattern-sections-count-ins-arrangement"><span class="header-section-number">13.5</span> Growing the pattern: sections, count-ins, arrangement</h2>
+<p>Eight looping bars is a texture; a <em>song</em> has structure. Both engines extend gracefully, and the shipped games show the shapes.</p>
+<p>On the step-clock side, Weasel War Dance’s conductor stores each song as named <strong>sections</strong> — pattern strings with a bar count — and flattens them into one long per-step string at load, letting a four-pattern song fill sixty-four bars without sixty-four bars of data. The load function also hides a lovely trick:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- weaselwardance/source/conductor.lua:33-43 (excerpt)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Conductor</span><span class="op">.</span>load<span class="op">(</span><span class="va">song</span><span class="op">)</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">song</span> <span class="op">=</span> <span class="va">song</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">stepDur</span> <span class="op">=</span> <span class="dv">60</span> <span class="op">/</span> <span class="va">song</span><span class="op">.</span><span class="va">bpm</span> <span class="op">/</span> <span class="dv">4</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">drum</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span>expand<span class="op">(</span><span class="va">song</span><span class="op">,</span> <span class="st">"drum"</span><span class="op">)</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">bass</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span>expand<span class="op">(</span><span class="va">song</span><span class="op">,</span> <span class="st">"bass"</span><span class="op">)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">lead</span> <span class="op">=</span> <span class="va">Conductor</span><span class="op">.</span>expand<span class="op">(</span><span class="va">song</span><span class="op">,</span> <span class="st">"lead"</span><span class="op">)</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">total</span> <span class="op">=</span> <span class="op">#</span><span class="va">Conductor</span><span class="op">.</span><span class="va">drum</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">t</span> <span class="op">=</span> <span class="op">-</span><span class="va">Conductor</span><span class="op">.</span><span class="va">stepDur</span> <span class="op">*</span> <span class="dv">16</span> <span class="co">-- one count-in bar</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">Conductor</span><span class="op">.</span><span class="va">playing</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Starting the clock at <em>negative</em> time buys a free count-in: for one bar, <code>trigger</code> sees negative step numbers and plays metronome clicks instead of notes, and the player’s first real beat arrives exactly at <code>t = 0</code>. Every downstream system — judgment windows, the scroll position of the note highway, the beat pulse — is a formula over <code>t</code>, and none of them needs a special case for the intro. That is the deep advantage of owning the clock: <em>musical time becomes a coordinate system</em> the whole game can compute in.</p>
+<p>On the SDK side, arrangement tools come built in: tracks can be muted and unmuted live (<code>track:setMuted(flag)</code> — the classic “layers fade in as you progress” mechanic is three unmute calls), <code>sequence:setLoops(startStep, endStep)</code> can pin playback to one section while a menu is open, and <code>track:addControlSignal(s)</code> attaches MIDI-style controller curves for parameter automation if your <code>.mid</code> file carries them. A verse–chorus form is just a longer track list; you pay nothing per note beyond the memory to hold it.</p>
+<p>Molt sits between the two: six 16-step motifs, one per zone, on the step clock — and switching zones is <code>Music.set(name)</code>, which simply repoints the table the trigger reads. Structure, in the house style, is data selection, not engine features.</p>
+</section>
+<section id="files-fileplayer-and-sampleplayer" class="level2" data-number="13.6">
+<h2 data-number="13.6" class="anchored" data-anchor-id="files-fileplayer-and-sampleplayer"><span class="header-section-number">13.6</span> Files: fileplayer and sampleplayer</h2>
+<p>Synth music weighs nothing and never loads, which is why the house style prefers it. But when you have <em>recorded</em> audio — a licensed track, voice lines, a sound too organic to synthesize — two players handle it, split by one question: does it fit in memory?</p>
+<p><strong><code>playdate.sound.sampleplayer</code></strong> loads the whole file into RAM and plays it on demand: <code>sampleplayer.new(path)</code> then <code>:play()</code>, with <code>setRate</code>, <code>setVolume</code>, <code>playAt(when, ...)</code> for scheduling on the audio clock, and <code>play(0)</code> for endless loops. Use it for short, frequently-fired sounds — it is the recorded-audio sibling of the preloaded synth voice. Loading returns <code>nil</code> plus an error message on failure, so the assert-wrapped load is the idiom.</p>
+<p><strong><code>playdate.sound.fileplayer</code></strong> streams from disk instead: <code>fileplayer.new(path, [buffersize])</code> reads ahead into a small buffer (settable in seconds) and decodes as it goes — uncompressed, ADPCM, or MP3, with ADPCM the sweet spot of cheap decode and small files. Streaming means a three-minute music track costs kilobytes of RAM instead of megabytes, at the price of disk latency: a <code>setOffset</code> seek stalls until the buffer refills, and a busy frame can <em>underrun</em> the buffer. By default the fileplayer emits a brief silence and recovers; <code>setStopOnUnderrun(true)</code> makes it halt instead, and <code>didUnderrun()</code> tells your telemetry. It also loops (<code>setLoopRange(start, end)</code>, <code>play(0)</code>), and <code>setRateMod</code> accepts an LFO for tape-warble effects.</p>
+<p>The rule of thumb: <strong>music and ambience stream through one fileplayer; effects live in memory</strong> (sampleplayer or, in this book’s style, synths). Two streaming fileplayers at once is asking the flash storage for trouble; one is engineered for.</p>
+</section>
+<section id="ducking-the-music-channel-earns-its-keep" class="level2" data-number="13.7">
+<h2 data-number="13.7" class="anchored" data-anchor-id="ducking-the-music-channel-earns-its-keep"><span class="header-section-number">13.7</span> Ducking: the music channel earns its keep</h2>
+<p><a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a> promised a payoff for routing all music sources through one <code>playdate.sound.channel</code>. Here it is: when a gameplay sound fires, the game dips the music channel’s volume and lets it swell back, so the effect reads clearly over the bed. The example wires its blip — which lives on the <em>default</em> channel, unducked — to a one-line envelope on the music channel:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> playBlip<span class="op">()</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">blip</span><span class="op">:</span>playNote<span class="op">(</span><span class="dv">1319</span><span class="op">,</span> <span class="dv">0.5</span><span class="op">,</span> <span class="dv">0.1</span><span class="op">)</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">duck</span> <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"blips"</span><span class="op">)</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> updateDuck<span class="op">()</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">duck</span> <span class="op">=</span> <span class="fu">math.max</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="va">duck</span> <span class="op">-</span> <span class="cn">DT</span> <span class="op">/</span> <span class="dv">0.5</span><span class="op">)</span>  <span class="co">-- recover over 0.5 s</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">music</span><span class="op">:</span>setVolume<span class="op">(</span><span class="dv">1</span> <span class="op">-</span> <span class="dv">0.7</span> <span class="op">*</span> <span class="va">duck</span><span class="op">)</span>      <span class="co">-- dip to 0.3, ride back</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>duck</code> snaps to 1 on every blip and decays linearly over half a second; the music volume rides <code>1 - 0.7 * duck</code>, so it dips to 30% and recovers. Because both engines’ sources — the three step-clock synths and the three sequence instruments — were added to the same <code>music</code> channel at build time, ducking is engine-agnostic:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- All music sources live on one channel, so a single volume knob</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- can duck them under gameplay SFX. The blip stays on the default</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- global channel at full volume.</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">music</span> <span class="op">=</span> <span class="va">snd</span><span class="op">.</span><span class="va">channel</span><span class="op">.</span>new<span class="op">()</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="va">SeqEngine</span><span class="op">.</span>build<span class="op">(</span><span class="va">music</span><span class="op">)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="va">StepClock</span><span class="op">.</span>build<span class="op">(</span><span class="va">music</span><span class="op">)</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">blip</span> <span class="op">=</span> <span class="va">snd</span><span class="op">.</span><span class="va">synth</span><span class="op">.</span>new<span class="op">(</span><span class="va">snd</span><span class="op">.</span><span class="va">kWaveSquare</span><span class="op">)</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="va">blip</span><span class="op">:</span>setADSR<span class="op">(</span><span class="dv">0.002</span><span class="op">,</span> <span class="dv">0.03</span><span class="op">,</span> <span class="dv">0.4</span><span class="op">,</span> <span class="dv">0.1</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="#fig-music-duck" class="quarto-xref">Figure&nbsp;<span>13.3</span></a> catches the dip in flight: the meter at the top right shows the music channel at just over half volume, six frames after a blip.</p>
+<div id="fig-music-duck" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-music-duck-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/13-music/music-duck.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-music-duck-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13.3: Six frames after the blip: the music meter mid-duck, recovering toward full.
+</figcaption>
+</figure>
+</div>
+<p>The same knob is your settings screen (“music volume”) and your pause behavior (duck to 0.2 while the menu is up). One channel, many features.</p>
+</section>
+<section id="the-ab-switch" class="level2" data-number="13.8">
+<h2 data-number="13.8" class="anchored" data-anchor-id="the-ab-switch"><span class="header-section-number">13.8</span> The A/B switch</h2>
+<p>The two engines present the same four functions — build, start, stop, step — so swapping is bookkeeping, not surgery:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> setEngine<span class="op">(</span><span class="va">name</span><span class="op">)</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">engine</span> <span class="op">==</span> <span class="va">name</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">engine</span> <span class="op">==</span> <span class="st">"sequence"</span> <span class="cf">then</span> <span class="va">SeqEngine</span><span class="op">.</span>stop<span class="op">()</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="va">StepClock</span><span class="op">.</span>stop<span class="op">()</span> <span class="cf">end</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">engine</span> <span class="op">=</span> <span class="va">name</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">engine</span> <span class="op">==</span> <span class="st">"sequence"</span> <span class="cf">then</span> <span class="va">SeqEngine</span><span class="op">.</span>start<span class="op">()</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="va">StepClock</span><span class="op">.</span>start<span class="op">()</span> <span class="cf">end</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">Harness</span><span class="op">.</span>count<span class="op">(</span><span class="st">"switches"</span><span class="op">)</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The swap restarts the loop from step 1: position hand-off between engines is possible (<code>goToStep</code> one way, <code>StepClock.seek</code> the other) and the example uses those seeks for its figures, but a musical swap on the bar line is what a real game would ship, and restarting keeps the listing honest about what it does. Note the <code>allNotesOff()</code> inside <code>SeqEngine.stop()</code> — the first version of this example left a lead note’s release tail ringing across the switch, a small lesson in why stop functions should silence, not merely halt.</p>
+<p>The grid view reads whichever engine is live through one accessor and draws the current bar’s sixteen columns for all three voices, boxing the playhead column — the figures earlier in the chapter are exactly this code:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">GX</span><span class="op">,</span> <span class="cn">GY</span> <span class="op">=</span> <span class="dv">64</span><span class="op">,</span> <span class="dv">78</span>     <span class="co">-- grid origin</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">CW</span><span class="op">,</span> <span class="cn">CH</span> <span class="op">=</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">30</span>     <span class="co">-- cell size</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="cn">ROWS</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"hat"</span><span class="op">,</span>  <span class="va">notes</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">hat</span> <span class="op">},</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"lead"</span><span class="op">,</span> <span class="va">notes</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">lead</span> <span class="op">},</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="va">name</span> <span class="op">=</span> <span class="st">"bass"</span><span class="op">,</span> <span class="va">notes</span> <span class="op">=</span> <span class="va">Song</span><span class="op">.</span><span class="va">bass</span> <span class="op">},</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- Draw the current bar as a 16 x 3 grid, with the playhead boxed</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- around the column both engines report as "now".</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> drawGrid<span class="op">(</span><span class="va">step</span><span class="op">)</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bar</span> <span class="op">=</span> <span class="op">(</span><span class="va">step</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">//</span> <span class="dv">16</span>          <span class="co">-- 0..7</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">col</span> <span class="op">=</span> <span class="op">(</span><span class="va">step</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">%</span> <span class="dv">16</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">r</span><span class="op">,</span> <span class="va">row</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="cn">ROWS</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">y</span> <span class="op">=</span> <span class="cn">GY</span> <span class="op">+</span> <span class="op">(</span><span class="va">r</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="cn">CH</span> <span class="op">+</span> <span class="dv">6</span><span class="op">)</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="va">row</span><span class="op">.</span><span class="va">name</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">8</span><span class="op">)</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">c</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">16</span> <span class="cf">do</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="cn">GX</span> <span class="op">+</span> <span class="op">(</span><span class="va">c</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="cn">CW</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>drawRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="cn">CW</span> <span class="op">-</span> <span class="dv">2</span><span class="op">,</span> <span class="cn">CH</span><span class="op">)</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">row</span><span class="op">.</span><span class="va">notes</span><span class="op">[</span><span class="va">bar</span> <span class="op">*</span> <span class="dv">16</span> <span class="op">+</span> <span class="va">c</span><span class="op">]</span> <span class="op">~=</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>                <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="va">x</span> <span class="op">+</span> <span class="dv">3</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">3</span><span class="op">,</span> <span class="cn">CW</span> <span class="op">-</span> <span class="dv">8</span><span class="op">,</span> <span class="cn">CH</span> <span class="op">-</span> <span class="dv">6</span><span class="op">)</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="cn">GX</span> <span class="op">+</span> <span class="op">(</span><span class="va">col</span> <span class="op">-</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="cn">CW</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">h</span> <span class="op">=</span> <span class="dv">3</span> <span class="op">*</span> <span class="op">(</span><span class="cn">CH</span> <span class="op">+</span> <span class="dv">6</span><span class="op">)</span> <span class="op">-</span> <span class="dv">6</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawRect<span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="dv">2</span><span class="op">,</span> <span class="cn">GY</span> <span class="op">-</span> <span class="dv">2</span><span class="op">,</span> <span class="cn">CW</span> <span class="op">+</span> <span class="dv">2</span><span class="op">,</span> <span class="va">h</span> <span class="op">+</span> <span class="dv">4</span><span class="op">)</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawRect<span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="dv">3</span><span class="op">,</span> <span class="cn">GY</span> <span class="op">-</span> <span class="dv">3</span><span class="op">,</span> <span class="cn">CW</span> <span class="op">+</span> <span class="dv">4</span><span class="op">,</span> <span class="va">h</span> <span class="op">+</span> <span class="dv">6</span><span class="op">)</span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">bar</span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The figure script switches engines mid-run with a scripted B press at frame 130, seeks, shoots each engine’s grid, and blips twice so the duck path runs under both engines. The heartbeat counters tell the story of a healthy run: <code>switches</code> = 1, <code>blips</code> = 2, and <code>clockBars</code> climbing only after the swap.</p>
+</section>
+<section id="what-you-know-now" class="level2" data-number="13.9">
+<h2 data-number="13.9" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">13.9</span> What you know now</h2>
+<ul>
+<li>Keep the <strong>song as data</strong> (per-step arrays of MIDI notes, 0 as rest) and the engine becomes swappable; <code>440 * 2^((n-69)/12)</code> turns MIDI numbers into Hertz.</li>
+<li>The SDK way: <code>sequence.new()</code> (or <code>.new("song.mid")</code>), <code>track:addNote(step, note, length, velocity)</code> with 1-based steps and lengths <em>in steps</em>, <code>instrument.new(synth)</code> (plus <code>addVoice</code> for polyphony and key ranges) as each track’s voice, <code>setTempo(stepsPerSecond)</code> — <em>not BPM</em> — and <code>setLoops(start, end, 0)</code> to run forever. It keeps time on the audio thread, whatever your frame rate does.</li>
+<li>The house way: accumulate <code>dt</code>, and <code>while lastStep &lt; floor(t / stepDur)</code> fire steps. Zero drift by construction, deterministic under the test harness, trivially mutable (molt swaps zone motifs mid-note), and gameplay can read the same clock — Weasel War Dance’s judgment and squash-and-stretch both poll its conductor.</li>
+<li><strong>fileplayer streams</strong> long audio from disk (ADPCM preferred, watch for underruns); <strong>sampleplayer preloads</strong> short sounds into RAM; synths cost no assets at all.</li>
+<li>One <strong>music channel</strong> for all music sources turns volume settings, pause dimming, and SFX ducking into a single <code>setVolume</code> knob.</li>
+<li>Music that has to last longer than a loop wants a tracker’s shape — patterns plus an order list, <code>A A B C</code> — and a stinger that remembers the playhead it interrupted. <a href="25-lore.html" class="quarto-xref"><span>Chapter 25</span></a> builds both.</li>
+</ul>
+<p>That completes the sound stack: effects that speak (<a href="12-sfx.html" class="quarto-xref"><span>Chapter 12</span></a>) and music that keeps time. The next part puts both under a game worth scoring — starting with movement, collision, and the physics of a platformer that feels right.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/12-sfx.html" class="pagination-link" aria-label="Synths and Sound Effects">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/14-platformer.html" class="pagination-link" aria-label="Movement, Collision, and Physics">
+        <span class="nav-page-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

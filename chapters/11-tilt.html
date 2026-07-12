@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.28">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; Tilt, Menus, and System UI – Playdate Game Development in Lua</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/12-sfx.html" rel="next">
+<link href="../chapters/10-crank.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-73d08f1ec3e13e4e2982b78c5de5b9cd.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-49e51e44f424ea8c7044b429bdbbbfe2.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9335c926208b6c40e3ed84e6fee34e31.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/11-tilt.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Playdate Game Development in Lua</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-hello.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Hello, Playdate</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-lua-lab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Lua the Playdate Way</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">The Update Loop and Game Modes</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Graphics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Drawing in One Bit</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-images.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Images, Imagetables, and Fonts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-sprites.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">The Sprite System</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-camera.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Cameras and Big Worlds</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-wireframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Vector Graphics and Faking 3D</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Input</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-input.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Buttons: The Input Layer</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10-crank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11-tilt.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Sound</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12-sfx.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13-music.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Music: Sequences and Step Clocks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Building Games</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14-platformer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Movement, Collision, and Physics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15-juice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Game Feel: Timers, Animators, and Effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16-maze.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Enemies, Pathfinding, and Bots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17-save.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Saving and Data</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Shipping</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Testing Without Touching It</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19-perf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Performance and the Device</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20-ship.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Polish and Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Inside the Engines</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21-phosphor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Inside Phosphor: A Vector Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22-tiles.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Inside Tiles: A Tile-World Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23-voxel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Inside Vox: A Voxel Room Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24-dither.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Inside Dither: A Shade Engine</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25-lore.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-a-lua.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Playdate Lua vs.&nbsp;Standard Lua</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-b-sdk-map.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">SDK Coverage Map</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-c-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">Environment Setup</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-d-harness.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">The Book Harness Reference</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/appendix-e-games.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">The Case-Study Games</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-accelerometer" id="toc-the-accelerometer" class="nav-link active" data-scroll-target="#the-accelerometer"><span class="header-section-number">11.1</span> The accelerometer</a>
+  <ul class="collapse">
+  <li><a href="#reading-tilt-through-the-seam" id="toc-reading-tilt-through-the-seam" class="nav-link" data-scroll-target="#reading-tilt-through-the-seam"><span class="header-section-number">11.1.1</span> Reading tilt through the seam</a></li>
+  <li><a href="#case-study-bearings-readtilt" id="toc-case-study-bearings-readtilt" class="nav-link" data-scroll-target="#case-study-bearings-readtilt"><span class="header-section-number">11.1.2</span> Case study: Bearing’s readTilt</a></li>
+  <li><a href="#rolling-the-marble" id="toc-rolling-the-marble" class="nav-link" data-scroll-target="#rolling-the-marble"><span class="header-section-number">11.1.3</span> Rolling the marble</a></li>
+  </ul></li>
+  <li><a href="#the-system-menu" id="toc-the-system-menu" class="nav-link" data-scroll-target="#the-system-menu"><span class="header-section-number">11.2</span> The System Menu</a>
+  <ul class="collapse">
+  <li><a href="#the-pause-card" id="toc-the-pause-card" class="nav-link" data-scroll-target="#the-pause-card"><span class="header-section-number">11.2.1</span> The pause card</a></li>
+  </ul></li>
+  <li><a href="#the-keyboard" id="toc-the-keyboard" class="nav-link" data-scroll-target="#the-keyboard"><span class="header-section-number">11.3</span> The keyboard</a></li>
+  <li><a href="#a-scoreboard-with-gridview" id="toc-a-scoreboard-with-gridview" class="nav-link" data-scroll-target="#a-scoreboard-with-gridview"><span class="header-section-number">11.4</span> A scoreboard with gridview</a></li>
+  <li><a href="#tying-it-together" id="toc-tying-it-together" class="nav-link" data-scroll-target="#tying-it-together"><span class="header-section-number">11.5</span> Tying it together</a></li>
+  <li><a href="#the-rest-of-the-lifecycle" id="toc-the-rest-of-the-lifecycle" class="nav-link" data-scroll-target="#the-rest-of-the-lifecycle"><span class="header-section-number">11.6</span> The rest of the lifecycle</a></li>
+  <li><a href="#what-you-know-now" id="toc-what-you-know-now" class="nav-link" data-scroll-target="#what-you-know-now"><span class="header-section-number">11.7</span> What you know now</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/09-input.html">Input</a></li><li class="breadcrumb-item"><a href="../chapters/11-tilt.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-tilt" class="quarto-section-identifier"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Tilt, Menus, and System UI</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Three inputs remain, and none of them is a button. The accelerometer turns the whole console into a controller — tilt the machine and a marble rolls. The System Menu is the one piece of UI the OS owns inside your game, and it hands you exactly three custom slots plus a half-screen billboard. And when you need a string from the player, the system keyboard takes the stage. Around all of these sit the lifecycle callbacks — pause, resume, terminate, sleep, lock — that separate a polished game from one that loses your save when the battery dies.</p>
+<p>This chapter’s example is a toy with all of it wired in: a steel marble rolling around a walled tray under accelerometer control, three System Menu items (an action, a checkmark, an options cycler), a procedurally drawn pause card, and a <code>playdate.ui.gridview</code> scoreboard that flips in on the B button, saved through the datastore by the lifecycle callbacks. The tilt case study is Bearing, a shipped marble-maze game whose calibration and scripted-tilt patterns this example distills.</p>
+<p>One honest warning up front: this is the chapter where headless figures get interesting. The Simulator’s accelerometer reads the tilt sliders in its own window, which no script of ours moves, and the real pause screen belongs to the OS, which no headless screenshot can capture. Both problems fall to the same seam we have used since Chapter 9 — and watching them fall is half the lesson.</p>
+<section id="the-accelerometer" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="the-accelerometer"><span class="header-section-number">11.1</span> The accelerometer</h2>
+<p>The accelerometer is off by default (it costs a little power). Turn it on once, then read it each frame:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">playdate</span><span class="op">.</span>startAccelerometer<span class="op">()</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- ...one update later...</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">z</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>readAccelerometer<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>readAccelerometer()</code> returns the gravity vector in units of <em>g</em>: <code>x</code> positive toward the device’s right edge, <code>y</code> positive toward the bottom of the screen, <code>z</code> positive out the back of the device. Held upright it reads (0, 1, 0); flat on a table, (0, 0, 1). For a tilt-controlled game on a face-up device, <code>x</code> and <code>y</code> are simply “how much downhill is that way” — which is why the marble code below can feed them straight into acceleration. <code>playdate.stopAccelerometer()</code> powers it back down when you leave the tilt mode, and <code>playdate.accelerometerIsRunning()</code> tells you where you stand.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two accelerometer traps
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>First, timing: the hardware needs an update cycle after <code>startAccelerometer()</code> before values are valid, so start it at boot (as the example does), not in the same frame you first read it — and guard the read (<code>x or 0</code>) so a <code>nil</code> from a not-yet- or never-started accelerometer cannot poison your math. Second, the Simulator: <code>readAccelerometer()</code> there reports the <strong>window’s tilt controls</strong>, not your MacBook’s orientation. Fine for hand testing; useless for scripts, which is what the seam below is for.</p>
+</div>
+</div>
+<section id="reading-tilt-through-the-seam" class="level3" data-number="11.1.1">
+<h3 data-number="11.1.1" class="anchored" data-anchor-id="reading-tilt-through-the-seam"><span class="header-section-number">11.1.1</span> Reading tilt through the seam</h3>
+<p>Here is the example’s entire tilt pipeline — bot first, hardware second, then smoothing and calibration:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- In the Simulator the accelerometer reads the window's tilt</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- sliders, which a headless run never moves -- so the bot supplies</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- tilt through the same seam the buttons use.</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> readTilt<span class="op">(</span><span class="va">bot</span><span class="op">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">x</span> <span class="op">=</span> <span class="va">bot</span> <span class="kw">and</span> <span class="va">bot</span><span class="op">.</span><span class="va">tiltX</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">or</span> <span class="fu">select</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="va">pd</span><span class="op">.</span>readAccelerometer<span class="op">())</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">y</span> <span class="op">=</span> <span class="va">bot</span> <span class="kw">and</span> <span class="va">bot</span><span class="op">.</span><span class="va">tiltY</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">or</span> <span class="fu">select</span><span class="op">(</span><span class="dv">2</span><span class="op">,</span> <span class="va">pd</span><span class="op">.</span>readAccelerometer<span class="op">())</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">=</span> <span class="va">x</span> <span class="kw">or</span> <span class="dv">0</span><span class="op">,</span> <span class="va">y</span> <span class="kw">or</span> <span class="dv">0</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- low-pass: keep 80% of the old value, take 20% of the new</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">smoothX</span> <span class="op">=</span> <span class="va">smoothX</span> <span class="op">+</span> <span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">smoothX</span><span class="op">)</span> <span class="op">*</span> <span class="dv">0.2</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">smoothY</span> <span class="op">=</span> <span class="va">smoothY</span> <span class="op">+</span> <span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">smoothY</span><span class="op">)</span> <span class="op">*</span> <span class="dv">0.2</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- calibration: tilt is measured from the player's "flat"</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">smoothX</span> <span class="op">-</span> <span class="va">zeroX</span><span class="op">,</span> <span class="va">smoothY</span> <span class="op">-</span> <span class="va">zeroY</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Three layers, each earning its place:</p>
+<p><strong>The seam.</strong> A headless run cannot tilt the Simulator, so the figure script supplies <code>bot.tiltX</code>/<code>bot.tiltY</code> through <code>Harness.input</code>, exactly as Chapter 9’s script supplied button levels. (A Lua footnote makes the <code>or</code>-chain safe here: <code>0</code> is <em>truthy</em> in Lua — only <code>nil</code> and <code>false</code> fall through — so a bot tilt of exactly zero still short-circuits and never falls back to the hardware read.)</p>
+<p><strong>The low-pass filter.</strong> Raw accelerometer samples jitter — hand tremor, sensor noise, the odd bump. Blending 20% of each new reading into a running value (<code>smooth = smooth + (raw - smooth) * 0.2</code>) is a one-line low-pass filter: jitter above a few hertz averages away, deliberate tilts pass through with a few frames of lag. Raise the <code>0.2</code> toward <code>1</code> for responsiveness, lower it for calm; 0.2 at 30 fps is a good marble.</p>
+<p><strong>The calibration offset.</strong> Nobody plays a Playdate dead flat — players hold it tilted back at whatever angle their couch dictates. If you treat raw (0, 0) as neutral, every player starts with the marble sliding toward their lap. So the game records the smoothed reading at a known moment as <code>zeroX, zeroY</code> — “this is what <em>this</em> player’s flat feels like” — and reports tilt relative to that. The example calibrates at boot, from a System Menu item, and (a detail worth stealing) in <code>gameWillResume</code>, because hands always shift while a menu is open.</p>
+<p>Two smaller accelerometer patterns round out the toolbox. <strong>Shake detection</strong> needs no new API: at rest the vector’s magnitude is 1 <em>g</em>, so <code>math.sqrt(x*x + y*y + z*z) - 1</code> measures how hard the device is being jostled, and a threshold of around 0.5 sustained for a couple of frames is a serviceable “shake to shuffle.” Use the <em>raw</em> reading for this, not the smoothed one — the low-pass filter exists precisely to erase the signal a shake detector wants. And <strong>turn it off when you leave the tilt mode</strong>: the power cost is small, but <code>stopAccelerometer()</code> in your mode-exit path is free, and a stopped accelerometer makes stale reads fail loudly (<code>nil</code>) instead of feeding yesterday’s gravity into today’s menu.</p>
+</section>
+<section id="case-study-bearings-readtilt" class="level3" data-number="11.1.2">
+<h3 data-number="11.1.2" class="anchored" data-anchor-id="case-study-bearings-readtilt"><span class="header-section-number">11.1.2</span> Case study: Bearing’s readTilt</h3>
+<p>Bearing shipped this exact stack, plus the scripted-tilt trick, as one function:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- bearing/source/main.lua:41</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> readTilt<span class="op">()</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="cn">AUTOPILOT</span> <span class="cf">then</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">apT</span> <span class="op">=</span> <span class="va">apT</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">math.cos</span><span class="op">(</span><span class="va">apT</span> <span class="op">*</span> <span class="dv">0.045</span><span class="op">)</span> <span class="op">*</span> <span class="dv">0.7</span><span class="op">,</span> <span class="fu">math.sin</span><span class="op">(</span><span class="va">apT</span> <span class="op">*</span> <span class="dv">0.062</span><span class="op">)</span> <span class="op">*</span> <span class="dv">0.7</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>readAccelerometer<span class="op">()</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">x</span> <span class="cf">then</span> <span class="cf">return</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span> <span class="cf">end</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">neutralX</span><span class="op">),</span> <span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">neutralY</span><span class="op">)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The autopilot branch fakes tilt as two incommensurate sine waves — a slow circular stir that rolls the marble around the whole maze — so Bearing’s smoke tests exercised ball physics, hole falls, and goal detection with the console flat on a desk. Its B button recalibrates <code>neutralX/neutralY</code> mid-game, which playtesting proved essential: a marble game without recalibration is a marble game people play with their necks bent.</p>
+</section>
+<section id="rolling-the-marble" class="level3" data-number="11.1.3">
+<h3 data-number="11.1.3" class="anchored" data-anchor-id="rolling-the-marble"><span class="header-section-number">11.1.3</span> Rolling the marble</h3>
+<p>The tray itself is velocity integration plus circle-versus- rectangle push-out, distilled from Bearing’s ball:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+board.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="board.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Board</span><span class="op">.</span>update<span class="op">(</span><span class="va">tx</span><span class="op">,</span> <span class="va">ty</span><span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">Board</span><span class="op">.</span><span class="va">vx</span> <span class="op">=</span> <span class="op">(</span><span class="va">Board</span><span class="op">.</span><span class="va">vx</span> <span class="op">+</span> <span class="va">tx</span> <span class="op">*</span> <span class="cn">ACCEL</span> <span class="op">*</span> <span class="cn">DT</span><span class="op">)</span> <span class="op">*</span> <span class="cn">FRICTION</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">Board</span><span class="op">.</span><span class="va">vy</span> <span class="op">=</span> <span class="op">(</span><span class="va">Board</span><span class="op">.</span><span class="va">vy</span> <span class="op">+</span> <span class="va">ty</span> <span class="op">*</span> <span class="cn">ACCEL</span> <span class="op">*</span> <span class="cn">DT</span><span class="op">)</span> <span class="op">*</span> <span class="cn">FRICTION</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">Board</span><span class="op">.</span><span class="va">x</span> <span class="op">=</span> <span class="va">Board</span><span class="op">.</span><span class="va">x</span> <span class="op">+</span> <span class="va">Board</span><span class="op">.</span><span class="va">vx</span> <span class="op">*</span> <span class="cn">DT</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">Board</span><span class="op">.</span><span class="va">y</span> <span class="op">=</span> <span class="va">Board</span><span class="op">.</span><span class="va">y</span> <span class="op">+</span> <span class="va">Board</span><span class="op">.</span><span class="va">vy</span> <span class="op">*</span> <span class="cn">DT</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">w</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="cn">WALLS</span><span class="op">)</span> <span class="cf">do</span> resolve<span class="op">(</span><span class="va">w</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- breadcrumbs for the trail</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">Board</span><span class="op">.</span><span class="va">trail</span><span class="op">[#</span><span class="va">Board</span><span class="op">.</span><span class="va">trail</span> <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">Board</span><span class="op">.</span><span class="va">x</span><span class="op">,</span> <span class="va">Board</span><span class="op">.</span><span class="va">y</span> <span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">#</span><span class="va">Board</span><span class="op">.</span><span class="va">trail</span> <span class="op">&gt;</span> <span class="dv">45</span> <span class="cf">then</span> <span class="fu">table.remove</span><span class="op">(</span><span class="va">Board</span><span class="op">.</span><span class="va">trail</span><span class="op">,</span> <span class="dv">1</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Tilt scales into acceleration, friction bleeds a fraction of the velocity every frame so the marble settles instead of orbiting forever, and each wall resolves by pushing the circle out along the closest-point normal and reflecting the inbound velocity component at 60% — enough bounce to feel like steel, not rubber. <a href="#fig-tilt-roll" class="quarto-xref">Figure&nbsp;<span>11.1</span></a> is the marble mid-roll, breadcrumb trail behind it and the tilt vector drawn as a line from its center; <a href="#fig-tilt-bounce" class="quarto-xref">Figure&nbsp;<span>11.2</span></a> is forty-five frames later, after the script tilted the tray north and the trail bent around a ricochet.</p>
+<div id="fig-tilt-roll" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tilt-roll-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/11-tilt/tilt-roll.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tilt-roll-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.1: Mid-roll: the HUD line is the smoothed, calibrated tilt; the line from the marble is that vector, scaled up.
+</figcaption>
+</figure>
+</div>
+<div id="fig-tilt-bounce" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tilt-bounce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/11-tilt/tilt-bounce.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tilt-bounce-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.2: The same marble after the script tilted north: the trail records the wall ricochets the bounce counter is tallying.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="the-system-menu" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="the-system-menu"><span class="header-section-number">11.2</span> The System Menu</h2>
+<p>Press the Menu button on the device and the OS pauses your game and slides in the System Menu. You cannot replace it, but you get two hooks: up to <strong>three</strong> custom menu items, and a 400x240 image displayed beside the menu. Both are pure API — no layout system, no widgets.</p>
+<p>Three item types exist, one constructor each:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+sysmenu.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="sysmenu.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Sysmenu</span><span class="op">.</span>setup<span class="op">()</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">menu</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span>getSystemMenu<span class="op">()</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- a plain action item</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">menu</span><span class="op">:</span>addMenuItem<span class="op">(</span><span class="st">"recenter tilt"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">Game</span><span class="op">.</span>calibrate<span class="op">()</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- a checkmark item: the callback gets the new boolean</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">menu</span><span class="op">:</span>addCheckmarkMenuItem<span class="op">(</span><span class="st">"show trail"</span><span class="op">,</span> <span class="kw">true</span><span class="op">,</span> <span class="kw">function</span><span class="op">(</span><span class="va">on</span><span class="op">)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">Game</span><span class="op">.</span><span class="va">showTrail</span> <span class="op">=</span> <span class="va">on</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">)</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- an options item: the callback gets the chosen string</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">menu</span><span class="op">:</span>addOptionsMenuItem<span class="op">(</span><span class="st">"marble"</span><span class="op">,</span> <span class="op">{</span> <span class="st">"steel"</span><span class="op">,</span> <span class="st">"wood"</span><span class="op">,</span> <span class="st">"lead"</span> <span class="op">},</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"steel"</span><span class="op">,</span> <span class="kw">function</span><span class="op">(</span><span class="va">choice</span><span class="op">)</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>            <span class="va">Game</span><span class="op">.</span><span class="va">marble</span> <span class="op">=</span> <span class="va">choice</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span><span class="op">)</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>addMenuItem</code> is a plain action: the OS hides the menu, calls your callback, and unpauses. <code>addCheckmarkMenuItem</code> toggles; your callback receives the new boolean. <code>addOptionsMenuItem</code> cycles a short list of strings; the callback receives the chosen string. For the latter two, note the timing: the callback fires <strong>when the menu closes</strong>, not on each flick through the options — and it arrives <em>before</em> <code>playdate.gameWillResume</code>. Keep titles short and game-scoped (“recenter tilt”, not “recenter” — the player should never wonder whether an item belongs to your game or to the OS).</p>
+<p>Items are objects, and they stay live after creation: each constructor returns a <code>playdate.menu.item</code> whose <code>setTitle</code>/<code>getTitle</code>, <code>setValue</code>/<code>getValue</code>, and <code>setCallback</code> methods let you rename or retarget an entry without rebuilding the menu — a checkmark item’s value is its boolean, an options item’s its current string. <code>menu:getMenuItems()</code> returns what is installed, and <code>menu:removeMenuItem(item)</code> / <code>menu:removeAllMenuItems()</code> clean up when different game modes need different slots (a common shape: “restart level” exists only while a level is running).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Three, and only three
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The OS enforces the three-item limit: a fourth <code>addMenuItem</code> fails, returning <code>nil</code> plus an error message rather than raising. If your settings outgrow three slots, the System Menu is the wrong home — build a proper options screen and spend one slot opening it.</p>
+</div>
+</div>
+<section id="the-pause-card" class="level3" data-number="11.2.1">
+<h3 data-number="11.2.1" class="anchored" data-anchor-id="the-pause-card"><span class="header-section-number">11.2.1</span> The pause card</h3>
+<p>While paused, the right half of the screen is the menu; the left half is yours. <code>playdate.setMenuImage(image)</code> posts a 400x240 image beside the menu — the OS shows roughly the left 200 pixels, with the right side visible only briefly as the menu animates. An optional second argument <code>xOffset</code> (0–200) slides the image left by that many pixels as the menu animates in. The natural place to set it is the pause callback itself, so the card is rebuilt with live numbers each time:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+sysmenu.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="sysmenu.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The pause card is 400x240, but the System Menu slides over the</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- right half: keep everything that matters in the left 200 px.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Sysmenu</span><span class="op">.</span>pauseImage<span class="op">()</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">img</span> <span class="op">=</span> <span class="va">gfx</span><span class="op">.</span><span class="va">image</span><span class="op">.</span>new<span class="op">(</span><span class="dv">400</span><span class="op">,</span> <span class="dv">240</span><span class="op">,</span> <span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>pushContext<span class="op">(</span><span class="va">img</span><span class="op">)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>fillRect<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">200</span><span class="op">,</span> <span class="dv">240</span><span class="op">)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillWhite</span><span class="op">)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"*TILT TRAY*"</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">24</span><span class="op">,</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"tilt to roll"</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">70</span><span class="op">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"B: scoreboard"</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">92</span><span class="op">,</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"bounces so far: "</span> <span class="op">..</span> <span class="va">Board</span><span class="op">.</span><span class="va">bounces</span><span class="op">,</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="dv">100</span><span class="op">,</span> <span class="dv">136</span><span class="op">,</span> <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="st">"marble: "</span> <span class="op">..</span> <span class="va">Game</span><span class="op">.</span><span class="va">marble</span><span class="op">,</span> <span class="dv">100</span><span class="op">,</span> <span class="dv">158</span><span class="op">,</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">center</span><span class="op">)</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeCopy</span><span class="op">)</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorWhite</span><span class="op">)</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>drawCircleAtPoint<span class="op">(</span><span class="dv">100</span><span class="op">,</span> <span class="dv">205</span><span class="op">,</span> <span class="dv">14</span><span class="op">)</span> <span class="co">-- the marble, as a logo</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>setColor<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kColorBlack</span><span class="op">)</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">gfx</span><span class="op">.</span>popContext<span class="op">()</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">img</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>gameWillPause<span class="op">()</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- built fresh each pause, so the stats are current</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="va">playdate</span><span class="op">.</span>setMenuImage<span class="op">(</span><span class="va">Sysmenu</span><span class="op">.</span>pauseImage<span class="op">())</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>gameWillResume<span class="op">()</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="va">Game</span><span class="op">.</span>calibrate<span class="op">()</span> <span class="co">-- hands moved while the menu was open</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>playdate.gameWillPause()</code> fires just before the OS takes over (today that means the Menu button); <code>playdate.gameWillResume()</code> fires on the way back — which the example uses to recalibrate tilt, closing the loop from the accelerometer section.</p>
+<p>One catch for this book’s pipeline: the real pause screen is drawn by the OS, so no headless screenshot can contain it. But the card is just an image <em>we</em> drew, so the example previews it in-game — the figure script sets <code>bot.showPause</code>, and the draw code renders <code>Sysmenu.pauseImage()</code> to the screen with a dithered overlay marking the half the menu would cover (a human can hold d-pad left for the same preview). <a href="#fig-tilt-pause" class="quarto-xref">Figure&nbsp;<span>11.3</span></a> is that preview: what you are seeing is pixel-for-pixel the image <code>setMenuImage</code> receives.</p>
+<div id="fig-tilt-pause" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tilt-pause-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/11-tilt/tilt-pause.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tilt-pause-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.3: The procedural pause card, previewed in-game: live bounce count and marble choice on the left 200 px; the dithered half is where the System Menu slides in.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="the-keyboard" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="the-keyboard"><span class="header-section-number">11.3</span> The keyboard</h2>
+<p>For text entry — initials, save names, level codes — the system keyboard takes over: <code>playdate.keyboard.show(initialText)</code> slides it up over the lower part of the screen and steals input focus (your <code>playdate.update</code> keeps running behind it, but button presses feed the keyboard, ideal for a crank-scrolled character column). The example wires it to rename a scoreboard row:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+scores.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="scores.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Rename the selected row with the system keyboard. The keyboard</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- takes over input focus; our update loop keeps running behind it.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Scores</span><span class="op">.</span>rename<span class="op">()</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">row</span> <span class="op">=</span> <span class="va">Scores</span><span class="op">.</span><span class="va">view</span><span class="op">:</span>getSelectedRow<span class="op">()</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">playdate</span><span class="op">.</span><span class="va">keyboard</span><span class="op">.</span><span class="va">textChangedCallback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">Scores</span><span class="op">.</span><span class="va">pending</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">keyboard</span><span class="op">.</span><span class="va">text</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- the callback receives true if the player chose OK</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">playdate</span><span class="op">.</span><span class="va">keyboard</span><span class="op">.</span><span class="va">keyboardWillHideCallback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ok</span><span class="op">)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">text</span> <span class="op">=</span> <span class="va">Scores</span><span class="op">.</span><span class="va">pending</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">ok</span> <span class="kw">and</span> <span class="va">text</span> <span class="kw">and</span> <span class="op">#</span><span class="va">text</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">then</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>            <span class="va">Scores</span><span class="op">.</span><span class="va">rows</span><span class="op">[</span><span class="va">row</span><span class="op">].</span><span class="va">name</span> <span class="op">=</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>                <span class="fu">string.upper</span><span class="op">(</span><span class="fu">string.sub</span><span class="op">(</span><span class="va">text</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">8</span><span class="op">))</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">Scores</span><span class="op">.</span>save<span class="op">()</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">Scores</span><span class="op">.</span><span class="va">pending</span> <span class="op">=</span> <span class="kw">nil</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">playdate</span><span class="op">.</span><span class="va">keyboard</span><span class="op">.</span>show<span class="op">(</span><span class="va">Scores</span><span class="op">.</span><span class="va">rows</span><span class="op">[</span><span class="va">row</span><span class="op">].</span><span class="va">name</span><span class="op">)</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The flow is all callbacks. <code>textChangedCallback</code> fires per character, with the current string in <code>playdate.keyboard.text</code>; <code>keyboardWillHideCallback</code> fires as the keyboard starts to close and receives <code>true</code> if the player confirmed with OK, <code>false</code> if they cancelled — commit on true, discard on false. (There are also <code>keyboardDidShowCallback</code>, <code>keyboardDidHideCallback</code>, and <code>keyboardAnimatingCallback</code> for syncing your layout with the slide, and <code>playdate.keyboard.width()</code>/<code>isVisible()</code> if you want to shrink your play area while it is up.) The scripted run never opens the keyboard — a robot has nothing to type and the figure would just be the stock OS keyboard — but the path is two button presses away from any human playing the example.</p>
+</section>
+<section id="a-scoreboard-with-gridview" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="a-scoreboard-with-gridview"><span class="header-section-number">11.4</span> A scoreboard with gridview</h2>
+<p><code>playdate.ui.gridview</code> (import <code>CoreLibs/ui</code>) draws scrolling grids and lists: you describe the geometry, override one drawing method, and it handles layout, selection, and animated scrolling. It is also famously fiddly on first contact, so here is a known- good list-view setup:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+scores.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="scores.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Scores</span><span class="op">.</span>setup<span class="op">()</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">Scores</span><span class="op">.</span>load<span class="op">()</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- cellWidth 0 = rows span the grid's full width (a list view)</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">gv</span> <span class="op">=</span> <span class="va">playdate</span><span class="op">.</span><span class="va">ui</span><span class="op">.</span><span class="va">gridview</span><span class="op">.</span>new<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">24</span><span class="op">)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">gv</span><span class="op">:</span>setNumberOfRows<span class="op">(#</span><span class="va">Scores</span><span class="op">.</span><span class="va">rows</span><span class="op">)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">gv</span><span class="op">:</span>setCellPadding<span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">gv</span><span class="op">:</span>setSelectedRow<span class="op">(</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="va">gv</span><span class="op">:</span>drawCell<span class="op">(</span><span class="va">section</span><span class="op">,</span> <span class="va">row</span><span class="op">,</span> <span class="va">column</span><span class="op">,</span> <span class="va">selected</span><span class="op">,</span> <span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">w</span><span class="op">,</span> <span class="va">h</span><span class="op">)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">selected</span> <span class="cf">then</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>fillRoundRect<span class="op">(</span><span class="va">x</span><span class="op">,</span> <span class="va">y</span><span class="op">,</span> <span class="va">w</span><span class="op">,</span> <span class="va">h</span><span class="op">,</span> <span class="dv">4</span><span class="op">)</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>            <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeFillWhite</span><span class="op">)</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">r</span> <span class="op">=</span> <span class="va">Scores</span><span class="op">.</span><span class="va">rows</span><span class="op">[</span><span class="va">row</span><span class="op">]</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawText<span class="op">(</span><span class="fu">string.format</span><span class="op">(</span><span class="st">"%2d  %s"</span><span class="op">,</span> <span class="va">row</span><span class="op">,</span> <span class="va">r</span><span class="op">.</span><span class="va">name</span><span class="op">),</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>            <span class="va">x</span> <span class="op">+</span> <span class="dv">8</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>drawTextAligned<span class="op">(</span><span class="fu">tostring</span><span class="op">(</span><span class="va">r</span><span class="op">.</span><span class="va">score</span><span class="op">),</span> <span class="va">x</span> <span class="op">+</span> <span class="va">w</span> <span class="op">-</span> <span class="dv">8</span><span class="op">,</span> <span class="va">y</span> <span class="op">+</span> <span class="dv">3</span><span class="op">,</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">kTextAlignment</span><span class="op">.</span><span class="va">right</span><span class="op">)</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">gfx</span><span class="op">.</span>setImageDrawMode<span class="op">(</span><span class="va">gfx</span><span class="op">.</span><span class="va">kDrawModeCopy</span><span class="op">)</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">Scores</span><span class="op">.</span><span class="va">view</span> <span class="op">=</span> <span class="va">gv</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The fiddly parts, named:</p>
+<ul>
+<li><strong><code>cellWidth = 0</code> means full-width rows.</strong> That single zero in <code>gridview.new(0, 24)</code> is what makes it a list instead of a grid. Forget it and you get one skinny column.</li>
+<li><strong><code>drawCell</code> is an override, not a callback you register.</strong> You define <code>function gv:drawCell(section, row, column, selected, x, y, width, height)</code> <em>on the instance</em>. Draw strictly inside the rect you are handed; the gridview clips nothing.</li>
+<li><strong>Selection is stateful.</strong> <code>setSelectedRow(1)</code> at setup, or your first <code>selectNextRow</code> starts from nowhere. Navigation is <code>selectNextRow(wrap)</code> / <code>selectPreviousRow(wrap)</code> (optional extra arguments control whether and how the view scrolls to the selection), and <code>getSelectedRow()</code> reads it back.</li>
+<li><strong>Rows are per-section and 1-based.</strong> Lists live in section 1; <code>setNumberOfRows(n)</code> is the list-style convenience.</li>
+<li><strong>You draw it every frame.</strong> <code>drawInRect(x, y, w, h)</code> renders and advances scroll animation; the <code>needsDisplay</code> property is true when content changed, an optimization hook for static screens — but call <code>drawInRect</code> every update while animating or the scroll freezes.</li>
+</ul>
+<p>Beyond flat lists, the same object scales up: give it <code>setNumberOfSections(n)</code> and <code>setNumberOfRowsInSection(section, n)</code> and rows renumber from 1 <em>within each section</em>; set a nonzero <code>setSectionHeaderHeight(h)</code> and your <code>drawSectionHeader(section, x, y, width, height)</code> override is called for each header (height 0 means never — another silent-fiddliness favorite). Horizontal dividers, <code>scrollToRow</code>/<code>scrollToTop</code>, and <code>setScrollDuration(ms)</code> for the animation speed cover the rest of a settings screen’s needs. For two-dimensional grids — inventories, level pickers — <code>setNumberOfColumns</code> plus a real <code>cellWidth</code> in the constructor turn the list back into a grid, and <code>selectNextColumn(wrap)</code> joins the navigation set.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>When not to use gridview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A gridview earns its setup cost when content scrolls or its length varies — scoreboards, save slots, long settings. For a fixed six-item title menu, a <code>for</code> loop over <code>drawText</code> with an inverted selection bar is less code than the overrides, which is why most of the shipped games’ menus are hand-rolled. Use the tool when the <em>scrolling</em> is the hard part, not to draw four static rows.</p>
+</div>
+</div>
+<p>The example toggles the scoreboard on B, moves the selection with up/down through the Chapter 9 snapshot (crank ticks would work the same — one <code>selectNextRow</code> per tick), and A opens the keyboard rename from the previous section. <a href="#fig-tilt-scores" class="quarto-xref">Figure&nbsp;<span>11.4</span></a> shows the script’s five down-taps later: row six selected, list scrolled, knockout text on the selection bar.</p>
+<div id="fig-tilt-scores" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tilt-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/11-tilt/tilt-scores.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tilt-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.4: The gridview scoreboard: full-width cells, row 6 selected and scrolled into view, drawn by one <code>drawCell</code> override.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="tying-it-together" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="tying-it-together"><span class="header-section-number">11.5</span> Tying it together</h2>
+<p>The example’s update loop is worth a look before we leave it, because it shows how little glue the three subsystems need:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+main.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="main.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>update<span class="op">()</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">bot</span> <span class="op">=</span> <span class="va">Harness</span><span class="op">.</span>input<span class="op">(</span><span class="va">frame</span><span class="op">)</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">s</span> <span class="op">=</span> gather<span class="op">(</span><span class="va">bot</span><span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">bJust</span> <span class="cf">then</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">Game</span><span class="op">.</span><span class="va">mode</span> <span class="op">=</span> <span class="va">Game</span><span class="op">.</span><span class="va">mode</span> <span class="op">==</span> <span class="st">"board"</span> <span class="kw">and</span> <span class="st">"scores"</span> <span class="kw">or</span> <span class="st">"board"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">Game</span><span class="op">.</span><span class="va">mode</span> <span class="op">==</span> <span class="st">"scores"</span> <span class="cf">then</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">Scores</span><span class="op">.</span>update<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">Scores</span><span class="op">.</span>draw<span class="op">()</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">tiltX</span><span class="op">,</span> <span class="va">tiltY</span> <span class="op">=</span> readTilt<span class="op">(</span><span class="va">bot</span><span class="op">)</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">Board</span><span class="op">.</span>update<span class="op">(</span><span class="va">tiltX</span><span class="op">,</span> <span class="va">tiltY</span><span class="op">)</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">s</span><span class="op">.</span><span class="va">preview</span> <span class="cf">then</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>            drawPreview<span class="op">()</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            drawBoard<span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>One mode string flips between the board and the scoreboard on B’s edge; tilt is read (and the marble simulated) only in board mode, so the physics freezes while the player browses scores; and the pause-card preview is just a draw-path branch inside board mode, driven by <code>bot.showPause</code> in scripted runs or a held d-pad left in human ones. Buttons arrive through a compact version of Chapter 9’s <code>gather()</code> — same seam, same derived edges — which is why one <code>shots.lua</code> script could roll the marble, walk the scoreboard selection to row six, and pose the pause card in a single 280-frame headless run. Note also what the System Menu code does <em>not</em> appear here at all: items and pause callbacks were installed once at boot, and the OS drives them from outside the loop.</p>
+</section>
+<section id="the-rest-of-the-lifecycle" class="level2" data-number="11.6">
+<h2 data-number="11.6" class="anchored" data-anchor-id="the-rest-of-the-lifecycle"><span class="header-section-number">11.6</span> The rest of the lifecycle</h2>
+<p>Pause and resume you have met. Four more callbacks complete the set, and they are where saving belongs:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+scores.lua
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="scores.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- The OS gives no "save now?" prompt: write when it warns you.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>gameWillTerminate<span class="op">()</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">Scores</span><span class="op">.</span>save<span class="op">()</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>deviceWillSleep<span class="op">()</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">Scores</span><span class="op">.</span>save<span class="op">()</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">playdate</span><span class="op">.</span>deviceWillLock<span class="op">()</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">Scores</span><span class="op">.</span>save<span class="op">()</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>playdate.gameWillTerminate()</code> fires when the player exits to the launcher; <code>playdate.deviceWillSleep()</code> when the console powers down from a critically low battery; <code>playdate.deviceWillLock()</code> / <code>playdate.deviceDidUnlock()</code> bracket the auto-lock that kicks in after inactivity. The OS never asks the player “save before quitting?” — your game is simply told, once, that the end is near. Writing your datastore in all three “going away” callbacks costs four lines and makes data loss structurally impossible; Chapter 17 covers what to write and how to version it.</p>
+<p>One relative of the lock callbacks deserves a mention while you are here: the device auto-locks after three minutes without a button press or crank motion, and a <em>tilt-only</em> game never presses buttons — Bearing’s players would hit the lock screen mid-maze. <code>playdate.setAutoLockDisabled(true)</code> turns the timer off (it is automatically re-enabled when your game terminates). Disable it only in modes where input genuinely bypasses the buttons, and be deliberate about it: a game that disables auto-lock and then sits on a pause screen is a battery complaint in the making.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Don’t save only in gameWillTerminate
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The tempting shortcut — save on exit — misses the two exits players actually hit: the battery dying mid-session (<code>deviceWillSleep</code>) and the console locking itself in a bag (<code>deviceWillLock</code>). All three callbacks should hit the same save function, which therefore must be cheap and idempotent.</p>
+</div>
+</div>
+</section>
+<section id="what-you-know-now" class="level2" data-number="11.7">
+<h2 data-number="11.7" class="anchored" data-anchor-id="what-you-know-now"><span class="header-section-number">11.7</span> What you know now</h2>
+<ul>
+<li><code>startAccelerometer()</code> then <code>readAccelerometer()</code> for a gravity vector in <em>g</em>; smooth it with a one-line low-pass, and always calibrate a per-player neutral — recalibrating on <code>gameWillResume</code> and on demand.</li>
+<li>In the Simulator the accelerometer is the window’s tilt sliders, so scripted runs inject <code>bot.tiltX/tiltY</code> through the same seam as buttons — Bearing’s sine-stir autopilot is the shipped proof.</li>
+<li>The System Menu grants three items (action, checkmark, options; callbacks fire when the menu closes) and one 400x240 pause card via <code>setMenuImage</code> — important content in the left 200 px, built fresh in <code>gameWillPause</code>.</li>
+<li><code>playdate.keyboard</code> is show, <code>text</code>, and callbacks — commit in <code>keyboardWillHideCallback</code> only when its boolean says OK.</li>
+<li><code>gridview.new(0, h)</code> makes a list; override <code>drawCell</code> on the instance, seed the selection, and call <code>drawInRect</code> every frame.</li>
+<li>Save in <code>gameWillTerminate</code>, <code>deviceWillSleep</code>, <em>and</em> <code>deviceWillLock</code> — the OS warns once and never asks.</li>
+</ul>
+<p>That completes the input story: buttons, crank, tilt, and the system surfaces around them. Next, the Playdate learns to make noise — synths, envelopes, and the sound-effects module pattern.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/10-crank.html" class="pagination-link" aria-label="The Crank">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">The Crank</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/12-sfx.html" class="pagination-link" aria-label="Synths and Sound Effects">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Synths and Sound Effects</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
