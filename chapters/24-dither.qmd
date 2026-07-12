@@ -1,0 +1,851 @@
+# Inside Dither: A Shade Engine {#sec-dither-engine}
+
+The fourth engine in the catalog nearly wasn't one. For most of its
+life the `dither/` package was a single racer sitting on an 81-line
+core — a smoke harness and a delayed-call scheduler, nothing more —
+and its own overhaul commit opens with the diagnosis: *"The package
+had no identity."* Phosphor had a thesis (@sec-phosphor: everything
+is lines), Tiles had one (@sec-tiles: the character grid is the
+single source of truth), Voxel had one (@sec-voxel: a game must use
+height and volume to earn the room). Dither had a folder. The fix
+was not more code first; it was a sentence first, written into
+`DESIGN.md` before any module existed:
+
+> Every engine in this fleet owns a rendering idea: phosphor owns
+> *lines*, tiles owns *the grid*, voxel owns *volume*. Dither owns
+> **shade** — the illusion of grayscale on a 1-bit screen, promoted
+> from an art trick to a game mechanic. — `dither/DESIGN.md`
+
+@sec-dither taught the art trick: dither patterns as a gray palette,
+the ladder figure, the `setDitherPattern` transparency trap. This
+chapter is about the promotion. An engine that *owns* shade cannot
+stop at "here is how to fill a rect with gray" — it has to make
+grays a resource (ramps as first-class objects), light a *query*
+("is this point lit?" answered by the same math that darkens the
+pixels), and distance a *tone* (parallax fade, depth haze, shadows
+that anchor). And like Voxel's height rule, the thesis doubles as an
+admission test:
+
+> A game earns Dither the way a game earns voxel's height rule: it
+> must USE shade — hide something in darkness, reveal something with
+> light, or make distance readable by tone. A game that only wants
+> sprites on a screen belongs in classics. — `dither/DESIGN.md`
+
+What came out of the overhaul is a core of twelve files and 1,246
+lines — `shade`, `light`, `cast`, `fade`, `para`, `scaler`, plus the
+cabinet (`kit`, `dsnd`, `dmusic`) and the original thin trio — and
+three proof games: *Sprint*, the pre-existing racer retrofitted with
+day/dusk/night headlight racing; *Glim*, a firefly-keeper built so
+that darkness is mechanics, not paint; and *Skimmer*, a Space
+Harrier-lineage dragonfly on the super-scaler. The example,
+`24-dither`, is an engine tour in the sibling chapters' format:
+eight core modules vendored verbatim (one-line provenance headers,
+otherwise untouched) under four scripted screens — the 17-level ramp
+chart, the three-band light compositor with live `Light.at` probes,
+the super-scaler pond, and the Bayer transitions. Every core listing
+below is extracted from the vendored files.
+
+## One ramp, three cartridges
+
+The house pattern is the siblings': the Makefile stages `core/*.lua`
+beside `games/<name>/*` into one flat directory, `pdc` compiles it,
+every module is a global table imported in dependency order by a
+one-line `lib.lua`. The demo's version, with the book's scaffolding
+in front:
+
+{{< snip 24-dither/source/main.lua tour-imports >}}
+
+As in @sec-tiles and @sec-voxel, the core's own `harness.lua` stays
+home: the book's `bookharness.lua` defines the same `Harness` global
+with the same call surface (`enabled`, `count`, `set`, `frame`), so
+the vendored `Kit.run` drives it unmodified. This engine adds one
+more wrinkle to that reconciliation: `Kit.run` also *assigns* two
+fields the book harness never declares — `Harness.extra`, and
+(under the Simulator) `Harness.shotPath`. Both writes are harmless
+because nothing in the book harness reads them, but they are
+exactly the kind of thing to check before declaring two
+implementations compatible at a named global: the surface is every
+field touched, not just every function called.
+
+{{< snip 24-dither/source/main.lua tour-run >}}
+
+`Kit.run` is the tiles/voxel cabinet ported into this package — the
+chapter returns to it briefly near the end — and everything else is
+new. The modules load in dependency order because they genuinely
+depend: `light` composites through `shade`'s ramps, `cast` and
+`fade` set patterns through them, `scaler` fills its floor with
+them. One ramp system underneath; everything above it inherits one
+aesthetic.
+
+## Ramps: seventeen grays as an object
+
+`shade.lua` is where the SDK's "one pattern at a time" becomes a
+palette. A **ramp** is seventeen 8×8 patterns — level 0 pure white
+through level 16 pure black — derived at import time from the Bayer
+8×8 threshold matrix. @sec-dither used the SDK's built-in Bayer
+dithers through `setDitherPattern`; the engine builds the matrix
+itself, in a dozen lines, because owning the thresholds is what makes
+everything later (dissolves, silhouettes, stencil levels) exact:
+
+{{< snip 24-dither/source/shade.lua bayer >}}
+
+The recursion is the classic index construction. Start from the 2×2
+base
+$B_2 = \begin{pmatrix}0 & 2\\ 3 & 1\end{pmatrix}$
+and double: each cell of the $2n$-size matrix is four times the
+half-size matrix's value at $(y \bmod n,\; x \bmod n)$, plus the
+quadrant's code from $B_2$,
+
+$$
+B_{2n}(y, x) \;=\; 4\,B_n(y \bmod n,\; x \bmod n)
+\;+\; B_2\!\left(\left\lfloor y/n\right\rfloor,
+\left\lfloor x/n\right\rfloor\right),
+$$
+
+which is exactly the loop's `q + add`. Two doublings take the 2×2 to
+8×8, and the result is a matrix in which every value 0–63 appears
+exactly once, arranged so that any prefix of them is maximally
+spread out. That last property is the whole point, and it is what
+makes the ramp *exact*:
+
+{{< snip 24-dither/source/shade.lua make-ramp >}}
+
+Level $k$ blackens every pixel whose threshold is below $4k$. Since
+the 64 thresholds are a permutation of 0–63, exactly $4k$ of 64
+pixels — precisely $k/16$ of the area — go black at level $k$. "Level
+8 is 50% gray" is not an approximation; it is arithmetic, and the
+demo's first screen is the receipt (@fig-ramp-chart): all seventeen
+levels of both ramps as labeled swatches, the engine's own version
+of @sec-dither's ladder figure.
+
+{{< snip 24-dither/source/game.lua demo-ramp >}}
+
+![Screen one at frame 50: the 17-level Bayer and noise ramps as
+labeled swatches, with a banded 0→16 gradient below — seventeen
+opaque pattern fills, one per band, no per-pixel
+work.](../figures/24-dither/ramp-chart.png){#fig-ramp-chart}
+
+Three decisions in `makeRamp` repay a close read. First, every level
+is built in **three forms**. `pat` is the opaque form — Playdate
+patterns are eight row bytes, bit set = white — and an 8-number
+`gfx.setPattern` fill paints *both* the black and the white pixels
+(verified against the SDK reference, which adds: "an additional 8
+numbers can be specified for an alpha mask bitmap"). Opaque is
+exactly right for terrain and panels: the fill *is* the surface.
+`over` uses that 16-number alpha form to make a **black-speckle
+overlay** — bitmap rows all black, alpha opaque only where the ramp
+is black — so a fill at level $k$ darkens $k/16$ of the pixels and
+lets the scene show through the rest. That overlay form is the
+engine's workhorse: lights, shadows, dissolves are all `Shade.over`
+fills. `wash` is the same coverage painted white, for haze and
+glare. Second, note what the module does *not* use:
+`setDitherPattern`, the API @sec-dither spent a warning box on
+(white draw color inverts the alpha argument — a documented SDK
+bug). The engine sidesteps the trap by never going near it; it owns
+its byte tables, and the polarity question cannot arise. Third, the
+fixed `NOISE` table is a second ramp with the same exactness —
+values 0–63, each once — but annealed for spread rather than
+regularity, so its texture reads as grain instead of Bayer's
+crosshatch. In @fig-ramp-chart the two rows carry identical
+coverage at every level and *feel* different; *Glim* and *Skimmer*
+fill ground with `"noise"` and skies with Bayer for exactly that
+reason.
+
+The public surface is small and fractional-friendly:
+
+{{< snip 24-dither/source/shade.lua shade-api >}}
+
+`Shade.quant` clamps and rounds, so callers can compute levels as
+continuous functions (a haze rising with distance, a dissolve
+tracking a timer) and let the ramp discretize. And gradients are
+**banded**, not per-pixel:
+
+{{< snip 24-dither/source/shade.lua shade-vgrad >}}
+
+A span of levels quantizes into at most seventeen bands, one opaque
+fill each — a full-screen sky gradient costs a dozen `fillRect`
+calls, which is why every game in the package opens its frame with
+one. Everything in the module is precomputed at import; a
+`Shade.fill` at draw time allocates nothing and does nothing but
+set a pattern and fill.
+
+## Light: the flagship
+
+`light.lua` is the module the thesis was written for: dynamic light
+sources — headlights, lanterns, a flare — that darken the scene
+*and* answer questions. It is also the package's best example of
+verifying the SDK before architecting on it. `DESIGN.md` explicitly
+ordered the check ("verify `gfx.setStencilImage` / stencil-pattern
+semantics against Inside Playdate before building") and specified a
+fallback compositor in case stencils could not gate pattern fills.
+The module's header is the report, kept in the source as a comment
+because the next maintainer will have the same doubts:
+
+{{< snip 24-dither/source/light.lua light-facts >}}
+
+The verified facts, in brief: while a stencil image is set, **all**
+drawing — pattern fills included — lands only where the stencil is
+white; `gfx.clearStencil()` clears it; the 8-byte `setPattern` form
+fills opaquely and the 16-byte form adds the alpha mask; and
+`setDitherPattern`'s white-color inversion bug is real and avoided.
+Stencil-gated pattern fills work, so the clip-rect-union fallback
+died unbuilt. The compositor that survives is worth deriving
+carefully, because it is the chapter's central machine.
+
+The design decision first: light is **quantized to K = 3 levels** —
+dark, dim, lit. The alternative, continuous radial falloff, is a
+per-pixel computation: every pixel needs its distance to every
+light compared against a threshold that varies with that distance,
+which on this hardware means Lua touching 96,000 pixels a frame.
+Quantizing turns the whole problem into set operations: the screen
+partitions into three regions, each region's darkness is *one*
+full-screen `Shade.over` fill at a fixed level, and the only
+per-light work is stamping discs into masks that define the
+regions. Three bands also read better than they sound — banded
+light on a 1-bit screen looks deliberate, like posterized film,
+where a continuous gradient would dissolve into noise — and, most
+importantly, a quantized level is something gameplay can *reason
+about*. "Lit means lit" is a crisp predicate; "0.37 lit" is not.
+
+Per frame the game brackets its lights:
+
+{{< snip 24-dither/source/light.lua light-begin >}}
+
+`Light.begin(ambient)` quantizes the ambient level:
+$q_{amb} = \lfloor \text{ambient} \cdot (K{-}1) \rfloor$, so
+anything below 0.5 is night (two darkness bands), 0.5 up to 1 is
+dusk (one band), and ambient 1 sets `active = false` — **the whole
+system becomes an exact no-op**. That last clause is a contract,
+not an optimization footnote: `Light.add` returns immediately,
+`Light.finish` returns immediately, `Light.at` returns 1. A game
+that ships a daytime mode pays zero for carrying the lighting code
+(*Sprint*'s DAY render is bit-identical to its pre-lighting
+render), and a game that never calls `Light.begin` at all pays
+nothing either. Each light is a position, a radius `r` it dims out
+to, and a falloff fraction: fully lit inside `r * falloff`, dim
+out to `r`, dark beyond. The pool entries are reused across frames
+— zero allocation, the discipline every module here inherits from
+@sec-phosphor.
+
+Then the composite:
+
+{{< snip 24-dither/source/light.lua light-finish >}}
+
+Read it as set algebra. For each darkness band $q$ from the ambient
+level up to dim, the code rebuilds one reusable 400×240 mask image
+(two exist, allocated once at import): the *base* band starts as
+all white — ambient darkness covers everything — while higher bands
+start black and receive a white disc per light at the radius that
+still reaches that band. Then, for every band, each light's
+*brighter* region (its radius for band $q{+}1$) is carved back out
+in black. Stencil the mask, lay one full-screen `Shade.over` fill
+at that band's level (12 for dark, 6 for dim — tunable), clear the
+stencil. Because bands run dark-to-lit and every brighter core is
+carved from every darker mask, a lit core ends up carved from
+*everything* and receives no fill at all: full-lit pixels are the
+ones the compositor never touches.
+
+The cost model is honest and countable straight off the code. At
+night with $L$ lights: two mask clears, $3L$ disc blits (one carve
+per light in the base band; one disc plus one carve in the dim
+band), and two stenciled full-screen pattern fills. The blits come
+from four precomputed white disc images (radii 16–128) scale-drawn
+to size — solid discs scale cleanly, only the edge aliases. The
+header comment's measurements: roughly 2–4 ms on device at $L \le
+4$, ~0.5 ms in the Simulator; dusk about half; ambient 1, zero.
+And the budget is *visible*: `Light.stats()` reports lights, blits,
+fills, and milliseconds, and all three games fold it into their
+smoke heartbeats (@sec-harness) so a lighting regression shows up
+as a number before it shows up as a frame hitch.
+
+Now the query, and the reason this module is the flagship rather
+than a screen effect:
+
+{{< snip 24-dither/source/light.lua light-at >}}
+
+`Light.at(x, y)` computes from the **same radii the masks blit** —
+inside any lit core returns 1, inside any dim radius returns 0.5,
+otherwise the ambient floor. There is no second lighting model, no
+"gameplay approximation" of the visuals: what you see is what the
+logic gets. The payoff lands in *Glim*, where this one function
+*is* the enemy AI gate — a moth outside every light literally does
+not think — and the chapter gets there shortly. The demo's second
+screen stages the guarantee directly: three lights orbit a dark
+garden, and two probe points print their live `Light.at` readouts
+beside crosshairs you can check against the pixels
+(@fig-light-bands). The figure script then walks probe A out of a
+lit core, across the dim band, and into the open dark
+(@fig-light-probe):
+
+{{< snip 24-dither/source/game.lua demo-probe >}}
+
+![Screen two at frame 160: ambient 0.15, three moving lights, three
+visible bands. Probe A sits inside a lit core and reads 1.0 LIT;
+probe B in the open reads 0.0 DARK. The labels are computed by
+`Light.at` from the same discs the stencil masks
+blit.](../figures/24-dither/light-bands.png){#fig-light-bands}
+
+![The same screen at frame 225: the script has walked probe A out
+of every light's reach and its readout has fallen to DARK — the
+label can never disagree with the pixels, because there is only
+one set of disc radii.](../figures/24-dither/light-probe.png){#fig-light-probe}
+
+::: {.callout-note}
+## Verify, then architect
+The stencil compositor exists because a documentation check came
+back positive; the design doc carried a fallback in case it came
+back negative. That is the right order. The SDK reference is the
+only authority on questions like "do pattern stencils gate image
+draws?" — and the engine's habit of recording the verified answers
+*in the module header*, with the SDK version checked against, means
+the next reader inherits the receipts instead of re-running the
+experiment. When your architecture depends on an API's fine print,
+write the fine print down where the architecture lives.
+:::
+
+## Cast and Fade: anchoring and dissolving
+
+`cast.lua` is 33 lines and two tricks. The first is the humble one:
+
+{{< snip 24-dither/source/cast.lua cast-blob >}}
+
+A dithered ellipse in the black-speckle overlay, and it earns its
+module because of what it *does* perceptually: a drop shadow is the
+only thing welding a sprite to the ground. Without one, a character
+drawn over a dithered floor floats ambiguously; with one, its height
+is legible — and *Skimmer* turns that legibility into gameplay,
+reading the dragonfly's altitude off the gap between body and blob
+(the chapter quotes it in the game tour). The second trick is the
+stencil inversion:
+
+{{< snip 24-dither/source/cast.lua cast-sil >}}
+
+`Cast.silhouette` draws an image's opaque shape as flat dithered
+black — a cast shadow, or a ghost. `kDrawModeFillBlack` turns every
+opaque pixel black; the `setStencilPattern` gates *which* of those
+pixels land. The index arithmetic is the ramp's exactness paying
+rent: a stencil passes where it is white, so to draw level $k$
+worth of black you stencil with ramp entry $16 - k$, whose white
+coverage is exactly $k/16$. One subtraction, and "75% silhouette"
+means precisely 48 of every 64 pixels.
+
+`fade.lua` builds the package's transitions from the same
+seventeen thresholds:
+
+{{< snip 24-dither/source/fade.lua fade-dissolve >}}
+
+A dissolve is one full-screen overlay fill whose level tracks $t$
+through the ramp — and because the *terrain* is drawn from the same
+Bayer matrix, a scene dissolving to black darkens through the same
+crosshatch it is made of. One matrix, one aesthetic; nothing in a
+Dither game ever fades through a texture the world doesn't already
+wear. The iris is the other signature:
+
+{{< snip 24-dither/source/fade.lua fade-iris >}}
+
+Built once, on first use: a 512×512 black square with a transparent
+disc punched out and a dithered annulus rim (the disc is speckled
+at level 8, then re-cleared inside 86% of the radius, leaving only
+the rim's ring of speckle). `Fade.iris(x, y, t)` then draws four
+solid rectangles around a scale-drawn hole whose radius shrinks
+from the farthest-corner distance to zero — so the iris can center
+on *anything*, and *Sprint* centers it on the player's car.
+`Fade.wipe` finishes the set with a solid front trailing a 24-pixel
+banded edge, and `Fade.haze` is a `Shade.wash` band — the white
+speckle that makes a skyline recede. All of them draw *after* the
+scene; the demo's fourth screen runs an iris in and a dissolve out
+over a night glade, captured mid-flight (@fig-fade-iris,
+@fig-fade-dissolve):
+
+{{< snip 24-dither/source/game.lua demo-fade >}}
+
+![Screen four at frame 385: the iris half-open on the keeper — four
+solid rects and one scale-drawn hole image with its baked dithered
+rim.](../figures/24-dither/fade-iris.png){#fig-fade-iris}
+
+![The same scene at frame 450, dissolve at exactly $t = 0.5$: a
+single level-8 overlay fill, the same Bayer thresholds the glade
+itself is shaded with.](../figures/24-dither/fade-dissolve.png){#fig-fade-dissolve}
+
+::: {.callout-warning}
+## Un-set the pattern
+`gfx.setPattern` and `gfx.setColor` are mutually exclusive — the
+SDK's own note — and a pattern *stays set* until something replaces
+it. Every drawing function in this engine therefore ends with
+`gfx.setColor(gfx.kColorBlack)`: the changer resets, at the
+boundary, exactly the discipline @sec-dither taught for draw modes.
+Skip it in your own module and the next plain `fillRect` in
+someone else's code paints in your leftover speckle — a bug that
+looks like *their* bug, three files away from its cause.
+:::
+
+## Para: depth as tone
+
+`para.lua` is the smallest idea in the package and the purest
+statement of "shade tells depth." Parallax scrolling — background
+layers moving at fractions of camera speed (@sec-camera) — is as
+old as the NES. Dither adds one parameter: each layer carries a
+*shade*, and distance becomes tone as well as speed.
+
+{{< snip 24-dither/source/para.lua para-draw >}}
+
+Image layers tile in $x$ by repeated draws and render through
+`image:drawFaded(x, y, 1 - shade/16, kDitherTypeBayer8x8)` — the
+SDK call verified in the light module's fact sheet: alpha 1 is
+opaque, and the Bayer dither type keeps the fade on the house
+matrix. Function layers get their pattern *preset* (`Shade.set`
+before the callback), so procedural skylines draw themselves in
+their layer's gray without knowing their depth. A hedge at shade 8
+is a dark silhouette; the same hedge shape at shade 4 with a
+`Fade.haze` band over it is a distant one. *Glim*'s moonlit garden
+and *Skimmer*'s receding treelines are both two `Para.layer` calls,
+and the demo's pond screen carries the same pair.
+
+## Scaler: distance is scale AND tone
+
+One paragraph of lineage, because the module names it. Sega's
+mid-80s "Super Scaler" boards — *Hang-On* and *Space Harrier* in
+1985, *OutRun* in 1986, *After Burner* after — faked 3D a decade
+before consumer polygons by doing two things fast: scaling sprites
+(objects grow as they approach, drawn from hardware that could
+resize a sprite every frame) and painting the ground as horizontal
+raster bands whose colors scrolled to sell motion. No geometry, no
+Z-buffer — a projection formula, a pile of pre-drawn art, and
+speed. That is precisely the budget shape a Playdate wants, and
+`scaler.lua` is the recipe in 280 lines of Lua.
+
+The projection is @sec-wireframe's similar triangles with the
+camera constrained — it never pitches or rolls, only slides — so
+the divide-by-depth applies per axis:
+
+{{< snip 24-dither/source/scaler.lua scaler-project >}}
+
+$$
+s_x = c_x + (w_x - \mathrm{cam}_x)\,\frac{f}{d_z}, \qquad
+s_y = \mathrm{horizon} + (\mathrm{cam}_y - w_y)\,\frac{f}{d_z},
+\qquad s = \frac{f}{d_z},
+$$
+
+with $d_z$ the depth ahead of the camera and the returned scale $s$
+doing double duty: it positions *and* sizes. Everything else in the
+module is about drawing at that scale cheaply, and about what
+happens when $d_z$ gets small — hold that thought.
+
+### Mip ladders
+
+Scaling art at draw time is the naive plan, and the SDK offers two
+forms of it: `image:drawScaled` resamples every pixel of every
+sprite every frame, and `image:scaledImage` allocates a new image
+each call. Both are exactly what a 30 fps frame full of approaching
+obstacles cannot afford. The ladder precomputes instead:
+
+{{< snip 24-dither/source/scaler.lua scaler-ladder >}}
+
+`steps` scaled copies built once at load — step $i$ at scale
+$\text{maxScale} \cdot i / \text{steps}$ — and drawing picks the
+nearest step at or below the projected scale: a plain masked blit,
+no resampling. The memory arithmetic makes the trade obvious. The
+steps' areas sum as
+
+$$
+\sum_{i=1}^{n} w_0 h_0 \left(\frac{i \cdot \text{maxScale}}{n}
+\right)^{\!2}
+= w_0 h_0\, \text{maxScale}^2 \sum_{i=1}^{n}
+\left(\frac{i}{n}\right)^{\!2}
+\;\approx\; w_0 h_0\, \text{maxScale}^2\, \frac{n}{3},
+$$
+
+since $\sum (i/n)^2 = (n{+}1)(2n{+}1)/6n \to n/3$. A 32×32 base at
+twelve steps and maxScale 3 is about 37k pixels — roughly 4.6 KB of
+1-bit bitmap plus the same again for its mask. Kilobytes, once, to
+delete a per-sprite per-frame resample forever. Past the top step
+the top image *is* scale-drawn live — that only happens for the one
+or two sprites flying past your ear, the classic arcade blow-up,
+and below the bottom step the smallest image draws (classic pop-in,
+also faithful to the arcade). `Scaler.ladderFromFn` renders a
+draw-callback into a base image first, which is how *Skimmer* and
+the demo ship zero art files.
+
+### The depth queue
+
+Painter's order in a scaler scene is by depth, and the queue makes
+it a pooled, allocation-free pass: `Scaler.queue` projects at
+enqueue time (culling behind-camera and off-screen-x), `flush`
+sorts far-to-near and draws. Two details carry the section's
+lessons:
+
+{{< snip 24-dither/source/scaler.lua scaler-flush >}}
+
+The sort is an insertion sort with *strict* comparison —
+deliberately, and the comment says why: strict descending order is
+**stable**, so two sprites at the same depth keep their queue order
+every frame instead of Z-flickering (the cabinet's `Kit.drawSorted`
+fights the same instability with sequence numbers, because
+`table.sort` is unstable; the queue solves it by algorithm choice
+instead). And `flush` takes
+`shadeByZ`, a depth-to-shade function applied at draw: this is
+"distance is scale AND tone" as an API. Build the mapper once —
+
+{{< snip 24-dither/source/scaler.lua scaler-haze >}}
+
+— hand the same closure to every flush, and far sprites rise
+through the ramp toward invisibility exactly as they shrink down
+the ladder. Haze doubles as a spawn mask: obstacles materialize at
+shade 12, not as hard black pop-ins.
+
+### The floor, and the bend
+
+The ground is the Super Scaler raster trick rebuilt from pattern
+fills: horizontal bands below the horizon, each band's world depth
+recovered from its screen row. A point on the ground plane
+($w_y = 0$) at depth $d_z$ projects to
+$s_y = \mathrm{horizon} + \mathrm{cam}_y f / d_z$; invert it and
+each row knows how far away it is,
+
+$$
+d_z \;=\; \frac{\mathrm{cam}_y\, f}{s_y - \mathrm{horizon}},
+$$
+
+which is the code's `dz = fy / (yt + bh * 0.5 - hy)`, sampled at
+band center:
+
+{{< snip 24-dither/source/scaler.lua floor-z >}}
+
+The stripe index comes from `(dz + cam.z) / size` — world-anchored,
+so driving the camera forward scrolls the stripes with **no
+additional work**: the same rows recompute to different stripe
+indices next frame. The budget is fixed by geometry: with the
+horizon at 110 and two rows per band, the floor is at most
+$(240 - 111)/2 \approx 64$ pattern fills per frame; the optional
+checker mode adds lateral cells (per-cell fills, nearest bands
+first) under a hard cap (`opts.budget`, default 96), with cells
+thinner than 8 pixels merging back into stripes. Like `Light`, the
+floor reports itself: `Scaler.stats()` counts fills into the smoke
+heartbeat.
+
+Then OutRun's road bend, in three lines:
+
+{{< snip 24-dither/source/scaler.lua floor-bend >}}
+
+Per band, marching *up* from the near edge, `dx` accumulates the
+curve and `xoff` accumulates `dx` — a double accumulation, so the
+lateral offset grows quadratically toward the horizon. That is the
+whole bend: near bands barely shift, far bands sweep sideways, and
+the road appears to curve away exactly as the 1986 cabinet's did.
+The per-row offsets are recorded into `bendX`, and
+`Scaler.bendAt(sy)` reads them back — so a game's *sprites* can
+root themselves on the same curve the stripes follow. *Skimmer*'s
+reeds pass their projected row through `bendAt` before drawing,
+which is why they sit *on* the meandering water instead of floating
+over it.
+
+The demo's third screen is the assembled money shot
+(@fig-scaler-pond) — and its draw function is the engine's
+prescribed frame order, worth learning as a sequence: sky gradient,
+parallax, haze, floor, depth queue, near actors, then (in a real
+game) the light pass and fades:
+
+{{< snip 24-dither/source/game.lua demo-scaler >}}
+
+![Screen three at frame 300: the perspective floor mid-bend, reed
+and lily ladders approaching through `linearHaze` depth shade, the
+parallax treelines faded by distance, and a near-plane dart with
+its `Cast.blob` shadow on the
+water.](../figures/24-dither/scaler-pond.png){#fig-scaler-pond}
+
+### The plane cull: an ordering war story
+
+Now the promised trouble with small $d_z$. Scale is $f/d_z$, and as
+an object approaches the near plane the ratio goes vertical: at
+$f = 180$, an obstacle two units ahead draws at ninety times its
+base size. In *Skimmer*, obstacles stream toward a player plane at
+$d_z = 90$ and must be removed once passed — and both plausible
+places to remove them are wrong. The shipped code keeps the scar
+tissue as a comment:
+
+```lua
+-- dither/games/skimmer/game.lua:61
+    for i = #G.obs, 1, -1 do
+        -- gone once safely past the player plane: scale = f/dz
+        -- explodes toward the camera (a passed lily became a
+        -- screen-filling blob). Cull 16 units BEHIND the plane --
+        -- this loop runs before crossings(), so the crossing frame
+        -- must still see the obstacle (max speed ~12 units/frame).
+        if G.obs[i].z < cam.z + C.PZ - 16 then
+            table.remove(G.obs, i)
+        end
+    end
+```
+
+Unpack the two failure modes. Cull *too late* — or not at all — and
+every lily pad that slips past the player keeps projecting as its
+$d_z$ shrinks toward the near plane: `f/dz` balloons it into a
+screen-filling black blob for a few frames before the projection
+finally rejects it. That was the shipped bug the review caught, and
+it is pure mathematics — nothing is wrong except that a sprite was
+allowed to exist where the projection is degenerate. But the
+obvious fix — cull *at* the player plane, `z < cam.z + PZ` — fails
+worse, and silently. The collision test runs *after* the streaming
+update, and it detects crossings: an obstacle collides on the frame
+its `z` moves from ahead-of-plane to behind-it. Cull at the plane
+inside the earlier loop and every obstacle that crossed this frame
+is deleted *before* the crossing test looks for it. Collisions
+don't get rarer; they go to exactly zero, with no error, no visual
+glitch, and a smoke heartbeat whose `dunks` counter quietly never
+increments. The fix threads the needle by trailing the plane by
+more than one frame's travel at top speed: a passed obstacle lives
+sixteen units longer — a frame or two, low on the screen at barely
+larger scale — so the crossing test always gets its look before the
+reaper runs.
+
+::: {.callout-warning}
+## Culling is an ordering decision
+Where you remove an entity is inseparable from *when* you remove
+it relative to every system that still wants to see it. A cull
+that runs before a collision pass must keep everything that pass
+could still match — which usually means culling a margin *behind*
+the interesting boundary, sized by the fastest possible approach.
+And when a cull bug's symptom is an absence (no collisions, no
+pickups), only a counter in a harness heartbeat will tell you;
+the screen looks perfect.
+:::
+
+## The cabinet: the fourth port
+
+The rest of the core is the fleet pattern arriving in its fourth
+package, and after @sec-tiles and @sec-voxel it needs one paragraph.
+`kit.lua` is the cabinet: `Kit.run{init=, extra=}` owns the loop —
+refresh rate honoring the smoke flag, clock seeding *before* `init`,
+harness wiring, the update/draw sandwich with EMA timings folded
+into every heartbeat — plus the mode-and-banner timer
+(`Kit.setMode`), write-on-record best-score persistence
+(`Kit.loadBest`/`saveBest`), screen shake, debris particles with the
+bounce that @sec-voxel's audit folded into core, the white-text HUD
+helpers, and the stable painter list. `dsnd.lua` is the round-robin
+synth pool (three voices per waveform, @sec-sfx's overlap
+compromise), and `dmusic.lua` is the 16-step clock-accumulator
+sequencer from @sec-music, bar counter and all. None of it is new;
+that is the point. Voxel's audit verdict — an engine without a
+cabinet is "an engine only below the waist" — became a checklist,
+and Dither shipped with the cabinet on day one of its identity.
+Lines, grid, volume, shade: four engines, one cabinet pattern, and
+a game moving between packages finds `Kit.run`, `Kit.best`, and
+`Music.set` waiting in all of them.
+
+## The proof games
+
+Three cartridges, one per claim: shade retrofits onto an existing
+game, shade *is* a game, and the scaler carries a game.
+
+### Sprint: the retrofit
+
+*Sprint* is the package's original tenant — a Super Sprint-style
+top-down racer, eight tracks converted from CC0 PySprint assets,
+about nine hundred lines of hand-written game over two thousand
+generated lines of track data. It predates the thesis, which makes
+it the controlled experiment: what does bolting the shade stack
+onto a finished game cost, and buy? The buy is a title-screen
+option: races run at DAY, DUSK, or NIGHT (ambient 1, 0.55, 0.25),
+and at anything below day, every car carries a headlight:
+
+```lua
+-- dither/games/sprint/draw.lua:104
+        local r = C.HEAD_R[G.tod]
+        local ahead = r * 0.55
+        for i = 1, #G.cars do
+            local c = G.cars[i]
+            local a = c.ang * math.pi / 8 -- 0 = up, clockwise
+            local x, y = sx(c.x), sy(c.y)
+            Light.add(x + sin(a) * ahead, y - cos(a) * ahead,
+                r, 0.55)
+            Light.add(x, y, C.GLOW_R, 0.5)
+        end
+```
+
+A cone approximated by a disc pushed ahead of the nose plus a small
+body glow — two lights per car, four cars, plus a fixed light on
+the finish gantry: **nine lights**, comfortably inside the budget
+(27 disc blits and two stenciled fills at night, and the heartbeat
+carries `Light.stats().lights` to prove it every 90 frames). The
+design consequence is better than the graphics: at night the
+drones' beams sweep the track ahead of them, telegraphing their
+racing line through corners you cannot otherwise see — information
+the day render simply doesn't have. Because `Light.begin(1)` is an
+exact no-op, DAY remains bit-identical to the classic render and
+costs nothing; and the readability rules survive every ambient
+because the player caret draws *after* `Light.finish`, so your own
+car stays findable in the dark. The cabinet retrofit shows in the
+mode machine — title, iris, grid, race, dissolve, results — which
+is now `Kit.mode` strings dispatched in the draw layer:
+
+```lua
+-- dither/games/sprint/draw.lua:196
+    elseif m == "toRace" then
+        Draw.title()
+        Fade.iris(sx(G.player.x), sy(G.player.y),
+            1 - Kit.modeT / C.FADE_T)
+    elseif m == "grid" then
+        Draw.play()
+        Fade.iris(sx(G.player.x), sy(G.player.y),
+            Kit.modeT / C.FADE_T)
+```
+
+The iris closes on the player's car on the title screen and reopens
+on the same car on the grid — a transition that carries information
+(that one is *you*) instead of just style. The finish dissolves
+out; the results dissolve in; nothing fades mid-race.
+
+### Glim: darkness is mechanics
+
+*Glim* is the identity game, designed in `DESIGN.md` before a line
+existed: a firefly-keeper in a walled night garden, ambient 0.15,
+about 650 lines, no image files. The lantern is one `Light.add`
+whose radius is the crank-trimmed wick — and the wick is the
+resource. Trim it bright and it burns fast (`BURN_BASE +
+BURN_K * t^{1.5}` wick per second); trim it low and you save fuel
+but shrink the world you can see and work in. Fireflies drift
+toward your light and must be led to the jar; moths stalk the
+lantern and steal wick on contact. The night ends when the wick
+does, and the score is fireflies jarred. Every currency in that
+loop is *shade*.
+
+The engine claim the game exists to prove is `Light.at` as
+gameplay. The moth update is the quote the thesis was written for:
+
+```lua
+-- dither/games/glim/game.lua:137
+        elseif Light.at(m.x, m.y) > 0 and d > 0 then
+            -- lit: fly at the lantern (unlit moths stay frozen)
+            m.x = m.x + dx / d * spd * dt
+            m.y = m.y + dy / d * spd * dt
+            if d < C.MOTH_HIT then
+                G.wick = G.wick - C.MOTH_STEAL
+                m.fleeT = C.MOTH_FLEE
+                Kit.shake(0.25)
+                Sfx.flutter()
+                scatterFlies()
+                Harness.count("mothHits")
+            end
+```
+
+A moth outside every light **does not advance** — darkness is
+mechanics, not paint. Dim the wick and the moths freeze where the
+light left them; the defensive move against the thing hunting your
+light is to have less light, which is also the move that starves
+your firefly-herding. That tension *is* the game, and it is
+implemented as one call into the same disc math the compositor
+draws — no second model, no cheating AI that sees through the dark
+you are looking at. The renderer closes the loop with the same
+query, one pixel big:
+
+```lua
+-- dither/games/glim/draw.lua:88
+        if Light.at(m.x, m.y) > 0 then   -- one lit eye
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(x, y - 2, 1, 1)
+        end
+```
+
+Moths are black sprites on a dark garden — inside a light's reach
+they resolve as wings and a single white eye pixel; outside it they
+are genuinely invisible, *and genuinely inert*, and both facts come
+from the same function. The game also shows the budget discipline
+scaling down: fireflies carry their own tiny glows, but neighbors
+within 14 pixels coalesce into one `Light.add` and the total is
+capped at eight, so the worst frame is about eleven lights —
+lantern, pulse flare, jar glow, eight fly glows — with
+`Light.stats()` in the heartbeat watching. Even the smoke autopilot
+lives inside the light model: it pulses only at moths that
+`Light.at` says are lit, and it pauses its firefly-herding whenever
+the fly lags past 0.55 of the lantern radius, so the bot cannot
+outrun its own light any more than a player can.
+
+### Skimmer: the scaler proof
+
+*Skimmer* is *Space Harrier* over a pond: a dragonfly flying into
+the screen at golden dusk, reeds to dodge laterally, lily pads that
+only bite when you fly low, midge clusters worth points multiplied
+by a crank throttle trim that also sets your speed. Everything on
+screen is the scaler section in play: obstacle rows spawn 700 units
+ahead on the depth queue and approach down `ladderFromFn` mip
+ladders through `linearHaze`; the water is a two-shade striped
+floor (levels `{2, 5}` on the Bayer ramp, 34-unit stripes) whose bend
+meanders on a sine, with every reed rooted through
+`Scaler.bendAt`; the treelines are two `Para` fn-layers; and the
+plane-cull comment quoted earlier is this game's crossing logic
+keeping its scar. Its own signature is the altitude cue — a
+one-line answer to "how high am I?" on a screen with no side view:
+
+```lua
+-- dither/games/skimmer/draw.lua:129
+-- near plane: the shadow is the height cue -- small and pale when
+-- high, wide and dark skimming the lilies
+local function dragonfly()
+    local pz = Scaler.cam.z + C.PZ
+    local sx, sy = Scaler.project(G.px, G.py, pz)
+    local _, wy = Scaler.project(G.px, 0, pz)
+    local a = G.py / C.PY_HI
+    Cast.blob(sx, wy + 1, 20 - a * 12, 9 - a * 5)
+```
+
+Two projections of the same world point — one at the dragonfly's
+altitude, one at altitude zero — put the body and its `Cast.blob`
+shadow on screen, and the shadow's size and darkness scale with
+height: wide and dark when you skim the lilies (where they can bite
+you), small and pale when you cruise. The player reads their
+clearance off the gap, which is precisely the anchoring-shadow
+argument from the `cast` section made load-bearing. The dusk option
+closes the package's circle: at ambient 0.6 the dragonfly carries a
+small glow (`Light.add`, one light, one band), the sun drops to the
+treeline, and at DAY the whole light pass no-ops — the ambient-1
+contract again, this time as a difficulty-neutral aesthetic toggle.
+
+## What you know now
+
+- Dither is the fleet's fourth engine and the proof that a package
+  needs a thesis before it needs modules: lines, grid, volume,
+  **shade** — and an admission rule ("a game must USE shade") that
+  keeps sprite-on-screen games in `classics/` where they belong.
+- A ramp is seventeen exact grays: the Bayer 8×8 threshold matrix
+  built by the recursive index construction, level $k$ covering
+  exactly $k/16$ of the pixels, in three forms — opaque (8-byte
+  `setPattern` fills paint black *and* white), black-speckle
+  overlay (the 16-byte alpha-mask form), and white wash. The
+  engine never touches `setDitherPattern`, so @sec-dither's
+  inversion trap cannot fire.
+- Light is quantized to three bands and composited as set algebra:
+  reusable masks stamped with per-light discs, carved by
+  brighter-band discs, each gating one full-screen overlay fill
+  through a stencil (verified: stencils gate pattern fills; white
+  passes). Cost at night is $3L$ blits and two fills, reported by
+  `Light.stats()`; ambient 1 is an exact no-op — and `Light.at`
+  answers from the same discs, so pixels and gameplay can never
+  disagree.
+- Shadows anchor (`Cast.blob` is how *Skimmer* reads altitude),
+  silhouettes stencil through ramp entry $16-k$, and every
+  transition — dissolve, iris, wipe — rides the same seventeen
+  thresholds the terrain is drawn with: one matrix, one aesthetic.
+- The scaler is Super Scaler pseudo-3D: $s_x = c_x + w_x f/d_z$,
+  mip ladders costing $\approx w_0 h_0\,\text{maxScale}^2\, n/3$
+  pixels once instead of a resample per sprite per frame, a pooled
+  stable-sorted depth queue with `shadeByZ` haze, and a
+  perspective floor recovering $d_z = \mathrm{cam}_y f/(s_y -
+  \mathrm{horizon})$ per band — about 64 fills a frame — with the
+  OutRun bend as a double accumulator, read back via `bendAt` so
+  sprites sit on the curve.
+- Culling is an ordering decision: cull at the interesting plane
+  *before* the crossing test and collisions silently zero; cull
+  too late and $f/d_z$ balloons passed sprites into screen-filling
+  blobs. Trail the plane by one frame's travel — and let a
+  heartbeat counter, not the screen, tell you when you get it
+  wrong.
+- The cabinet is the fleet pattern's fourth port — `Kit.run`,
+  modes, write-on-record bests, shake, particles, the synth pool,
+  the 16-step sequencer — unchanged because it is a pattern, which
+  is what makes it one.
+
+The complete engine and all three games are MIT-licensed at
+[github.com/plaidate/dither](https://github.com/plaidate/dither) —
+read `core/shade.lua` first, then `light.lua` against its own
+header, then *Glim* to watch one function gate an ecosystem. Then
+go hide something in the dark.

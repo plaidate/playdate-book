@@ -9,7 +9,7 @@ published games lives in the
 in the chapters carry `repo/path.lua:line` attributions so you can read
 every excerpt in context.
 
-The catalog is in two halves: the standalone games, then the four
+The catalog is in two halves: the standalone games, then the five
 *collections* — shared engines with a fleet of games on top — plus one
 reusable module. Screenshots are the games' own repository
 `screenshot.png` files, upscaled 2x nearest-neighbor like every other
@@ -154,7 +154,7 @@ line; their lessons arrived as design rules rather than excerpts:
 
 ## The collections
 
-Four repositories are not single games but engines with fleets on
+Five repositories are not single games but engines with fleets on
 top. When a chapter quotes `vec/` or `tiles/core/`, it is quoting
 code that a dozen games run through every frame — the strongest
 battle-testing in the catalog.
@@ -231,6 +231,27 @@ strategy), @sec-sfx (`tsnd.lua` noise sweeps), @sec-platformer
 chapter's core, plus *Blast*'s walkable-bomb `isSolid` and
 *Burrow*'s falling-boulder variant), and @sec-maze (*Blast*'s
 radius checks). *Relic*'s save-versioning appears in @sec-save.
+
+### Dither
+
+The shade engine: dither ramps, dynamic lights, shadows,
+transitions, and Super Scaler pseudo-3D on one core, with three
+games that each *use* shade — *Sprint* (a Super Sprint-style racer
+with day/dusk/night headlight racing), *Glim* (a firefly-keeper
+whose lantern wick is the resource), and *Skimmer* (a Space
+Harrier-lineage dragonfly over a pond).
+
+![Glim, from the Dither collection: the lantern is a light, the
+light is the game.](../figures/case-studies/glim.png){#fig-cs-glim}
+
+**Cited in:** @sec-dither-engine — an entire chapter walks the
+`core/` engine module by module (the 17-level Bayer/noise ramps,
+the stencil-gated three-band light compositor and its `Light.at`
+pixels-equal-logic query, shadows and Bayer transitions, the mip
+ladders, depth queue, and perspective floor of the scaler, and all
+three games) and is this collection's primary citation. It builds
+directly on @sec-dither's dither-ladder foundations, and its
+plane-cull war story is that chapter's ordering-dependency lesson.
 
 ## Modules
 
