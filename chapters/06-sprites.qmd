@@ -22,8 +22,8 @@ though, a disclosure.
 ::: {.callout-note}
 ## Why the case-study games don't use sprites
 
-Honesty requires saying it plainly: of the ~60 shipped games this
-book draws on, essentially none use `gfx.sprite`. They are
+Honesty requires saying it plainly: of the sixty-odd shipped games
+this book draws on, essentially none use `gfx.sprite`. They are
 immediate-mode renderers — clear, draw in explicit order, repeat
 — for three reasons. First, *dirty-rect bookkeeping stops paying
 when most of the screen changes anyway*: scrolling worlds,

@@ -76,7 +76,7 @@ point drift until the model shears, so it re-orthonormalizes,
 a trick it credits to Elite:
 
 ```lua
--- phosphor/vec/mat.lua:66
+-- phosphor/vec/mat.lua:87
 -- Re-orthonormalize to shed the rounding drift that accumulates
 -- when a matrix is spun every frame (Elite's TIDY).
 -- Gram-Schmidt anchored on column 3 (nose).
@@ -115,7 +115,7 @@ interpolation instead — this is the projection core the whole
 package rides on:
 
 ```lua
--- phosphor/vec/proj.lua:47
+-- phosphor/vec/proj.lua:46
 -- draw a world-space line with near-plane clipping
 function Proj.line(x1, y1, z1, x2, y2, z2)
     local ax, ay, az = toCam(x1, y1, z1)
@@ -276,6 +276,9 @@ mechanic that needs it. No mechanic, no engine.
   projections on the same menu as perspective.
 - And the rule that governs the whole chapter: **a projection
   must earn its engine** — no mechanic, no engine.
+- Both of this chapter's borrowed engines get read in full later on:
+  @sec-phosphor walks `vec/` and its sixteen vector games, @sec-voxel
+  the 3/4 view and its ten.
 
 That closes the graphics part of the book. Next, Part III turns
 to input, starting with the button layer — edges versus levels,

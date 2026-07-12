@@ -246,12 +246,23 @@ Attract.high = (saved and saved.highScore) or 0
 
 ```lua
 -- phosphor/vec/attract.lua:47
-local score = cfg.hooks.score and cfg.hooks.score() or 0
-if score > Attract.high then
-    Attract.high = score
-    playdate.datastore.write({ highScore = Attract.high })
+function Attract.gameOver()
+    Attract.state = "over"
+    overT = 0
+    local score = cfg.hooks.score and cfg.hooks.score() or 0
+    Attract.newHigh = score > Attract.high and score > 0
+    if score > Attract.high then
+        Attract.high = score
+        playdate.datastore.write({ highScore = Attract.high })
+    end
 end
 ```
+
+Note the ordering: `newHigh` is *latched* before the overwrite,
+because after it `score > Attract.high` is false and a screen that
+re-derived the answer at draw time would never show the banner.
+Compute a fact at the moment it becomes true; persist it and display
+it, but do not ask a mutated store to remember it for you.
 
 Because the cabinet owns persistence, all twelve games got high
 scores for free — none of them contains a line of save code. The
@@ -357,6 +368,9 @@ of the project.
   what one-table-per-file datastores can't; save at meaningful
   moments, and the instant a record breaks.
 - A save inspector screen makes the invisible debuggable.
+- @sec-lore turns that JSON key caveat into an architecture: when the
+  save file *is* the game's memory, you build string keys at the write,
+  not repair integer ones at the load.
 
 Your game now remembers. Chapter 18 closes the loop on the machinery
 this part has been quietly using all along: the harness that plays

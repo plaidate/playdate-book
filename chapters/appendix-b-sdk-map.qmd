@@ -30,7 +30,7 @@ stray functions inside otherwise-covered areas that the book skips.
 |---|---|---|---|
 | 7.1 | Lua enhancements (`+=`, `table` additions, `class()`) | @sec-appendix-lua, "What is added"; demonstrated in @sec-lua-lab | Full |
 | 7.2 | System and game metadata (`playdate.metadata`) | @sec-ship, "pdxinfo: the full reference" | Full |
-| 7.3 | Game flow (`playdate.update`, `wait`, `stop`, `start`) | @sec-modes, "The update contract" and "The loop-control APIs the skeleton refuses" | Full |
+| 7.3 | Game flow (`playdate.update`, `wait`, `stop`, `start`) | @sec-modes, "The update contract" and "The loop-control APIs the skeleton refuses" — including the reference's note that `playdate.update` is itself invoked as a coroutine; @sec-lore, "Problem 3: cutscenes are sequential", puts *Lua's* coroutines above the loop | Full |
 | 7.4 | Game lifecycle callbacks | @sec-tilt, "The rest of the lifecycle"; @sec-save, "Last-chance saves: the lifecycle hooks" | Full |
 | 7.5 | System Menu (`getSystemMenu`, menu items, menu image) | @sec-tilt, "The System Menu" | Full |
 | 7.6 | Localization (`getSystemLanguage`) | — | Not covered |
@@ -72,9 +72,10 @@ own table:
 | Graphics area | Where in the book | Depth |
 |---|---|---|
 | Color, pattern & dither | @sec-dither, "The dither ladder" and "Patterns: rolling your own gray" | Full |
-| Drawing primitives | @sec-dither, "The primitive set" | Full |
+| Drawing primitives | @sec-dither, "The primitive set"; `drawArc` earns its keep as @sec-lore's charge ring | Full |
 | Draw modes & modifiers | @sec-dither, "Draw-mode reset discipline"; @sec-images, "Draw modes: one image, many inkings" | Full |
-| `image` (load, draw, flips, scale, rotation) | @sec-images, "Two ways to make an image" and "Stamping: draw, flips, scaled, rotated" | Full |
+| Stencils (`setStencilImage`, `setStencilPattern`, `clearStencil`) | @sec-dither-engine, "Light: the flagship" (the stencil-gated three-band light compositor) and "Un-set the pattern" (the reset gotcha) | Full |
+| `image` (load, draw, flips, scale, rotation, `drawFaded`) | @sec-images, "Two ways to make an image" and "Stamping: draw, flips, scaled, rotated"; @sec-dither-engine, "Mip ladders" — why the scaler pre-builds `image:scaledImage` ladders instead of calling `drawScaled` per frame, and `drawFaded` as the distance haze | Full |
 | Offscreen drawing (`pushContext`, `lockFocus`) | @sec-images, "Drawing into an image: pushContext"; put to work in @sec-camera | Full |
 | `imagetable` | @sec-images, "Imagetables and the animation loop" | Full |
 | `animation.loop` | @sec-images, "Imagetables and the animation loop" | Full |
@@ -117,9 +118,9 @@ chapters inside it and leaves its studio-grade corners alone:
 
 | SDK § | Area | Where in the book | Depth |
 |---|---|---|---|
-| 7.18 | `datastore` | @sec-save, the whole chapter | Full |
+| 7.18 | `datastore` | @sec-save, the whole chapter; @sec-lore, "The ledger: what a save file actually is", and @sec-voxel's write-on-record saves | Full |
 | 7.18 | `playdate.file` (open/read/write, filesystem operations) | @sec-save, "Beyond datastores: `json` and `playdate.file`" | Introduced |
-| 7.21 | JSON (`json.encode`/`decode` and file variants) | @sec-save, "Beyond datastores"; @sec-appendix-lua, "The `json` global" | Introduced |
+| 7.21 | JSON (`json.encode`/`decode` and file variants) | @sec-save, "Beyond datastores"; @sec-appendix-lua, "The `json` global"; @sec-lore, "The ledger" — the key semantics a `datastore` round-trip forces on you (integer keys come back as strings; sparse tables must be string-keyed dictionaries on purpose) | Full |
 | 7.29 | Strings (`CoreLibs/string`: `UUID`, whitespace trims) | — | Not covered |
 
 : Data and file areas. {#tbl-map-data}
@@ -157,10 +158,16 @@ chapters inside it and leaves its studio-grade corners alone:
 
 ## The tally
 
-Sixty-four areas: **37 Full, 12 Introduced, 2 Mentioned, 13 Not
+Sixty-five areas: **39 Full, 11 Introduced, 2 Mentioned, 13 Not
 covered.** Everything a single-player game running on the device
 touches — graphics, sound, input, timers, persistence, pathfinding,
-the lifecycle — is taught at Full or Introduced depth. The Not covered
+the lifecycle — is taught at Full or Introduced depth. Part VII moved
+three of those numbers: the stencil family is its own row now, because
+@sec-dither-engine builds a light compositor out of it rather than
+name-checking it; and JSON is promoted from Introduced to Full,
+because @sec-lore treats a `datastore` round-trip's key semantics as a
+structural constraint on the save format rather than a footnote. The
+Not covered
 column clusters at the edges: connectivity, recorded-media plumbing,
 and single-function conveniences. Here is what each one is, so you
 know whether you need it.
@@ -190,7 +197,7 @@ prompt; **serial communication** (§7.33) lets a game receive `msg`
 commands over USB; and **Playdate Mirror** (§7.34) provides callbacks
 so a game can lighten its load while the Mirror app streams it to a
 computer. For all of these, the numbered section of *Inside Playdate*
-in the left column is the definitive reference — and after eighteen
+in the left column is the definitive reference — and after twenty-five
 chapters of this book's habits, none of them will read as foreign.
 
 Fine print on the partially covered rows: within areas rated Full or

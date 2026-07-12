@@ -324,10 +324,17 @@ That is the whole path: from a bouncing "Hello, Playdate!" to a
 game with a card in the launcher — drawing in one bit, reading a
 crank, making noise, saving progress, testing itself while you
 sleep, holding 30 frames on real hardware, and shipping with its
-buildNumber bumped. None of the sixty games behind this book
+buildNumber bumped. None of the sixty-odd games behind this book
 started as more than one strange idea and an empty `main.lua`; the
 machine on your desk is small, sharp, joyful, and completely
-knowable, and you now know it. Pick the idea that has been circling
-while you read. Make the folder. Write the update loop.
+knowable, and you now know it.
+
+What follows is not more path. Part VII reads five of the fleet's
+shipped engines end to end — vectors, the grid, volume, shade, story
+state over a world — and every one of them is nothing but the habits
+of the last twenty chapters, compounded until a package of sixteen
+games weighs a thousand lines. Read them when you want to see how far
+this scales. Or don't, and start now. Pick the idea that has been
+circling while you read. Make the folder. Write the update loop.
 
 Crank on.

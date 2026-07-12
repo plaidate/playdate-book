@@ -123,7 +123,7 @@ identical to the version above, with one addition — the definition of
 "solid" is a parameter:
 
 ```lua
--- tiles/core/tphys.lua:16
+-- tiles/core/tphys.lua:19
 function Phys.blocked(x, y, hw, hh, isSolid)
     isSolid = isSolid or defaultSolid
     local tx0, ty0 = Map.tileAt(x - hw, y - hh)
@@ -215,7 +215,7 @@ adds cost and subtracts legibility.
 ## Case study: the corner nudge
 
 The tiles engine adds one refinement on top of `Phys.move` worth
-knowing about: `Phys.moveAssist` (`tiles/core/tphys.lua:60`), the
+knowing about: `Phys.moveAssist` (`tiles/core/tphys.lua:63`), the
 classic Game Boy Zelda / Bomberman corner assist. When an actor is
 blocked on its movement axis but its center is within half a tile of
 an open corridor, `moveAssist` nudges it perpendicular — capped at
@@ -386,6 +386,9 @@ harness chapter (Chapter 18) return to this.
 - Jump feel is asymmetric gravity (light up, heavy down, lighter
   still at the apex) plus two 4-frame forgiveness counters: coyote
   time and jump buffering.
+- This physics is not a toy: it *is* `tiles/core/tphys.lua`, four
+  shipped games deep. @sec-tiles reads it in full, including the
+  variants those games needed — a walkable bomb, a falling boulder.
 
 The player now moves beautifully — and silently, in a world with no
 consequences. @sec-juice adds the thump: timers, animators, screen

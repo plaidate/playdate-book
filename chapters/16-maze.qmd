@@ -79,7 +79,7 @@ overlay figures; in a game, return whichever your consumers need.
 
 There is a third shape of BFS worth knowing: run it from a source
 with *no goal at all* and keep the whole distance table. The tiles
-engine does exactly this — `Phys.bfs` (`tiles/core/tphys.lua:98`)
+engine does exactly this — `Phys.bfs` (`tiles/core/tphys.lua:104`)
 returns `dist[ty][tx]` for every reachable cell, and its header
 comment tells you why: "Shared by enemy chase AI and every
 autopilot." Root the field at the *player* once per frame, and then
@@ -87,7 +87,7 @@ any number of enemies answer their movement question with four table
 lookups each:
 
 ```lua
--- tiles/core/tphys.lua:144
+-- tiles/core/tphys.lua:148
 -- first step from (sx,sy) toward smaller values in a BFS
 -- field rooted at the target
 function Phys.descend(dist, sx, sy)
@@ -359,6 +359,9 @@ mid-flutter, and the HUD counting catches.
 - Autopilots are enemy AI pointed at the chair: measure goal
   progress (not movement), wander-burst when boxed in, and give
   area weapons a stand-off distance.
+- Both halves scale up in Part VII: the shared BFS field — one flood
+  fill that every chaser reads — in @sec-tiles, and the autopilot as a
+  written *walkthrough* rather than a steering behavior in @sec-lore.
 
 The ghosts can hunt, the bot can play all night — but the moment the
 Playdate powers down, everything it earned evaporates. @sec-save

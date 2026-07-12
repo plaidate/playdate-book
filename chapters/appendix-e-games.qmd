@@ -1,7 +1,7 @@
 # The Case-Study Games {#sec-appendix-games}
 
 The code quoted in this book's sidebars comes from real, shipped
-Playdate games — roughly sixty of them, built by the author on the
+Playdate games — more than sixty of them, built by the author on the
 house style this book teaches. This appendix is the cast list: what
 each game is, and where and why the book quotes it. Source for the
 published games lives in the
@@ -9,11 +9,12 @@ published games lives in the
 in the chapters carry `repo/path.lua:line` attributions so you can read
 every excerpt in context.
 
-The catalog is in two halves: the standalone games, then the six
-*collections* — shared engines with a fleet of games on top — plus one
-reusable module. Screenshots are the games' own repository
-`screenshot.png` files, upscaled 2x nearest-neighbor like every other
-figure in the book.
+The catalog is in two halves: fifteen standalone games, then the seven
+*collections* — shared engines with a fleet of games on top, forty-nine
+games between them — plus one reusable module. Five of those
+collections get a whole chapter to themselves in Part VII. Screenshots
+are the games' own repository `screenshot.png` files, upscaled 2x
+nearest-neighbor like every other figure in the book.
 
 ## Standalones
 
@@ -104,7 +105,7 @@ witness.
 the author's actual dog (who also, by seniority, supplied this book's
 cover). **Cited in:** @sec-juice — notably as the only game in the
 fleet built on `playdate.timer`, which is exactly why that chapter
-trusts it for the timer coverage the other fifty-nine games skip.
+trusts it for the timer coverage the other sixty-three games skip.
 
 ### Bauble
 
@@ -122,7 +123,7 @@ difference between raw tilt (jittery) and playable tilt.
 
 ### The supporting bestiary
 
-Five more standalones inform chapters without being quoted line by
+Seven more standalones inform chapters without being quoted line by
 line; their lessons arrived as design rules rather than excerpts:
 
 - **Squirl** — a squirrel Metroidvania/parkour game; the Magic Acorn
@@ -154,10 +155,12 @@ line; their lessons arrived as design rules rather than excerpts:
 
 ## The collections
 
-Six repositories are not single games but engines with fleets on
+Seven repositories are not single games but engines with fleets on
 top. When a chapter quotes `vec/` or `tiles/core/`, it is quoting
 code that a dozen games run through every frame — the strongest
-battle-testing in the catalog.
+battle-testing in the catalog. Five of the seven — Phosphor, Tiles,
+Voxel, Dither, and Lore — are read end to end in Part VII, each in a
+chapter of its own with the engine vendored into a runnable example.
 
 ### Phosphor
 
@@ -183,8 +186,8 @@ cabinet-style shared attract mode and its high-score table in
 
 Both volumes of *Code the Classics*, ported as original Lua
 implementations sharing one core — a Pong, a Frogger, a Centipede, a
-soccer game, a brawler, and more. Less quoted than lived-in: this
-port marathon (nineteen games in one push) is where the headless
+soccer game, a brawler, and five more. Less quoted than lived-in: this
+port marathon (ten games in one push) is where the headless
 smoke-testing workflow was first hardened — the pcall-to-datastore
 error trap, the `writeToFile` visual debugging, and the
 asset-conversion checks that resurface across @sec-images,
@@ -284,6 +287,25 @@ autopilot argument it takes to the limit — including the war story of
 the bot that farmed a boss's summons for 57 kills without ever touching
 the boss, and `tools/headless.lua`, a stubbed-SDK Lua runner that beats
 a whole RPG in two seconds.
+
+### Shmup
+
+A generic 1-bit shoot-'em-up engine, written for the 400x240 screen and
+built around **three scroll paradigms**, with a demo of each: *Nova
+Strike* (a vertical shooter of classic top-down waves), *Ravine* (a
+horizontal forced-scroll cave-flyer with Scramble-style terrain, fuel
+and bombs), and *Skimmer* (Uridium-style bidirectional follow-scrolling
+— a different *Skimmer* from Dither's dragonfly; the fleet reuses a
+good name). Games on it are almost entirely *data*: enemy types compose
+from a small library of movement and fire behaviors, and a wave is a
+spawn timeline.
+
+**Cited in:** nothing, and it is listed anyway — it is the one
+collection the chapters never quote, and a catalog that quietly omitted
+it would be a cast list, not a census. Its house rule is worth the
+paragraph regardless: solid white sprites on black space, code-drawn,
+because that is the lesson a 1-bit OpenTyrian port teaches — anything
+subtler turns to muddy dither at this contrast (@sec-dither).
 
 ## Modules
 

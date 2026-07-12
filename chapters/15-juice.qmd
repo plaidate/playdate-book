@@ -245,10 +245,11 @@ verdict.
 gravity — the same architecture every phosphor vector game ships:
 
 ```lua
--- phosphor/vec/fx.lua:18
+-- phosphor/vec/fx.lua:20
 function Fx.burst(x, y, n, speed)
     speed = speed or 70
     for _ = 1, n do
+        if #particles >= MAX_POOL then return end
         local a = math.random() * math.pi * 2
         local s = speed * (0.4 + math.random() * 1.0)
         particles[#particles + 1] = {
@@ -264,8 +265,11 @@ One pool per game, `burst` to fill it, one update pass integrating
 positions and expiring lives, one draw pass of pixels. The key word
 is *shared*: nothing owns its particles, so a burst can outlive the
 coin (or enemy, or asteroid) that spawned it, and there is exactly
-one place to cap the count if performance ever demands it. The
-example's version adds gravity and an upward bias so bursts fountain:
+one place to cap the count — which phosphor does, with the soft cap
+`MAX_POOL` (400) guarding the insert. A pathological cascade of
+bursts then degrades to "fewer sparks" instead of an unbounded frame
+cost (@sec-phosphor). The example's version adds gravity and an
+upward bias so bursts fountain:
 
 {{< snip 15-juice/source/fx.lua particles >}}
 

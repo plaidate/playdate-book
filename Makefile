@@ -31,6 +31,7 @@ book: figures render
 
 lint:
 	tools/lint.sh
+	tools/vendor-check.sh
 
 clean:
 	rm -rf build _book

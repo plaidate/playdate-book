@@ -47,7 +47,7 @@ jumps. The shipped games all smooth it with an exponential moving
 average, and the wrapper comes from Molt verbatim:
 
 ```lua
--- molt/source/main.lua:233
+-- molt/source/main.lua:232
 local frame = 0
 function playdate.update()
     frame = frame + 1

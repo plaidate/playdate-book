@@ -8,7 +8,7 @@ this whole file before touching a chapter.
 An O'Reilly-caliber guide to building Playdate games in Lua. The reader is a
 competent programmer who has never touched a Playdate. The examples are real,
 buildable pdx projects; the figures are captured from them automatically; the
-case studies come from ~60 shipped games in `~/Projects/playdate/`.
+case studies come from more than sixty shipped games in `~/Projects/playdate/`.
 
 ## Voice
 

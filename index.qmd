@@ -56,7 +56,7 @@ programming is best learned.
 
 ## How the book is organized
 
-Six parts, twenty chapters, five appendices:
+Seven parts, twenty-five chapters, five appendices:
 
 - **Part I, Getting Started** takes you from an empty directory to a
   running program, then teaches the dialect of Lua this platform
@@ -75,6 +75,14 @@ Six parts, twenty chapters, five appendices:
 - **Part VI, Shipping** is the payoff: testing your game without
   touching it, making it fast on real hardware, and packaging a
   finished, polished pdx for other people's devices.
+- **Part VII, Inside the Engines** is the long look back. Five of the
+  book's case-study packages are not single games but *engines* with
+  fleets of games on top, and each gets a chapter that reads it end to
+  end: Phosphor's vectors, Tiles' grid, Voxel's volume, Dither's
+  shade, and Lore's story systems. Every one of these chapters vendors
+  the real, shipped engine into its runnable example, so what you read
+  is what runs — and the five together are a study in the one decision
+  that matters most: deciding what your engine is *about*.
 
 The appendices are references: Playdate Lua versus standard Lua, a map
 of the full SDK by namespace, environment setup (including the
@@ -130,11 +138,12 @@ introduced honestly in @sec-hello and documented in full in
 
 ## Where the patterns come from
 
-The advice in this book is not speculative. It is distilled from
-roughly sixty shipped Playdate games by the author — vector arcade
-games, tile-engine platformers, a voxel engine, a 28-room
-metroidvania, rhythm games, fighting games, and a bestiary of
-small animal-shaped originals — all built in Lua, on one consistent
+The advice in this book is not speculative. It is distilled from more
+than sixty shipped Playdate games by the author — sixteen vector
+arcade games on one line-drawing library, tile-engine platformers, a
+voxel engine, a shade engine, an RPG engine, a 28-room metroidvania,
+rhythm games, fighting games, and a bestiary of small animal-shaped
+originals — all built in Lua, on one consistent
 house style, with a shared testing discipline. When a chapter
 recommends a pattern, the recommendation usually arrives with a scar:
 the game where the alternative was tried, what broke, and what the

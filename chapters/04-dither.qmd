@@ -324,6 +324,9 @@ figure script can page through the screens:
   `kDrawModeCopy`.
 - Drawing state is global: reset color, width, dither, clip, and
   draw mode at module boundaries, every frame.
+- All of this is a floor, not a ceiling: @sec-dither-engine promotes
+  it to an engine — ramps as objects, stencil-gated lights, and dither
+  as *lighting* rather than texture.
 
 Next, @sec-images moves from drawing *on the screen* to drawing
 *into images* — loading them, generating them in code at boot,

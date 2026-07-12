@@ -194,7 +194,7 @@ or builds, the tiles engine repaints *only the touched cell*
 into the background image and goes back to one-blit-per-frame:
 
 ```lua
--- tiles/core/tmap.lua:118
+-- tiles/core/tmap.lua:121
 function Map.repaint(tx, ty)
     local S = Tiles.SIZE
     local d = Tiles.defs[Map.grid[ty][tx]]
@@ -260,6 +260,9 @@ whole trick, visible in one frame.
   globally animating terrain only.
 - Screen shake is a decaying random addend inside the same
   offset call — three lines, HUD immune by construction.
+- The shipped version of this chapter is `tiles/core/tcam.lua`, the
+  same follow-and-clamp camera bolted to a real tilemap engine and four
+  games; @sec-tiles reads it end to end.
 
 Next, @sec-wireframe bends the same 2D screen into the third
 dimension: rotation matrices, perspective projection, and

@@ -476,6 +476,9 @@ the story of a healthy run: `switches` = 1, `blips` = 2, and
 - One **music channel** for all music sources turns volume
   settings, pause dimming, and SFX ducking into a single
   `setVolume` knob.
+- Music that has to last longer than a loop wants a tracker's shape —
+  patterns plus an order list, `A A B C` — and a stinger that
+  remembers the playhead it interrupted. @sec-lore builds both.
 
 That completes the sound stack: effects that speak (@sec-sfx) and
 music that keeps time. The next part puts both under a game worth

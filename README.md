@@ -1,7 +1,7 @@
 # Playdate Game Development in Lua
 
 A book-length guide to building [Playdate](https://play.date) games in Lua —
-six parts, twenty chapters, five appendices. Every chapter has a runnable
+seven parts, twenty-five chapters, five appendices. Every chapter has a runnable
 example project, and every screenshot in the book is captured automatically
 from the very example it illustrates.
 
