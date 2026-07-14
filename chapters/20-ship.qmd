@@ -329,9 +329,10 @@ started as more than one strange idea and an empty `main.lua`; the
 machine on your desk is small, sharp, joyful, and completely
 knowable, and you now know it.
 
-What follows is not more path. Part VII reads five of the fleet's
+What follows is not more path. Part VII reads six of the fleet's
 shipped engines end to end — vectors, the grid, volume, shade, story
-state over a world — and every one of them is nothing but the habits
+state over a world, and a frame of reference — and every one of them
+is nothing but the habits
 of the last twenty chapters, compounded until a package of sixteen
 games weighs a thousand lines. Read them when you want to see how far
 this scales. Or don't, and start now. Pick the idea that has been

@@ -1,0 +1,646 @@
+# Inside Shmup: A Frame of Reference {#sec-shmup}
+
+Every engine in this part answers the same question, and answers it
+differently. Phosphor says the world is made of **lines**
+(@sec-phosphor). Tiles says it is made of **the grid** (@sec-tiles).
+Voxel says **volume** (@sec-voxel), Dither says **shade**
+(@sec-dither-engine), Lore says **story state over a world**
+(@sec-lore). Five packages, five representations; each thesis is a
+claim about what the world is *made of*, and everything else — the
+modules, the cost model, the admission test for what games belong —
+falls out of it.
+
+Now ask that question about a shoot-'em-up. What is a shmup made of?
+Sprites, bullets, and a scrolling background. That is a true answer and
+a useless one, and it is useless because it is the wrong question. Line
+up the landmarks of the genre and what actually differs between them is
+not the substance. *Xevious* and *Tyrian* scroll a world past a player
+who is welded to the screen. *Scramble* and *Defender* scroll it past
+you at a rate you are not allowed to change. *Uridium* does not scroll
+at all: its level is a fixed place with two ends, and the camera chases
+you through it. A grunt that dives at you does not care which of those
+three it is diving through. Neither does a bullet, a pool, a collision
+test, a wave script, or the score. The difference — the whole
+difference — is **what is nailed down and what moves**:
+
+| Game | The world | The player | The camera |
+|---|---|---|---|
+| *Xevious*, *Tyrian* | scrolls past, forever | locked to the screen | fixed |
+| *Scramble*, *Defender* | scrolls past at a rate you cannot change | locked to the screen | fixed |
+| *Uridium* | is a fixed place with two ends | flies *through* it | chases the player |
+
+: The genre, in three rows. Everything below this table — bullets,
+pools, collision, waves, explosions, score — is identical code. {#tbl-shmup-frames}
+
+So the sixth engine's thesis is not a representation at all. It is a
+**frame of reference**: `core/frame.lua` owns exactly four questions —
+where frame coordinates land on the screen, how the world advances,
+where the player is allowed to be, and which way is forward — and
+nothing else in `core/` is allowed to answer them. Choosing a frame is
+one string in a game's content table. Everything else is written once,
+against the frame, and works in all three.
+
+The example, `26-shmup`, is an engine tour in the format of its five
+siblings: sixteen core modules vendored verbatim (each carries a
+one-line provenance header; the code is otherwise untouched) under a
+demo that plays *three levels back to back on one engine* — a vertical
+shooter, a side-scrolling cave, a free-roaming hull run — and then
+draws a diagram of the bug that this chapter is really about. Every
+engine listing below is extracted from those vendored files, so the
+prose and the shipped code cannot drift apart.
+
+{{< snip 26-shmup/source/main.lua tour-imports >}}
+
+## The four questions
+
+Read `frame.lua` as a specification and the engine writes itself. The
+first three questions are eleven lines of code:
+
+{{< snip 26-shmup/source/frame.lua frame-questions >}}
+
+Every entity in the engine — player, bullet, enemy, boss, power-up,
+explosion — lives in **frame coordinates**, and every draw routes
+through `Frame.toScreenX`. In `vertical` and `side` that transform is
+the identity, so the scrollers pay nothing at all for the abstraction:
+the cost is a branch on a local that predicts perfectly. In `free` it is
+a subtraction of the camera, which is @sec-camera's `setDrawOffset`
+argument moved one level down — the engine does not offset the drawing
+context, it offsets the *coordinates*, because bullets and collision
+need the same transform and a draw offset does not give it to them.
+
+The temptation the engine had to resist is worth naming, because it is
+what the previous version did: let each paradigm use whatever
+coordinates are convenient — screen coordinates for the scrollers (the
+world *is* only ever the screen, after all) and world coordinates for
+the free camera. That is exactly how a shared engine drifts apart into
+two engines that look alike.
+
+`Frame.advance` is the second question, and note what it does *not* do
+in free mode: it does not move the world. It moves the camera, clamped
+to the level, centred on the player. Nothing else in the engine knows
+the difference, because the transform absorbs it.
+
+The fourth question is the one that turns a fixed shooter into a
+Uridium:
+
+{{< snip 26-shmup/source/frame.lua frame-forward >}}
+
+A scroller's forward is a constant. The free frame's ship *turns
+around*, so forward is the player's facing, and the sprite flips to
+match (`Frame.flips`). This is why the weapon ladder in `bullets.lua`
+is written once for all three frames: `Bullets.playerFire` asks the
+frame for `(dx, dy)`, takes the perpendicular `(-dy, dx)`, and lays the
+twin shot and the angled pair along those axes. Level 3 in a vertical
+game fans left-and-right; in a side game it fans up-and-down; in the
+free frame it fans up-and-down *and* fires backwards when you do.
+Nobody wrote three versions.
+
+Enemies get the same treatment in reverse. `Frame.enemyAngle` returns
+$\pi$ in a horizontal frame and $\pi/2$ in a vertical one — the
+direction the player is coming *from* — and `Bullets.eSpread` defaults
+its centre angle to it. The old `Firers.spread` hardcoded $\pi/2$, with
+the result that a spread enemy in a side-scroller dutifully hosed the
+floor. When a constant in a shared module encodes an assumption about
+the *game*, the module is not shared; it is copied and not yet
+diverged.
+
+![The vertical frame at frame 150: waves falling past a screen-locked
+ship, two gun capsules dropping from the wave that just died, and the
+weapon ladder as pips in the HUD. The starfield scrolls because the
+world does — `stars.lua` asks the frame which way is
+down.](../figures/26-shmup/shmup-vertical.png){#fig-shmup-vertical}
+
+### Spent and culled are not the same question
+
+Now the pair of predicates that look like duplicates and are not:
+
+{{< snip 26-shmup/source/frame.lua frame-spentcull >}}
+
+A bullet is **spent** when it can never matter again, and it is measured
+against the *visible box*, because a bullet exists only to reach
+something you can see. An enemy is **culled** when it should stop
+existing — and in the free frame nothing is ever culled, because the
+level is a **place**. Its defenders were standing at their posts before
+you arrived and they are still standing there when you fly back past
+them. Cull on the camera in free mode and the level quietly empties out
+behind the player: fly right for four seconds, turn around, and the
+world you just fought through is gone. No error, no counter, no crash —
+just a level that erases itself while your back is turned.
+
+Note that `Frame.spent` uses `toScreenX` and `Frame.cull` does not.
+That is not an oversight. A bullet's relevance is a question about the
+screen; an enemy's existence is a question about the world, and in the
+scrollers those two happen to coincide because the world *is* the
+screen. Conflating them costs you nothing until the day you add a frame
+where they differ, and then it costs you the frame.
+
+## A game is a content table
+
+With the frame owning the paradigm, a game has nothing structural left
+to write. It hands `Shmup.new` a `Content` table — a title, a scroll
+mode, an art hook, an enemy dictionary, a boss dictionary, a wave
+script, optional terrain, an optional static `scene`, an optional fuel
+gauge, a music track — and the engine does the rest. Here are the
+example's three levels, and the argument of this chapter is that you can
+read the first four lines of each and stop:
+
+{{< snip 26-shmup/source/demo.lua three-frames >}}
+
+`scroll = "vertical"`, `scroll = "side"` with a `speed`, `scroll =
+"free"` with a `levelW`. Everything else is furniture. Enemy types are
+data that compose exactly one `Movers.*` and one `Firers.*` closure —
+`Movers.sine(120, 55, 3.0)` for a darter, `Movers.groundLeft(7)` for a
+tank that rides the scrolling terrain, `Movers.station(26, 2.2)` for a
+defender bobbing on its post, `Firers.aimedNear(1.9, 130, 220)` for one
+that only shoots when you are actually within reach. A game never writes
+an update loop for an enemy, because there is only one enemy update loop
+and it is in `enemies.lua`.
+
+A wave script is a spawn timeline, drained in order:
+
+{{< snip 26-shmup/source/waves.lua waves-ready >}}
+
+Look at `ready`. There are two triggers, `t` and `at`, and the reason
+both exist is the frame again. In a scroller the world comes to you at a
+fixed rate, so *a time is a distance* and a clock is the only sensible
+index into a level. In the free frame the world does not move at all —
+you may hover, or fly backwards — so a clock indexes nothing, and the
+only honest trigger is where the player actually is. Skimmer's whole
+level is placed at `t = 0` and its boss is armed by position:
+
+```lua
+-- shmup/games/skimmer/content.lua:175
+    -- The whole level, placed at t = 0: it is a place, and all of it is there
+    -- before you arrive. The boss alone is triggered by WHERE you are.
+    waves = {
+        { t = 0, type = "defender", x = 420,  y = 90 },
+        { t = 0, type = "defender", x = 560,  y = 170 },
+        { t = 0, type = "sentry",   x = 700,  y = 120 },
+        { t = 0, type = "defender", x = 860,  y = 70 },
+```
+
+…and, at the bottom of that list, `{ at = 1900, boss = "core" }`: the
+reactor is bolted to the far end of the ship and has been there the
+whole time. You are the one who arrives.
+
+![The free frame at frame 880: the hull, girders top and bottom, a
+defender ahead on its station, and the position bar in the HUD — which
+exists because it is the only way to see that a level with two ends
+*has* ends. The camera is chasing the ship; the world is standing
+still.](../figures/26-shmup/shmup-free.png){#fig-shmup-free}
+
+### The war story: an engine with two and a half pillars
+
+That tidiness is retrofitted, and the retrofit is the reason this
+chapter exists. The previous version of the engine **advertised three
+scroll paradigms and shipped two.** `camera.lua` was twenty-two lines.
+And Skimmer — the game that was supposed to prove the third — was
+`games/skimmer/game.lua`, 244 lines that reimplemented the player, the
+bullets, the enemies, the collision, the HUD *and the state machine*,
+sitting beside the engine rather than on it. Not because its author was
+lazy: because the engine's modules were written in screen coordinates
+and Skimmer needed world coordinates, so not one of them could be
+reused.
+
+Making the frame explicit deleted all 244 lines. Skimmer is now a
+content table like the other two, and its `main.lua` is imports, an
+autopilot, and one call to `Shmup.run`. The lesson generalizes past
+shmups: **an engine whose third pillar is a copy-paste of the first two
+does not have three pillars.** If a feature of your engine can only be
+demonstrated by a game that bypasses your engine, you have not built the
+feature — you have written its documentation.
+
+The same rot shows up in miniature, and the miniature is easier to
+catch. Ravine's content file used to open with a constant called
+`TSPEED` and a comment explaining that it *must match* the terrain's
+scroll speed or the ground units would slide along the cavern floor as
+if on ice. Two numbers, one truth, kept in sync by a comment addressed
+to a future human. Now there is one number — `Frame.speed`, stated once
+in the content table — and `Movers.groundLeft` reads it. Comments do not
+keep numbers in sync.
+
+## The terrain bug
+
+Here is the bug that justifies the whole rewrite, and it is the best
+thing this engine has to teach.
+
+Ravine's cavern was **drawn** as a polygon sampled every 16 pixels — a
+chain of straight chords — and **collided** against the exact,
+continuous sine that generated it. Those are not the same curve. Between
+samples the true curve bows away from the chord, so the wall you *saw*
+was not the wall you *hit*: near a crest the ship died in visibly empty
+black; in a trough it flew through white pixels.
+
+The magnitude of the error is what makes it poison. At the worst point
+of Ravine's profile the chord strays **under a pixel** from the curve it
+is pretending to be. It is invisible in a screenshot. It will never move
+a counter. It cannot be reproduced on demand, because it only bites when
+you happen to be flying through the fat part of a chord. And it is
+absolutely *felt* — as the occasional unfair death that the player cannot
+explain, in a genre where the player's entire relationship with the game
+is trusting that the black pixels are safe.
+
+The fix is a rule, and the rule is blunt: **there is one profile, it is
+sampled, and the renderer and the collider both read the same samples.**
+
+{{< snip 26-shmup/source/terrain.lua terrain-sample >}}
+
+`Terrain.sample` runs once a frame and fills two arrays — 51 samples at
+8-pixel spacing across the screen. `Terrain.draw` builds its two filled
+polygons out of those arrays and nothing else. And the collider reads
+them the way the renderer draws them, by linear interpolation *within*
+the samples:
+
+{{< snip 26-shmup/source/terrain.lua terrain-read >}}
+
+`lerpAt` is the whole fix. It is the same straight line between sample
+$i$ and sample $i+1$ that `fillPolygon` rasterizes, evaluated
+analytically instead of in pixels. The generator functions `genGround`
+and `genCeil` still exist — something has to produce the samples — but
+they are file-local and called from exactly one place, `Terrain.sample`,
+with a comment saying so. Coarsen `STEP` and both halves coarsen
+together; refine it and both halves refine. They *cannot* disagree,
+because there is no second source of truth for them to disagree about.
+
+::: {.callout-warning}
+## Two sources of truth for one shape
+Any time a shape is **drawn** one way and **collided** another, you have
+two sources of truth, and they will disagree. The disagreement is
+usually sub-pixel, which is why this class of bug survives review: it
+never looks wrong, it only ever *feels* wrong. A circle drawn with
+`drawCircleAtPoint` and hit-tested with a radius is fine — those are the
+same shape. A sprite drawn from an image and hit-tested against a
+hand-typed rectangle is not: the day someone nudges the art two pixels,
+the hitbox stays where it was and nobody notices for a month. Derive one
+from the other, or derive both from a third thing. Never maintain two.
+:::
+
+The demo's last phase is that argument with a receipt attached. It
+cannot show you the bug at 1:1 — at 1:1 the two curves are the same line,
+which is the entire problem — so it magnifies one sample span:
+
+{{< snip 26-shmup/source/demo.lua profile-diagram >}}
+
+The span it picks is the *flattest* one, found by scanning for the
+minimum slope, because a flat span is a crest or a trough and that is
+where a chord strays furthest from the curve it approximates. The dotted
+column down the middle is the disagreement at its widest:
+
+![One 16-pixel sample span of the old cavern, magnified twenty times
+horizontally and forty-six times vertically. The straight chord between
+the two square samples is what the renderer drew; the dotted arc is the
+continuous sine the collider read. The gap between them at mid-span is
+**0.58 pixels** — a death the player cannot explain and you cannot
+reproduce.](../figures/26-shmup/shmup-profile.png){#fig-shmup-profile}
+
+![The side frame at frame 700: the sampled cavern (drawn and collided
+from one array), bombs arcing onto the ground targets, a tank riding the
+scrolling floor at exactly `Frame.speed`, and the fuel gauge that makes
+the dumps worth bombing. The HUD sits on a black plate because white
+text on a white cavern wall is not text.
+](../figures/26-shmup/shmup-side.png){#fig-shmup-side}
+
+## Pools that actually pool
+
+`lib.lua` has a fixed-capacity pool with swap-remove: preallocate the
+slots, hand out cleared ones, compact the dead out in place. @sec-perf
+made the case for it and @sec-juice used it for particles. The engine
+had one, and it had the bug that makes owning one pointless.
+
+`Enemies.spawn` used to end with `e.data = {}`.
+
+That is a fresh table for every enemy that ever spawns — the exact
+allocation the pool exists to avoid, reintroduced one line below the pool
+that avoids it. A bullet-hell frame with forty spawns is forty tables for
+the collector to find later, and the pause it eventually takes will land
+in the middle of a boss. The fix is in the pool, where it belongs:
+
+{{< snip 26-shmup/source/lib.lua pool-spawn >}}
+
+The slot's `data` sub-table — scratch space for the movement behaviours,
+where `Movers.sine` keeps its `x0` and `Movers.patrol` keeps its `dir` —
+is cleared **in place** and handed back. After the first pass through the
+pool, spawning allocates nothing, forever.
+
+The general shape of the lesson is more useful than the fix: **a pool is
+only as good as its coldest field**, and the way to check is not to read
+the pool. The pool was already correct. The way to check is to read every
+`spawn` **call site** looking for a `{}`. (The boss is not a pool slot —
+it is a singleton state machine — so `boss.lua` carries its own `data`
+table and clears it in place on every arm, for exactly the same reason
+and by exactly the same code.)
+
+The other pool lesson is a one-frame visual bug that took a screenshot to
+see:
+
+{{< snip 26-shmup/source/lib.lua pool-eachlive >}}
+
+Collision marks `e.dead` in the middle of the frame; compaction does not
+happen until the *next* update. So anything that draws with `:each` draws
+the corpses too — and a corpse is drawn on top of its own explosion for
+exactly one frame. One frame is not nothing: it is a white smear that
+flickers over every kill, on every kill, and it reads as a rendering
+glitch rather than as a logic error. `Enemies.draw`, `Bullets.draw` and
+`Power.draw` all use `:eachLive`. `collide()` uses `:each`, deliberately,
+because collision *must* see the slot it just killed to know not to kill
+it twice.
+
+## A boss is not a big enemy
+
+It is tempting to model a boss as an enemy with a lot of hit points, and
+for about ten minutes that works. Then you want it to enter from
+off-screen without being culled; to be immune while it enters; to change
+its fire pattern when it is hurt; to hold the wave timeline open until it
+dies; and to *be the ending*. None of that is "more HP". All of it is a
+small state machine with a phase list, which is what `core/boss.lua` is:
+`enter` → `fight` → `dying`, with `Boss.vulnerable()` — a single
+predicate, `Boss.active and Boss.state == "fight"` — so that no caller
+has to remember the rule.
+
+{{< snip 26-shmup/source/boss.lua boss-phase >}}
+
+Phases are picked by *remaining HP fraction*, not by a timer and not by a
+counter: the first phase in the spec whose `above` the fraction still
+exceeds. Nova's dreadnought has two — a stately sweep with a five-shot
+spread you can out-position, and, below half health, the desperate one
+that stops aiming and starts filling the screen with rings. The phase
+list is data in the content table, so a boss's whole personality is
+written where the level is written.
+
+The death cascade is deliberate too: `dying` scatters an explosion across
+the hull every 0.12 s for 1.6 seconds before the level ends. The pause is
+the point. It is the one moment in the game when nothing is trying to
+kill you.
+
+And then the rule that keeps all of it honest:
+
+{{< snip 26-shmup/source/shmup.lua shmup-won >}}
+
+**The boss owns the win condition.** If the level has one, the level is
+cleared when the boss dies — never when the spawn script happens to run
+dry. Only a level with no boss falls back to "the script is exhausted and
+the screen is swept" (`Waves.finished`). Without that rule you get the old
+engine's ending, in which the level declares victory the instant the last
+scripted grunt drifts off the bottom edge, several seconds after the
+player stopped doing anything. A level that ends by accident is read by
+the player as a bug, and they are not wrong.
+
+![The Dreadnought at frame 400, mid-ring, in its second phase. The health
+bar at the foot of the screen is the fight's clock: without it the player
+cannot tell progress from stalemate, and a boss that feels like a
+stalemate is a boss they quit to the
+launcher on.](../figures/26-shmup/shmup-boss.png){#fig-shmup-boss}
+
+### The bug you can only see by looking
+
+The boss used to have a hit flash. The enemies have one and it works
+beautifully — `Sprites.draw(name, x, y, flash)` fills the silhouette
+solid white for two frames, and against the black field it reads
+instantly as "that one is taking damage". So the boss got the same
+treatment.
+
+The boss is under *sustained* fire. The autopilot alone hits it about
+eight times a second. The flash never let go.
+
+{{< snip 26-shmup/source/boss.lua boss-noflash >}}
+
+For the entire fight — the climax of the game, the thing with the
+hand-drawn gun ports and the phase list and the health bar — the boss
+rendered as a **featureless white rectangle**. Every counter was healthy.
+`bossHp` fell, `wins` reached 1, the smoke run was green, the frame time
+was fine. Nothing in the instrumentation could possibly have known,
+because nothing in the instrumentation looks at the screen.
+
+One glance at a screenshot could. This is @sec-harness's standing warning
+in its purest form: a heartbeat tells you the game is *running*, and it
+will tell you that with total confidence while the game is unplayable. The
+counter is a smoke detector, not an inspector. Look at the picture. That
+is why every smoke run in this book writes a PNG.
+
+## Autopilots written against the frame
+
+Every game in the fleet ships a bot that plays it, because that bot is the
+smoke test (@sec-harness). Shmup's three raise the bar in one specific
+way, and `tools/smoke.sh` enforces it:
+
+```bash
+# shmup/tools/smoke.sh:37
+        grep -q '"wins":1' "$DATA/smoke.json" 2>/dev/null && break
+```
+
+A run is green only when the bot reached the **win** screen. Not survived,
+not scored, not "no errors" — *won*, boss included. The reason is the same
+one @sec-lore learned from a bot that farmed a boss's summons for 57 kills
+and never touched the boss: **a bot that merely survives has quietly
+stopped testing the second half of the game**, and it looks exactly like a
+bot that is working. `wins` is a *latch* in `shmup.lua`, incremented once
+and never reset, because the bot presses A on the victory screen and starts
+a fresh run — a counter that reported only the current state would answer
+"no" a second later, and a green smoke run that forgot it won is worse than
+no smoke run at all.
+
+What makes the three bots worth reading is that each one is shaped by its
+frame. They are not three difficulty settings on one bot; they are three
+different games to play.
+
+**The vertical bot** (Nova) holds the bottom edge, keeps its gun under
+whatever is closest to reaching its line, and sidesteps. The sidestep is
+where it earned its scar. The first version compared each incoming
+bullet's *current* x against the ship's — which is a bot dodging where the
+bullet is instead of where it is going. It beat every wave and then died to
+the boss on every single run, because the boss's aimed shots are launched
+at an angle and a bullet that is currently beside you is a bullet that is
+about to be on you. So it solves for the crossing:
+
+```lua
+-- shmup/games/nova/main.lua:46
+        for i = 1, ep.n do
+            local b = ep.items[i]
+            if not b.dead and b.vy > 20 then
+                local t = (Player.y - b.y) / b.vy      -- time to our row
+                if t > 0 and t < 1.1 then
+                    local dx = (b.x + b.vx * t) - Player.x
+                    if math.abs(dx) < 24 then
+                        shift = shift + (dx >= 0 and -1 or 1)
+                        if math.abs(dx) < math.abs(nearest) then nearest = dx end
+                    end
+                end
+            end
+        end
+```
+
+Time to our row, position at that time, lean away. And one more detail
+worth stealing: when the bot is pinned from both sides the votes cancel to
+zero, and the naive version stands perfectly still in the crossfire. The
+tie-break is to run for the wider half of the screen.
+
+**The side bot** (Ravine) flies the gap, and it steers by
+`Terrain.groundY` / `Terrain.ceilY` — which is to say, *by the same sampled
+profile the collider uses*:
+
+```lua
+-- shmup/games/ravine/main.lua:48
+    local function gapCenter()
+        local ahead = math.min(SCREEN_W - 1, Player.x + 46)
+        local g = Terrain.groundY(ahead)
+        local c = Terrain.ceilY(ahead)
+        return (g + c) / 2, c, g
+    end
+```
+
+That is not a convenience. It is the terrain rule stated as an executable
+proof. A bot that read the true sine instead — the "correct" curve, the one
+the old collider used — would fly what it believed was the exact centre of
+the gap and would still, occasionally, clip a wall it was nowhere near. And
+it would do it rarely enough to look like flakiness rather than like a bug,
+which is how the original survived. It aims a little way ahead (`+46`
+pixels) because at 66 px/s the wall you have to clear is one you can already
+see, and it solves a ballistic drop point for its bombs — fall time from the
+ship's altitude to the target's, then the x at which a bomb launched *now*
+meets a tank that is itself sliding left, closing at the sum of the bomb's
+drift and the world's speed.
+
+**The free bot** (Skimmer) is the only one of the three that can fail by
+being **slow**. That is the free frame's whole character: the level is a
+place with a far end, so there is somewhere to *get to*. The scroller bots
+cannot loiter — the world drags them forward whether they like it or not —
+but this one has to decide to go, and a bot that merely survived would hover
+happily at the near end of the hull forever and report a perfectly green
+run. So the bot's spine is one line: fly right, toward the goal.
+
+```lua
+-- shmup/games/skimmer/main.lua:97
+        -- 145, not 170. The camera keeps the player at screen centre, so a
+        -- stand-off of D puts the boss at screen x = 200 + D -- and at 170 the
+        -- bot was duelling a 70px-wide core that was half off the right edge of
+        -- its own boss fight. In the free frame, "how far away do I stand" and
+        -- "what can I see" are the same number.
+        local goal = Boss.active and (Boss.x - 145) or (Content.levelW - 60)
+        cmd.right = Player.x < goal - 8
+        cmd.left = Player.x > goal + 8
+```
+
+That comment is the free frame in one paragraph: because the camera is bound
+to the player, *distance* and *visibility* stop being independent variables.
+The bot's other lesson is a constraint-versus-preference one that any
+navigation code can use. A girder does not dictate an altitude; it forbids a
+*band*. The first version treated it as a command ("fly to the far side") and
+switched dodging off while a girder was ahead — so in the boss arena, where
+rings come at you from every angle, the bot obediently held a straight line
+and died. Compute the open corridor first, then choose freely inside it.
+
+::: {.callout-note}
+## The bot reads only what a player can see
+Each of the three reads the enemy pool, the bullet pool, the boss and the
+terrain — the same state the renderer draws. None of them reads the wave
+script, the RNG, or anything about the future. That discipline is what keeps
+an autopilot honest as a test: a bot that peeks at the spawn table proves
+that the spawn table exists, and nothing else. And it is what lets the same
+bot survive a content change: retune Nova's waves and its bot re-derives its
+plan from what is on the screen.
+:::
+
+The example's own bot is a fourth one, in `main.lua`, and it makes the point
+more bluntly than any of them: it is a single function that branches on
+`Frame.mode` and plays accordingly. Not on the enemy list, not on the level,
+not on the game — on the *frame*. That is the clearest possible statement of
+what a frame actually changes: not the rules, not the bullets, not the
+enemies. Just where you are allowed to be, and what "forward" means.
+
+## The furniture
+
+The rest of `core/` is the fleet's standard cabinet, and it is short. Two of
+its choices are worth a paragraph each.
+
+**Sprites are solid white, code-drawn at load, and there is not one image
+file in the package.** This is the OpenTyrian 1-bit rule (@sec-dither,
+@sec-sprites), and in a shmup it is not an aesthetic preference but a legibility
+requirement: at bullet size, the eye cannot resolve a dither pattern — it
+resolves the *average*, and the average of a 50 % dither is the mid-grey
+smudge that a bullet must never be. Dither is for the Dither engine's big soft
+shapes (@sec-dither-engine). A shmup is small fast shapes, and small fast
+shapes must be solid. The one place the rule bites back is the terrain, which
+is a solid white silhouette — so `Kit.panel` puts a black plate under the HUD,
+because white text on a white cavern wall is not text.
+
+**The engine had no audio at all** before the rewrite; it now has both halves
+of the book's sound chapters. `snd.lua` is a round-robin pool of three synths
+per waveform (@sec-sfx), and the pool is not premature optimization: a shmup
+fires a *lot* of bullets, and a single shared synth turns rapid fire into one
+long stutter as each shot steals the voice from the one before it. `music.lua`
+is the clock-driven 16-step sequencer from @sec-music, mixed deliberately quiet,
+because in this genre the sound effects are *information* and the music is only
+weather. `Kit.saveBest` writes the high score only when it is actually beaten
+(@sec-save), so a losing run costs zero datastore writes. And `fx.lua` is screen
+shake plus hitstop (@sec-juice), with the HUD drawn *after* `Fx.pop()` — a
+shaking world reads as an explosion, a shaking HUD reads as a rendering bug.
+
+Finally, the loop, which is the last thing you need to believe the thesis:
+
+{{< snip 26-shmup/source/main.lua tour-loop >}}
+
+The demo swaps the entire game out from under the engine three times in
+1,120 frames — a different frame, a different enemy set, a different level
+each time — with one call to `Shmup.new`. The engine does not notice, because
+a level *is* its content table.
+
+## What you know now
+
+- The five engines before this one each chose a **representation**. Shmup
+  chose a **frame of reference**, because "what is a shoot-'em-up made of?" is
+  the wrong question and "what is nailed down and what moves?" is the right
+  one.
+- `frame.lua` owns exactly four questions — `toScreenX` (where frame
+  coordinates land), `advance` (how the world moves), `bounds` (where the
+  player may be), `fireDir` (which way is forward) — and nothing else in the
+  engine is allowed to answer them. Three modes cover the genre; choosing one
+  is a single string in a content table.
+- **`Frame.spent` and `Frame.cull` are different questions.** A bullet is
+  spent against the visible box; an enemy is culled against the world — and in
+  the free frame nothing is ever culled, because the level is a *place* that
+  exists whether or not you are looking at it.
+- **One shape, one source of truth.** The cavern is sampled once; `Terrain.draw`
+  fills its polygon from the samples and `Terrain.hits` interpolates within
+  them. Draw a shape one way and collide it another and the two will disagree —
+  by *under a pixel*, which is precisely why the bug is poison: invisible in a
+  screenshot, absent from every counter, and felt as an unfair death nobody can
+  reproduce.
+- **A pool is only as good as its coldest field.** `Pool:spawn` clears the
+  slot's `data` sub-table in place; the way to audit a pool is to read every
+  spawn call site looking for a `{}`. And draw with `:eachLive`, because
+  collision marks the dead mid-frame and `:each` paints a corpse on top of its
+  own explosion for exactly one frame.
+- **A boss is a phase state machine, and it owns the win condition.** Immune
+  while entering, never culled, phases chosen by remaining HP fraction, a death
+  cascade — and a level with a boss is cleared when the boss dies, never when
+  the spawn script happens to run dry. A level that ends by accident is read as
+  a bug.
+- **The autopilot must be able to win.** All three bots beat their game, boss
+  included, and `smoke.sh` passes only on `"wins":1` — because a bot that merely
+  survives has stopped testing the second half of the game. Each bot is shaped
+  by its frame: the vertical one leads its dodges (a bot that compared *current*
+  x died to the boss every run), the side one flies the gap by reading the same
+  profile the collider reads, and the free one is the only one that can fail by
+  being slow.
+- **Counters cannot see the screen.** The boss's hit flash never let go under
+  sustained fire and the climax of the game rendered as a white rectangle, with
+  every counter green. Look at the picture.
+
+The engine and all three games are MIT-licensed at
+[github.com/plaidate/shmup](https://github.com/plaidate/shmup) — read
+`DESIGN.md`, then `frame.lua`, which is the whole thesis in one short file,
+then any one of the three `content.lua` files, which are the same game with
+one word changed.
+
+And that closes Part VII, and the book. Six packages, six theses: Phosphor
+draws **lines** and nothing else; Tiles makes **the grid** the single source of
+truth; Voxel earns its **volume** by demanding that a game dig, climb, lob or
+fall; Dither promotes **shade** from an art trick to a mechanic; Lore keeps a
+**story** over a world; and Shmup fixes a **frame of reference** and lets
+everything else be the same code. Five of them chose what the world is made of.
+The sixth chose what is nailed down. The common thread is not the cabinet they
+share, or the 30 fps, or the procedural art, or the bots that beat their own
+games before anyone was allowed to say they worked — those are consequences. The
+thread is that **an engine is a decision about what your games are about**, and
+that decision is worth more than the code that follows from it. Write the
+sentence down first. Then make the machine prove it.

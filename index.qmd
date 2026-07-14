@@ -56,7 +56,7 @@ programming is best learned.
 
 ## How the book is organized
 
-Seven parts, twenty-five chapters, five appendices:
+Seven parts, twenty-six chapters, five appendices:
 
 - **Part I, Getting Started** takes you from an empty directory to a
   running program, then teaches the dialect of Lua this platform
@@ -75,14 +75,17 @@ Seven parts, twenty-five chapters, five appendices:
 - **Part VI, Shipping** is the payoff: testing your game without
   touching it, making it fast on real hardware, and packaging a
   finished, polished pdx for other people's devices.
-- **Part VII, Inside the Engines** is the long look back. Five of the
+- **Part VII, Inside the Engines** is the long look back. Six of the
   book's case-study packages are not single games but *engines* with
   fleets of games on top, and each gets a chapter that reads it end to
   end: Phosphor's vectors, Tiles' grid, Voxel's volume, Dither's
-  shade, and Lore's story systems. Every one of these chapters vendors
-  the real, shipped engine into its runnable example, so what you read
-  is what runs — and the five together are a study in the one decision
-  that matters most: deciding what your engine is *about*.
+  shade, Lore's story systems, and Shmup's frame of reference. Every
+  one of these chapters vendors the real, shipped engine into its
+  runnable example, so what you read is what runs — and the six
+  together are a study in the one decision that matters most: deciding
+  what your engine is *about*. Five of them answer it with a
+  representation; the sixth answers it with a question about what is
+  standing still.
 
 The appendices are references: Playdate Lua versus standard Lua, a map
 of the full SDK by namespace, environment setup (including the

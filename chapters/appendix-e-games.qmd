@@ -158,9 +158,10 @@ line; their lessons arrived as design rules rather than excerpts:
 Seven repositories are not single games but engines with fleets on
 top. When a chapter quotes `vec/` or `tiles/core/`, it is quoting
 code that a dozen games run through every frame — the strongest
-battle-testing in the catalog. Five of the seven — Phosphor, Tiles,
-Voxel, Dither, and Lore — are read end to end in Part VII, each in a
-chapter of its own with the engine vendored into a runnable example.
+battle-testing in the catalog. Six of the seven — Phosphor, Tiles,
+Voxel, Dither, Lore, and Shmup — are read end to end in Part VII, each
+in a chapter of its own with the engine vendored into a runnable
+example.
 
 ### Phosphor
 
@@ -290,22 +291,25 @@ a whole RPG in two seconds.
 
 ### Shmup
 
-A generic 1-bit shoot-'em-up engine, written for the 400x240 screen and
-built around **three scroll paradigms**, with a demo of each: *Nova
-Strike* (a vertical shooter of classic top-down waves), *Ravine* (a
-horizontal forced-scroll cave-flyer with Scramble-style terrain, fuel
-and bombs), and *Skimmer* (Uridium-style bidirectional follow-scrolling
-— a different *Skimmer* from Dither's dragonfly; the fleet reuses a
-good name). Games on it are almost entirely *data*: enemy types compose
-from a small library of movement and fire behaviors, and a wave is a
-spawn timeline.
+A 1-bit shoot-'em-up engine built around **the frame of reference** —
+what is nailed down and what moves — with one game per frame: *Nova
+Strike* (`vertical`: the world falls past a screen-locked ship, in the
+line of *Xevious*), *Ravine* (`side`: a forced-scroll cave-flyer with
+Scramble-style terrain, draining fuel and ballistic bombs), and
+*Skimmer* (`free`: the level is a fixed-width place with two ends and
+the camera chases you, in the line of *Uridium* — a different *Skimmer*
+from Dither's dragonfly; the fleet reuses a good name). Games on it are
+almost entirely *data*: an enemy type composes one movement behavior
+with one fire behavior, a level is a spawn timeline, and the whole
+paradigm is a single string in a table.
 
-**Cited in:** nothing, and it is listed anyway — it is the one
-collection the chapters never quote, and a catalog that quietly omitted
-it would be a cast list, not a census. Its house rule is worth the
-paragraph regardless: solid white sprites on black space, code-drawn,
-because that is the lesson a 1-bit OpenTyrian port teaches — anything
-subtler turns to muddy dither at this contrast (@sec-dither).
+**Cited in:** @sec-shmup, which reads the engine end to end and vendors
+it into that chapter's example. Its house rule is worth stating on its
+own: solid white sprites on black space, code-drawn, because that is
+the lesson a 1-bit OpenTyrian port teaches — at bullet size the eye
+cannot resolve a dither pattern, so it resolves the average, and the
+average of a 50% dither is exactly the grey smudge you most need your
+bullets not to be (@sec-dither).
 
 ## Modules
 

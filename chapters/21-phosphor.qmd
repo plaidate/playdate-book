@@ -23,12 +23,15 @@ on the device, and then a tour of all sixteen games with an eye to
 which modules each one leans on and the one clever thing it does
 with them.
 
-It is the first of five such tours. Part VII reads the fleet's five
+It is the first of six such tours. Part VII reads the fleet's six
 shipped engines end to end, one per chapter, each owning a different
 thesis about what a game is made of: Phosphor owns **lines** (here),
 Tiles owns **the grid** (@sec-tiles), Voxel owns **volume**
 (@sec-voxel), Dither owns **shade** (@sec-dither-engine), and Lore
-owns **story state over a world** (@sec-lore). They are best read as a
+owns **story state over a world** (@sec-lore). The sixth answers the
+question by refusing it: Shmup (@sec-shmup) owns **the frame of
+reference** — not what the world is made of, but what is nailed down
+and what moves. They are best read as a
 set — the theses differ, but the cabinet, the discipline, and the
 harness underneath them are the same ones this book has been teaching
 since @sec-hello, and seeing that skeleton wearing five different

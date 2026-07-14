@@ -1,0 +1,6 @@
+name=Shmup Tour
+author=Simon Frost
+description=Chapter 26: three scroll frames on one engine.
+bundleID=com.sdwfrost.book.26shmup
+version=1.0
+buildNumber=1
