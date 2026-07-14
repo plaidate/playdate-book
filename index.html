@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Simon D.W. Frost">
-<meta name="dcterms.date" content="2026-07-12">
+<meta name="dcterms.date" content="2026-07-14">
 
 <title>Playdate Game Development in Lua</title>
 <style>
@@ -381,6 +381,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/26-shmup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Inside Shmup: A Frame of Reference</span></span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -472,7 +478,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 12, 2026</p>
+      <p class="date">July 14, 2026</p>
     </div>
   </div>
   
@@ -505,7 +511,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="how-the-book-is-organized" class="level2">
 <h2 class="anchored" data-anchor-id="how-the-book-is-organized">How the book is organized</h2>
-<p>Seven parts, twenty-five chapters, five appendices:</p>
+<p>Seven parts, twenty-six chapters, five appendices:</p>
 <ul>
 <li><strong>Part I, Getting Started</strong> takes you from an empty directory to a running program, then teaches the dialect of Lua this platform actually speaks and the update-loop-plus-mode-machine skeleton that every later example is built on.</li>
 <li><strong>Part II, Graphics</strong> covers the 1-bit screen from primitives and dither patterns through images, fonts, the sprite system, cameras for worlds bigger than the screen, and wireframe fake-3D.</li>
@@ -513,7 +519,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Part IV, Sound</strong> builds effects from raw synthesizers and music from sequences and step clocks, with no audio files in sight.</li>
 <li><strong>Part V, Building Games</strong> assembles the game-shaped parts: movement and collision, game feel, enemies and pathfinding, and saving.</li>
 <li><strong>Part VI, Shipping</strong> is the payoff: testing your game without touching it, making it fast on real hardware, and packaging a finished, polished pdx for other people’s devices.</li>
-<li><strong>Part VII, Inside the Engines</strong> is the long look back. Five of the book’s case-study packages are not single games but <em>engines</em> with fleets of games on top, and each gets a chapter that reads it end to end: Phosphor’s vectors, Tiles’ grid, Voxel’s volume, Dither’s shade, and Lore’s story systems. Every one of these chapters vendors the real, shipped engine into its runnable example, so what you read is what runs — and the five together are a study in the one decision that matters most: deciding what your engine is <em>about</em>.</li>
+<li><strong>Part VII, Inside the Engines</strong> is the long look back. Six of the book’s case-study packages are not single games but <em>engines</em> with fleets of games on top, and each gets a chapter that reads it end to end: Phosphor’s vectors, Tiles’ grid, Voxel’s volume, Dither’s shade, Lore’s story systems, and Shmup’s frame of reference. Every one of these chapters vendors the real, shipped engine into its runnable example, so what you read is what runs — and the six together are a study in the one decision that matters most: deciding what your engine is <em>about</em>. Five of them answer it with a representation; the sixth answers it with a question about what is standing still.</li>
 </ul>
 <p>The appendices are references: Playdate Lua versus standard Lua, a map of the full SDK by namespace, environment setup (including the unattended-Simulator configuration the book’s own tooling depends on), the book’s test-and-figure harness documented for reuse, and a catalog of the shipped games quoted throughout.</p>
 </section>

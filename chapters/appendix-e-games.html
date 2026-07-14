@@ -344,6 +344,12 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Inside Lore: An RPG Engine</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26-shmup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Inside Shmup: A Frame of Reference</span></span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -555,7 +561,7 @@ Figure&nbsp;E.5: Weasel War Dance: chart, dancer, and the beat clock.
 </section>
 <section id="the-collections" class="level2" data-number="E.2">
 <h2 data-number="E.2" class="anchored" data-anchor-id="the-collections"><span class="header-section-number">E.2</span> The collections</h2>
-<p>Seven repositories are not single games but engines with fleets on top. When a chapter quotes <code>vec/</code> or <code>tiles/core/</code>, it is quoting code that a dozen games run through every frame — the strongest battle-testing in the catalog. Five of the seven — Phosphor, Tiles, Voxel, Dither, and Lore — are read end to end in Part VII, each in a chapter of its own with the engine vendored into a runnable example.</p>
+<p>Seven repositories are not single games but engines with fleets on top. When a chapter quotes <code>vec/</code> or <code>tiles/core/</code>, it is quoting code that a dozen games run through every frame — the strongest battle-testing in the catalog. Six of the seven — Phosphor, Tiles, Voxel, Dither, Lore, and Shmup — are read end to end in Part VII, each in a chapter of its own with the engine vendored into a runnable example.</p>
 <section id="phosphor" class="level3" data-number="E.2.1">
 <h3 data-number="E.2.1" class="anchored" data-anchor-id="phosphor"><span class="header-section-number">E.2.1</span> Phosphor</h3>
 <p>Sixteen vector arcade games — white beam lines on black, the way the cabinets drew them — on one thin shared library, <code>vec/</code>.</p>
@@ -637,8 +643,8 @@ Figure&nbsp;E.10: Shrew, from the Lore collection: the dawn meter, the chunked o
 </section>
 <section id="shmup" class="level3" data-number="E.2.7">
 <h3 data-number="E.2.7" class="anchored" data-anchor-id="shmup"><span class="header-section-number">E.2.7</span> Shmup</h3>
-<p>A generic 1-bit shoot-’em-up engine, written for the 400x240 screen and built around <strong>three scroll paradigms</strong>, with a demo of each: <em>Nova Strike</em> (a vertical shooter of classic top-down waves), <em>Ravine</em> (a horizontal forced-scroll cave-flyer with Scramble-style terrain, fuel and bombs), and <em>Skimmer</em> (Uridium-style bidirectional follow-scrolling — a different <em>Skimmer</em> from Dither’s dragonfly; the fleet reuses a good name). Games on it are almost entirely <em>data</em>: enemy types compose from a small library of movement and fire behaviors, and a wave is a spawn timeline.</p>
-<p><strong>Cited in:</strong> nothing, and it is listed anyway — it is the one collection the chapters never quote, and a catalog that quietly omitted it would be a cast list, not a census. Its house rule is worth the paragraph regardless: solid white sprites on black space, code-drawn, because that is the lesson a 1-bit OpenTyrian port teaches — anything subtler turns to muddy dither at this contrast (<a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>).</p>
+<p>A 1-bit shoot-’em-up engine built around <strong>the frame of reference</strong> — what is nailed down and what moves — with one game per frame: <em>Nova Strike</em> (<code>vertical</code>: the world falls past a screen-locked ship, in the line of <em>Xevious</em>), <em>Ravine</em> (<code>side</code>: a forced-scroll cave-flyer with Scramble-style terrain, draining fuel and ballistic bombs), and <em>Skimmer</em> (<code>free</code>: the level is a fixed-width place with two ends and the camera chases you, in the line of <em>Uridium</em> — a different <em>Skimmer</em> from Dither’s dragonfly; the fleet reuses a good name). Games on it are almost entirely <em>data</em>: an enemy type composes one movement behavior with one fire behavior, a level is a spawn timeline, and the whole paradigm is a single string in a table.</p>
+<p><strong>Cited in:</strong> <a href="26-shmup.html" class="quarto-xref"><span>Chapter 26</span></a>, which reads the engine end to end and vendors it into that chapter’s example. Its house rule is worth stating on its own: solid white sprites on black space, code-drawn, because that is the lesson a 1-bit OpenTyrian port teaches — at bullet size the eye cannot resolve a dither pattern, so it resolves the average, and the average of a 50% dither is exactly the grey smudge you most need your bullets not to be (<a href="04-dither.html" class="quarto-xref"><span>Chapter 4</span></a>).</p>
 </section>
 </section>
 <section id="modules" class="level2" data-number="E.3">
