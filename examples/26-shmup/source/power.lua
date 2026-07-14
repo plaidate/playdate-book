@@ -43,6 +43,18 @@ function Power.update(dt)
         -- the world is not going anywhere.
         if Frame.mode == "side" then
             p.x = p.x - Frame.speed * dt
+            -- ...and it FLOATS. A capsule dropped by a ground unit is born at
+            -- the ground unit's altitude, which in a cavern game means inside
+            -- the wall: it then slid left through solid rock for nine seconds
+            -- and expired, having been visible to nobody and collectable by
+            -- no one. Every power-up a tank or a fuel dump ever dropped was
+            -- unreachable. It rises out of the wreck, and the profile that
+            -- draws the cavern is the profile that keeps it in the open air.
+            p.y = p.y - 26 * dt
+            if Terrain.active then
+                p.y = math.max(p.y, Terrain.ceilY(p.x) + 12)
+                p.y = math.min(p.y, Terrain.groundY(p.x) - 12)
+            end
         elseif Frame.mode == "vertical" then
             p.y = p.y + 40 * dt
         end

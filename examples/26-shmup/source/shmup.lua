@@ -87,9 +87,17 @@ local function addScore(n)
     end
 end
 
+-- What killed us, counted by cause. Every hit on the player goes through
+-- hurtPlayer, so this is free -- and without it, tuning a bot is guesswork: you
+-- can see THAT it died at 93% of the level and not WHY, and you will spend an
+-- afternoon hardening its bullet-dodging when it was flying into the wall.
+Shmup.causes = { terrain = 0, scene = 0, bullet = 0, enemy = 0, boss = 0, fuel = 0 }
+local cause = "?"
+
 -- One hit on the player. A shield eats it; otherwise it costs a life. Exactly
 -- one place knows whether a hit was survivable.
 local function hurtPlayer(x, y)
+    Shmup.causes[cause] = (Shmup.causes[cause] or 0) + 1
     if Player.shield then
         Player.shield = false
         Player.invuln = 1.0
@@ -143,11 +151,13 @@ local function collide()
     if not Player.vulnerable() then return end
 
     if useTerrain and Terrain.hits(Player.x, Player.y, Player.r) then
+        cause = "terrain"
         hurtPlayer()
         return
     end
 
     if scene and scene.hits and scene.hits(Player.x, Player.y, Player.r) then
+        cause = "scene"
         hurtPlayer()
         return
     end
@@ -156,6 +166,7 @@ local function collide()
         if b.dead or not Player.vulnerable() then return end
         if Lib.circlesHit(b.x, b.y, b.r, Player.x, Player.y, Player.r) then
             b.dead = true
+            cause = "bullet"
             hurtPlayer()
         end
     end)
@@ -165,6 +176,7 @@ local function collide()
         if Lib.circlesHit(e.x, e.y, e.r, Player.x, Player.y, Player.r) then
             e.dead = true
             Shmup.boom(e.x, e.y)
+            cause = "enemy"
             hurtPlayer(e.x, e.y)
         end
     end)
@@ -172,6 +184,7 @@ local function collide()
     if Boss.active and Player.vulnerable()
         and Lib.circlesHit(Boss.x, Boss.y, Boss.spec.r or 30,
             Player.x, Player.y, Player.r) then
+        cause = "boss"
         hurtPlayer()
     end
 end
@@ -288,6 +301,7 @@ function Shmup.update(dt)
         Player.fuel = Player.fuel - fuelRate * dt
         if Player.fuel <= 0 then
             Player.fuel = 0
+            cause = "fuel"
             hurtPlayer()
         end
     end
@@ -401,7 +415,21 @@ end
 function Shmup.run(c, opts)
     opts = opts or {}
     playdate.display.setRefreshRate(SMOKE_BUILD and 0 or 30)
-    math.randomseed(playdate.getSecondsSinceEpoch())
+
+-- snip: smoke-seed
+    -- A shipped game seeds from the clock. A SMOKE build must not: seeded from
+    -- the clock, every run is a different game, so a green run proves nothing
+    -- and a red one is indistinguishable from bad luck. (This engine's bot
+    -- passed seven runs in eight, which is the worst possible result: too good
+    -- to look broken, too flaky to trust.) The Makefile writes SMOKE_SEED and
+    -- tools/smoke.sh sweeps a few of them, so a failure is a fact you can
+    -- reproduce by name rather than a mood.
+    if SMOKE_BUILD then
+        math.randomseed(SMOKE_SEED or 1)
+    else
+        math.randomseed(playdate.getSecondsSinceEpoch())
+    end
+-- endsnip
 
     Shmup.new(c)
 

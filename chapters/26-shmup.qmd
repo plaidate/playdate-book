@@ -424,7 +424,7 @@ smoke test (@sec-harness). Shmup's three raise the bar in one specific
 way, and `tools/smoke.sh` enforces it:
 
 ```bash
-# shmup/tools/smoke.sh:37
+# shmup/tools/smoke.sh:50
         grep -q '"wins":1' "$DATA/smoke.json" 2>/dev/null && break
 ```
 
@@ -443,48 +443,111 @@ What makes the three bots worth reading is that each one is shaped by its
 frame. They are not three difficulty settings on one bot; they are three
 different games to play.
 
-**The vertical bot** (Nova) holds the bottom edge, keeps its gun under
-whatever is closest to reaching its line, and sidesteps. The sidestep is
-where it earned its scar. The first version compared each incoming
-bullet's *current* x against the ship's — which is a bot dodging where the
-bullet is instead of where it is going. It beat every wave and then died to
-the boss on every single run, because the boss's aimed shots are launched
-at an angle and a bullet that is currently beside you is a bullet that is
-about to be on you. So it solves for the crossing:
+### Seed it, or you are not testing anything
+
+Before any of that, one line had to change, and it is the most valuable
+line in the chapter.
+
+`Shmup.run` seeds the RNG from the clock, which is right for a shipped
+game and catastrophic for a test. Seeded from the clock, every smoke run
+plays a *different game*: the drops differ, so the weapon level differs, so
+the boss fight is short or long, so the bot lives or dies. Ravine's bot sat
+at **seven wins in eight** for an afternoon — which is the worst result
+available, because it is too good to look broken and too flaky to trust. A
+green run proved nothing, a red one was indistinguishable from bad luck,
+and so every "fix" was being evaluated against a coin.
+
+{{< snip 26-shmup/source/shmup.lua smoke-seed >}}
+
+The build now writes `SMOKE_SEED`, `tools/smoke.sh` sweeps several of them,
+and the bot must win **all** of them. The effect was immediate and slightly
+humiliating: with the seeds pinned, *Nova's* bot — which had been passing
+happily all week — turned out to lose two seeds out of four. It had never
+been good. It had been lucky, and the clock had been covering for it.
+
+This is the general form of a very common self-deception. If a test's
+inputs are not pinned, its passes are not evidence. Pin them, and a failure
+stops being a mood and becomes a fact with a name you can type again.
+
+### Three bots, and one mistake made three times
+
+**The vertical bot** (Nova) holds the bottom edge and picks a column. **The
+side bot** (Ravine) flies the cavern and picks an altitude. Both began life
+as *reflexes* — find the incoming fire, lean the other way — and both
+failed, in three escalating ways worth knowing, because everybody writes
+this function eventually:
+
+1. **Lean away from where the bullet is.** Wrong: it is moving. A bullet
+   currently beside you is a bullet about to be on you. Solve for when it
+   crosses your row, and use its position *then*.
+2. **Sum the leans from several bullets.** Wrong: caught between two of
+   them, the votes cancel to zero and the bot holds a perfectly straight
+   line through the crossfire. (A tie-break patches this. It does not cure
+   it.)
+3. **Recompute the lean every frame.** Wrong, and this one is nasty: the
+   bot slides just far enough that the threat stops registering, the lean
+   drops to zero, it steers calmly back toward the middle of the gap — and
+   back into the bullet, which has not gone anywhere. It oscillates its way
+   into every shot fired at it.
+
+The death-cause counters said so in one word, four times over: `bullet`,
+`bullet`, `bullet`, `bullet`. Not the wall. Not a hull. I had spent an hour
+hardening the terrain clamp of a bot that was never once hitting the
+terrain — which is exactly why the engine now counts *what killed you*, by
+cause, in the one place every hit already passes through.
+
+The cure is to stop reacting and start **choosing**. The reachable space is
+one-dimensional and small — a 150-pixel gap, or the stretch of screen you
+can cross in half a second — so score every position in it: how close the
+incoming fire will pass to it *at the moment that fire arrives*, plus the
+cost of flying there, plus a pull toward whatever you would like to shoot.
+Take the best. It is thirty lines, it costs a couple of hundred comparisons
+a frame, and it cannot oscillate, because the cost of moving is part of what
+it is minimising.
 
 ```lua
--- shmup/games/nova/main.lua:46
-        for i = 1, ep.n do
-            local b = ep.items[i]
-            if not b.dead and b.vy > 20 then
-                local t = (Player.y - b.y) / b.vy      -- time to our row
-                if t > 0 and t < 1.1 then
-                    local dx = (b.x + b.vx * t) - Player.x
-                    if math.abs(dx) < 24 then
-                        shift = shift + (dx >= 0 and -1 or 1)
-                        if math.abs(dx) < math.abs(nearest) then nearest = dx end
-                    end
-                end
-            end
-        end
+-- shmup/games/ravine/main.lua:210
+            local score = -danger * 4 - math.abs(y - Player.y) * 0.3
+            if aim then score = score - math.abs(y - aim) * 0.4 end
+            if score > bestScore then bestScore, best = score, y end
 ```
 
-Time to our row, position at that time, lean away. And one more detail
-worth stealing: when the bot is pinned from both sides the votes cancel to
-zero, and the naive version stands perfectly still in the crossfire. The
-tie-break is to run for the wider half of the screen.
+Two footnotes, both paid for. The first: Nova's version must consider only
+columns it can actually *reach*, because searching the whole 400-pixel
+screen made it strictly worse — it kept electing to be somewhere lovely and
+dying on the way there. Ravine can search its entire gap, because the gap is
+150 pixels tall and the trip is free. The second: that `aim` weight is a
+knife edge. Too high and the bot parks directly under the boss, which is
+precisely where a boss's fire is densest. Too low and it stops committing to
+a firing line at all — Nova scored 1550 and died with the boss on 49 HP,
+having spent the whole level gracefully dodging things it never shot. A bot
+that will not commit does not run out of luck. It runs out of level.
 
-**The side bot** (Ravine) flies the gap, and it steers by
-`Terrain.groundY` / `Terrain.ceilY` — which is to say, *by the same sampled
-profile the collider uses*:
+And the tuning cut *both* ways, which is the honest part. What made Nova's
+boss unbeatable was not only the bot. Its desperate phase fired a full
+360-degree **ring** — and a ring, from a boss at the top of the screen, puts
+its densest fire directly beneath itself, which is the one place you have to
+stand in order to shoot back. That is not difficulty; that is a game asking
+the player to choose between attacking and living. A wide downward spread
+threatens the same width of screen but leaves pockets you can be *in*. The
+bot went from dying with the boss on 49 HP to winning with all three lives
+intact — and so, I suspect, would you.
+
+**The side bot** steers by `Terrain.groundY` / `Terrain.ceilY` — which is to
+say, *by the same sampled profile the collider uses*:
 
 ```lua
--- shmup/games/ravine/main.lua:48
-    local function gapCenter()
+-- shmup/games/ravine/main.lua:57
+    local function gap()
         local ahead = math.min(SCREEN_W - 1, Player.x + 46)
-        local g = Terrain.groundY(ahead)
-        local c = Terrain.ceilY(ahead)
-        return (g + c) / 2, c, g
+        local mid = (Terrain.groundY(ahead) + Terrain.ceilY(ahead)) / 2
+
+        local lo, hi = -1e9, 1e9        -- worst ceiling, worst ground
+        for x = Player.x, ahead, 12 do
+            lo = math.max(lo, Terrain.ceilY(x))
+            hi = math.min(hi, Terrain.groundY(x))
+        end
+        return mid, lo, hi
     end
 ```
 
