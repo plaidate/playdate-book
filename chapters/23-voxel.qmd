@@ -4,7 +4,8 @@ The third engine in the catalog answers every question with a cube.
 *Voxel* is the collection's Voxatron homage: one fixed room of
 96×64×16 solid voxels, dither-shaded and drawn in a 3/4 projection
 on the 1-bit screen, fully destructible down to its bedrock floor —
-and ten shipped games on a core of ten files and 1,131 lines. Where
+and ten shipped games on the compact core this chapter reads — eight
+modules, 1,197 lines. Where
 Phosphor's thesis was *everything is lines* (@sec-phosphor) and
 Tiles' was *the character grid is the single source of truth*
 (@sec-tiles), Voxel's thesis is a rule about admission: **a game
@@ -834,7 +835,7 @@ engine is *not* for is the cheapest feature it will ever have.
 
 ## What you know now
 
-- Voxel is ten games on a ten-file, 1,131-line core: a fixed
+- Voxel is ten games on an eight-module, 1,197-line core: a fixed
   96×64×16 room of dither-shaded voxels, drawn oblique at
   $s_x = 8 + 4x$, $s_y = 86 + 2y - 4z$ — two adds, no divide, the
   whole volume on screen by construction. Admission rule: a game

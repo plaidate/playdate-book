@@ -5,8 +5,9 @@ Where Phosphor (@sec-phosphor) answers every question with a line,
 NES/Game Boy engine: a fixed grid of 16×16 tiles, code-drawn
 tilesets and sprites, and four shipped games — a Bomberman
 (*Blast*), a shrine-defense shooter (*Spirit*), a screen-flip action
-RPG (*Relic*), and a scrolling Boulder Dash (*Burrow*) — on a core
-of nine files and 772 lines, comments included. There is not one
+RPG (*Relic*), and a scrolling Boulder Dash (*Burrow*) — on the
+compact core this chapter reads: seven modules, 861 lines, comments
+included. There is not one
 image file in the repository. Every tile is a dither fill plus a
 string-art overlay, every sprite is rows of `'.'`/`'#'`/`'o'`, and
 every level is an array of strings, one character per tile. That
@@ -718,7 +719,7 @@ catch.
 
 ## What you know now
 
-- Tiles is four raster games on a 772-line core: 16×16 tiles,
+- Tiles is four raster games on a seven-module, 861-line core: 16×16 tiles,
   25×15 screen cells, a 16px HUD row, module-per-concern globals,
   fixed `DT = 1/30`, and no art assets — tiles and sprites are
   string art baked to images once, at definition time.
