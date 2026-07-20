@@ -106,7 +106,8 @@ diverged.
 
 ![The vertical frame at frame 150: waves falling past a screen-locked
 ship, two gun capsules dropping from the wave that just died, and the
-weapon ladder as pips in the HUD. The starfield scrolls because the
+weapon ladder as square pips in the HUD — with the ship's smart-bomb
+reserve as the round pips beside it. The starfield scrolls because the
 world does — `stars.lua` asks the frame which way is
 down.](../figures/26-shmup/shmup-vertical.png){#fig-shmup-vertical}
 
@@ -165,22 +166,23 @@ both exist is the frame again. In a scroller the world comes to you at a
 fixed rate, so *a time is a distance* and a clock is the only sensible
 index into a level. In the free frame the world does not move at all —
 you may hover, or fly backwards — so a clock indexes nothing, and the
-only honest trigger is where the player actually is. Skimmer's whole
-level is placed at `t = 0` and its boss is armed by position:
+only honest trigger is where the player actually is. (A `boss` entry may
+also carry `mid = true`, which `Waves.update` forwards to `Boss.arm` as a
+fourth argument to mark a *mid-boss* — described with the boss below.)
+Skimmer's whole level is placed at `t = 0` and its boss is armed by position:
 
 ```lua
--- shmup/games/skimmer/content.lua:175
-    -- The whole level, placed at t = 0: it is a place, and all of it is there
-    -- before you arrive. The boss alone is triggered by WHERE you are.
-    waves = {
-        { t = 0, type = "defender", x = 420,  y = 90 },
-        { t = 0, type = "defender", x = 560,  y = 170 },
-        { t = 0, type = "sentry",   x = 700,  y = 120 },
-        { t = 0, type = "defender", x = 860,  y = 70 },
+-- shmup/games/skimmer/hulls.lua:178
+local w1 = {
+    { t = 0, type = "defender", x = 300, y = 120 },
+    { t = 0, type = "defender", x = 430, y = 80 },
+    { t = 0, type = "defender", x = 610, y = 165 },
+    { t = 0, type = "sentry", x = 780, y = 120 },
+    { t = 0, type = "defender", x = 840, y = 70 },
 ```
 
-…and, at the bottom of that list, `{ at = 1900, boss = "core" }`: the
-reactor is bolted to the far end of the ship and has been there the
+…and, at the bottom of that list, `{ at = 1500, boss = "fore" }`: the
+fore core is bolted to the far end of the ship and has been there the
 whole time. You are the one who arrives.
 
 ![The free frame at frame 880: the hull, girders top and bottom, a
@@ -376,14 +378,22 @@ And then the rule that keeps all of it honest:
 
 {{< snip 26-shmup/source/shmup.lua shmup-won >}}
 
-**The boss owns the win condition.** If the level has one, the level is
-cleared when the boss dies — never when the spawn script happens to run
+**The final boss owns the win condition.** If the level has one, it is
+cleared when that boss dies — never when the spawn script happens to run
 dry. Only a level with no boss falls back to "the script is exhausted and
 the screen is swept" (`Waves.finished`). Without that rule you get the old
 engine's ending, in which the level declares victory the instant the last
 scripted grunt drifts off the bottom edge, several seconds after the
 player stopped doing anything. A level that ends by accident is read by
 the player as a bug, and they are not wrong.
+
+The engine has since grown a campaign layer — several stages back to back —
+so the predicate is named `stageWon` and the latch it waits on is
+`finalBossDown`. That latch is the home of one more distinction: a wave entry
+marked `mid = true` arms a *mid-boss*, one that fights and dies partway
+through the level to gate the road without being the ending. `Waves.hasBoss`
+counts only the final, non-mid boss, so a mid-boss can die on camera without
+tripping the win.
 
 ![The Dreadnought at frame 400, mid-ring, in its second phase. The health
 bar at the foot of the screen is the fight's clock: without it the player
@@ -506,7 +516,7 @@ a frame, and it cannot oscillate, because the cost of moving is part of what
 it is minimising.
 
 ```lua
--- shmup/games/ravine/main.lua:210
+-- shmup/games/ravine/main.lua:209
             local score = -danger * 4 - math.abs(y - Player.y) * 0.3
             if aim then score = score - math.abs(y - aim) * 0.4 end
             if score > bestScore then bestScore, best = score, y end
@@ -537,7 +547,7 @@ intact — and so, I suspect, would you.
 say, *by the same sampled profile the collider uses*:
 
 ```lua
--- shmup/games/ravine/main.lua:57
+-- shmup/games/ravine/main.lua:68
     local function gap()
         local ahead = math.min(SCREEN_W - 1, Player.x + 46)
         local mid = (Terrain.groundY(ahead) + Terrain.ceilY(ahead)) / 2
@@ -547,6 +557,7 @@ say, *by the same sampled profile the collider uses*:
             lo = math.max(lo, Terrain.ceilY(x))
             hi = math.min(hi, Terrain.groundY(x))
         end
+        -- (zone 3 also clamps lo/hi against the pistons' worst stroke)
         return mid, lo, hi
     end
 ```
@@ -569,18 +580,27 @@ place with a far end, so there is somewhere to *get to*. The scroller bots
 cannot loiter — the world drags them forward whether they like it or not —
 but this one has to decide to go, and a bot that merely survived would hover
 happily at the near end of the hull forever and report a perfectly green
-run. So the bot's spine is one line: fly right, toward the goal.
+run. So the bot's spine is one variable — `goal` — and one instruction: fly
+toward it.
 
 ```lua
--- shmup/games/skimmer/main.lua:97
-        -- 145, not 170. The camera keeps the player at screen centre, so a
-        -- stand-off of D puts the boss at screen x = 200 + D -- and at 170 the
-        -- bot was duelling a 70px-wide core that was half off the right edge of
-        -- its own boss fight. In the free frame, "how far away do I stand" and
-        -- "what can I see" are the same number.
-        local goal = Boss.active and (Boss.x - 145) or (Content.levelW - 60)
-        cmd.right = Player.x < goal - 8
-        cmd.left = Player.x > goal + 8
+-- shmup/games/skimmer/main.lua:176
+        -- WHERE TO BE. The far end of the hull — unless a core is live, in
+        -- which case hold station 145 short of it (the stand-off doubles as
+        -- "keep the whole boss on screen": the camera centres the player, so
+        -- distance and visibility are the same number in the free frame) —
+        -- or a closed bulkhead door is ahead, in which case hold short and
+        -- settle the argument with the warden first.
+        local goal
+        if Boss.active then
+            goal = Boss.x - 145
+        else
+            goal = Frame.levelW - 60
+            local g = Level.gate
+            if g and not g.open and Player.x < g.x then
+                goal = math.min(goal, g.x - 70)
+            end
+        end
 ```
 
 That comment is the free frame in one paragraph: because the camera is bound
@@ -675,9 +695,9 @@ a level *is* its content table.
   own explosion for exactly one frame.
 - **A boss is a phase state machine, and it owns the win condition.** Immune
   while entering, never culled, phases chosen by remaining HP fraction, a death
-  cascade — and a level with a boss is cleared when the boss dies, never when
-  the spawn script happens to run dry. A level that ends by accident is read as
-  a bug.
+  cascade — and a level with a boss is cleared when its *final* boss dies (a
+  mid-boss gates the road but is not the ending), never when the spawn script
+  happens to run dry. A level that ends by accident is read as a bug.
 - **The autopilot must be able to win.** All three bots beat their game, boss
   included, and `smoke.sh` passes only on `"wins":1` — because a bot that merely
   survives has stopped testing the second half of the game. Each bot is shaped

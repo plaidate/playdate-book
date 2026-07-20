@@ -9,9 +9,11 @@
 -- MEMBER SCHEMA (State.party[i]):
 --   { id=, name=, lvl=, xp=, hp=, maxhp=, mp=, maxmp=,
 --     atk=, def=, agi=,            -- BASE stats (no equipment)
---     equip = { weapon=id, armor=id },
+--     equip = { weapon=id, armor=id, acc=id },
 --     skills = { skill ids },      -- contiguous array
---     status = {} }                -- "poison"/"sleep"/"guard" -> n
+--     status = {} }                -- "poison"/"sleep"/"guard" and
+--                                  -- battle buffs "atkup"/"atkdown"/
+--                                  -- "defup"/"defdown" -> rounds left
 --
 -- Party.add(def): def = the schema fields plus growth = {hp, mp,
 -- atk, def, agi} (added per level) and learn = {[lvl] = skillId}.
@@ -20,16 +22,23 @@
 --
 -- CONTENT REGISTRIES (the game supplies plain tables):
 --   Party.defineItems(t)    id -> { name, kind = "heal"|"cure"|
---     "key"|"weapon"|"armor", power, price, target = "one"|"all" }
---     (weapon/armor power = the equipment stat mod)
+--     "key"|"weapon"|"armor"|"acc"|"ether"|"revive", power, price,
+--     target = "one"|"all" } (weapon/armor power = the equipment
+--     stat mod; acc power mods `stat` = "atk"|"def"|"agi"|"crit"
+--     (crit: +power/16 crit chance); ether power = mp restored;
+--     revive power = hp fraction 0..1)
 --   Party.defineSkills(t)   id -> { name, mp, power, kind = "dmg"|
---     "heal"|"buff", target = "one"|"all"|"self", element }
+--     "heal"|"buff"|"debuff"|"revive", target = "one"|"all"|"self"|
+--     "party", element, buff = "atkup"|"defup"|"atkdown"|"defdown",
+--     rounds }
 --   Party.defineBestiary(t) id -> { name, hp, atk, def, agi, xp,
 --     gold, mp, skills = {ids}, ai = "basic"|"caster"|"sly",
 --     artFn = fn(w, h),  -- draw a w x h portrait into the current
 --                        -- context (48x48 in lturn, 16x16 field)
 --     elems = { element -> dmg multiplier }, fspeed = field px/s,
---     drop = { item=, chance = 0..1 } }
+--     drop = { item=, chance = 0..1 },
+--     lore = "a bestiary-page line", aiFn = fn(slot) -> "fight" |
+--       ("skill", id) | "heal" (scripted boss brains, lturn) }
 --
 -- snip: party-formulas
 -- THE FORMULAS (canonical; both battle modules call these):
@@ -114,27 +123,56 @@ local function modOf(id, kind)
     return 0
 end
 
+local function accMod(m, stat)
+    local d = m.equip.acc and Party.items[m.equip.acc]
+    if d and d.kind == "acc" and d.stat == stat then
+        return d.power or 0
+    end
+    return 0
+end
+
 function Party.atkOf(m)
     return m.atk + modOf(m.equip.weapon, "weapon")
+        + accMod(m, "atk")
 end
 
 function Party.defOf(m)
     return m.def + modOf(m.equip.armor, "armor")
+        + accMod(m, "def")
 end
 
 function Party.agiOf(m)
-    return m.agi
+    return m.agi + accMod(m, "agi")
+end
+
+-- crit-passive gear: an acc with stat = "crit" adds `power` extra
+-- 1/16ths of crit chance (power 1 doubles the base 1/16)
+function Party.critBonus(m)
+    return accMod(m, "crit")
+end
+
+-- battle buff/debuff multiplier for "atk" or "def": statuses set by
+-- buff/debuff skills, rounds counted down by lturn at round end.
+-- Works for members AND foe slots (anything with a status table).
+function Party.buffMult(who, stat)
+    local st = who.status
+    if not st then return 1 end
+    local mul = 1
+    if st[stat .. "up"] then mul = mul * 1.5 end
+    if st[stat .. "down"] then mul = mul * 0.67 end
+    return mul
 end
 
 -- ---- the damage math ------------------------------------------------------
 
 -- snip: party-attack
--- one physical attack roll -> dmg, crit, miss (see header formulas)
-function Party.attack(atk, dfn, aAgi, dAgi, guarded)
+-- one physical attack roll -> dmg, crit, miss (see header formulas).
+-- critB (optional) = extra 1/16ths of crit chance (crit gear).
+function Party.attack(atk, dfn, aAgi, dAgi, guarded, critB)
     local miss = Util.clamp(dAgi / math.max(1, aAgi * 16), 0, 0.5)
     if math.random() < miss then return 0, false, true end
     local dmg = (atk * 2 - dfn) * (0.875 + math.random() * 0.25)
-    local crit = math.random(16) == 1
+    local crit = math.random(16) <= 1 + (critB or 0)
     if crit then dmg = dmg * 1.5 end
     if guarded then dmg = dmg * 0.5 end
     dmg = math.floor(dmg)
@@ -275,6 +313,35 @@ UI.useItem = function(id)
         Party.heal(best, it.power or 10)
         Kit.toast(best.name .. " recovers.")
         return true
+    elseif it.kind == "ether" then
+        local best
+        for i = 1, #State.party do
+            local m = State.party[i]
+            if m.hp > 0 and m.maxmp > 0 and m.mp < m.maxmp
+                and (not best
+                or m.mp / m.maxmp < best.mp / best.maxmp) then
+                best = m
+            end
+        end
+        if not best then
+            Kit.toast("No one needs it.")
+            return false
+        end
+        best.mp = math.min(best.maxmp, best.mp + (it.power or 8))
+        Kit.toast(best.name .. "'s spirit returns.")
+        return true
+    elseif it.kind == "revive" then
+        for i = 1, #State.party do
+            local m = State.party[i]
+            if m.hp <= 0 then
+                m.hp = math.max(1,
+                    math.floor(m.maxhp * (it.power or 0.5)))
+                Kit.toast(m.name .. " is back on their feet!")
+                return true
+            end
+        end
+        Kit.toast("No one has fallen.")
+        return false
     elseif it.kind == "cure" then
         for i = 1, #State.party do
             local m = State.party[i]
@@ -295,4 +362,104 @@ end
 UI.innHeal = function()
     Party.restoreAll()
     Kit.toast("You feel rested.")
+end
+
+-- ---- the bestiary journal -------------------------------------------------
+-- Both battle grammars record what the party has met and beaten
+-- (string counters, so it rides the save): seen_<id> / kill_<id>.
+-- Party.installBestiary() (OPT-IN) adds the pause-menu "Bestiary"
+-- window: unseen foes are "???", seen ones show the portrait, stats
+-- and kill count — a collect-them-all reason to fight everything.
+
+function Party.recordSeen(id)
+    State.counters["seen_" .. id] = 1
+end
+
+function Party.recordKill(id)
+    State.bump("kill_" .. id)
+end
+
+function Party.seen(id)
+    return (State.counters["seen_" .. id] or 0) > 0
+end
+
+function Party.kills(id)
+    return State.counters["kill_" .. id] or 0
+end
+
+local gfx = playdate.graphics
+local bimg = nil -- pooled 48x48 portrait for the detail page
+
+local function openBestiaryDetail(id)
+    local d = Party.bestiary[id]
+    bimg = bimg or gfx.image.new(48, 48)
+    bimg:clear(gfx.kColorClear)
+    if d.artFn then
+        gfx.pushContext(bimg)
+        d.artFn(48, 48)
+        gfx.popContext()
+    end
+    local st = {
+        ui = true, kind = "bestiaryDetail", translucent = true,
+        sel = 1, n = 1, rows = { d.name },
+    }
+    st.update = function(dt)
+        if Input.a or Input.b then Kit.pop() end
+    end
+    st.draw = function()
+        UI.panel(70, 40, 260, 160)
+        Gfx.text(d.name, 86, 48)
+        Gfx.fill(86, 72, 52, 52, 3)
+        gfx.setColor(gfx.kColorWhite)
+        gfx.drawRect(86, 72, 52, 52)
+        bimg:draw(88, 74)
+        Gfx.text("HP  " .. d.hp, 160, 72)
+        Gfx.text("ATK " .. d.atk, 160, 90)
+        Gfx.text("DEF " .. d.def, 160, 108)
+        Gfx.text("AGI " .. d.agi, 240, 72)
+        Gfx.text("XP  " .. (d.xp or 0), 240, 90)
+        Gfx.text("Beaten: " .. Party.kills(id), 86, 140)
+        if d.lore then
+            local buf = {}
+            local n = UI.wrap(d.lore, 228, buf)
+            for i = 1, math.min(n, 2) do
+                Gfx.text(buf[i], 86, 158 + (i - 1) * 18)
+            end
+        end
+    end
+    Kit.push(st)
+end
+
+local function openBestiary()
+    local ids = {}
+    for id, d in pairs(Party.bestiary) do
+        ids[#ids + 1] = id
+    end
+    table.sort(ids, function(a, b)
+        return (Party.bestiary[a].name or a)
+            < (Party.bestiary[b].name or b)
+    end)
+    local rows, seenN = {}, 0
+    for i = 1, #ids do
+        if Party.seen(ids[i]) then
+            seenN = seenN + 1
+            rows[i] = Party.bestiary[ids[i]].name
+        else
+            rows[i] = "???"
+        end
+    end
+    UI.list{
+        title = "Bestiary  " .. seenN .. "/" .. #ids,
+        tag = "bestiary", rows = rows,
+        onA = function(i, st)
+            if Party.seen(ids[i]) then
+                openBestiaryDetail(ids[i])
+            end
+        end,
+    }
+end
+
+-- OPT-IN: put "Bestiary" in the pause menu (call once at boot)
+function Party.installBestiary()
+    UI.addMenuSection("Bestiary", openBestiary)
 end

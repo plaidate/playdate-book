@@ -52,9 +52,10 @@ shipped games — is exactly this sandwich plus clamping and lerp,
 in under twenty lines:
 
 ```lua
--- tiles/core/tcam.lua:33
--- smooth-follow a world point; call once per frame
+-- tiles/core/tcam.lua:35
+-- smooth-follow a world point; call once per frame. No-op mid-slide.
 function Cam.follow(wx, wy, dt, rate)
+    if Cam.sliding then return end
     local k = math.min(1, (rate or 6) * dt)
     Cam.x = Cam.x + (clampX(wx - 200) - Cam.x) * k
     Cam.y = Cam.y + (clampY(wy - 128) - Cam.y) * k
@@ -71,6 +72,13 @@ function Cam.done()
     gfx.setDrawOffset(0, 0)
 end
 ```
+
+The one-line `Cam.sliding` guard at the top of `follow` is a later
+addition: the shipped engine grew a scripted glide (`Cam.slideTo`, for
+cutscene pans and room-to-room slides) that owns the camera while it
+runs, so the follow gets out of its way. It is always false unless a
+slide is playing; ignore it here and see @sec-tiles for the slide
+itself.
 
 Note the `math.floor(x + 0.5)` in `apply`: the camera's position
 is a float (lerp guarantees that), but a fractional draw offset

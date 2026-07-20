@@ -262,6 +262,24 @@ function toast(text)
     Kit.toast(text)
 end
 
+-- non-blocking seasoning: a speech bubble and a white flash
+function emote(actor, sym, secs)
+    Act.emote(actor, sym, secs)
+end
+
+function flash(secs)
+    UI.flash(secs)
+end
+
+-- a party member joins mid-story (wave-4): registers the sheet and
+-- announces it. def = the Party.add schema. Returns the member.
+function joinParty(def)
+    local m = Party.add(def)
+    Kit.toast((def.name or def.id) .. " joins the party!")
+    Harness.count("joins")
+    return m
+end
+
 -- wave-3 seam: real battles replace the hook. Default: instant win.
 Script.battleHook = function(group, done)
     Kit.toast("The " .. tostring(group) .. " scatter!")

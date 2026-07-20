@@ -523,7 +523,20 @@ gate:
 the version check @sec-save argued for, doing the one job it exists to
 do. `State.autosave` is the hook `warp()` fires on every map change, so
 the game saves at the doors of things, which is where players expect
-it. The demo's story script exercises the write end — two flags and a
+it.
+
+The snip carries three things @sec-save did not need but a shipping
+RPG does. `save` and `load` take a *slot*, so `save1`/`save2`/`save3`
+are three independent ledgers behind one file name (`State.FILE ..
+slot`) and a title's Continue can choose one; `State.slot` remembers
+the active choice. The envelope also carries a game-owned `meta` card —
+scalars only (place, chapter, playtime) — that `State.slotSummary`
+reads back *without* loading the game, so a slot picker can show what
+is in each file. And the optional day/night clock stores and restores
+through the same round trip. All three are pure envelope, so the
+version gate and the JSON-safety rule already cover them.
+
+The demo's story script exercises the write end — two flags and a
 battle, then `State.save()`. *Slice*'s autopilot closes the loop: after
 saving from the pause menu it calls `State.load()` and asserts that the
 flag, the purchased torch and the opened chest all came home, setting a
@@ -705,24 +718,33 @@ when it runs, *that position is part of its API.* Write it down.
 :::
 
 And that is the Chrono Trigger hybrid, with no hybrid engine in it.
-Field combat plus a script beat, composed: *Stoat*'s Rat King is two
-stacked spawns, and killing the first one runs a scripted parley while
-the second is already standing there, frozen solid because a script
-state is on top of the field:
+Field combat plus a script beat, composed: *Stoat*'s Rat King parleys
+mid-fight through the field swing's own `onHurt` hook — the same
+`f.onHurt` call `laction`'s swing makes on every landed hit. A blow
+that takes him to a third of his blood clamps his HP back up to at
+least one and raises a parley flag, so no swing, however overpowered,
+can put him down before he has spoken:
 
 ```lua
--- lore/games/stoat/game.lua:81
-onKing1 = function()
-    creditKill("warren")
-    State.set("king1_dead")
-    G.king = Game.spawnKing(2) -- rises under the parley, frozen
-    if not Script.active then Script.run(Story.parley) end
+-- lore/games/stoat/game.lua:131
+-- the Rat King stands off to talk at low blood — and CANNOT be
+-- overkilled past the beat (hp is clamped up until the parley runs)
+local function kingHurt(e, f)
+    if State.has("king_parley") then return end
+    if f.hp <= f.maxhp * 0.35 then
+        if f.hp < 1 then f.hp = 1 end
+        State.set("king_parley")
+        G.pendParley = true
+    end
 end
 ```
 
-The king talks, offers you a choice, and rises desperate — and no
-overkill damage can skip the beat, because stage 2 exists before the
-dialogue starts. Mid-fight story, on an action engine, in five lines.
+The next field tick sees the flag and runs `Story.kingParley`; that
+script state freezes the action battle exactly as any script freezes
+the field, and the king stands there mid-swing to make you an offer.
+The clamp is what makes the beat uncloseable — no overkill can skip it,
+because it is armed before the killing damage ever lands. Mid-fight
+story, on an action engine, in nine lines.
 
 ## Problem 5: RPGs need more than a jingle
 
@@ -831,7 +853,7 @@ is invisible in memory and fatal on load — which is exactly the class
 of bug a stub can *simulate*:
 
 ```lua
--- lore/tools/headless.lua:97
+-- lore/tools/headless.lua:125
     datastore = {
         write = function(t, name)
             disk[name or "data"] = jsonify(t)
@@ -881,11 +903,10 @@ chewed to death by the swarm. The rule that works is in the shipped
 source, kept with its scar tissue:
 
 ```lua
--- lore/games/stoat/input.lua:166
--- Captains outrank their adds -- but only at range. The king summons
--- pups forever, so a plain nearest-foe pick grinds spawns and never
--- closes on him; beelining past the swarm gets you chewed. Rule:
--- clear an add that is already in your face, otherwise go for the boss.
+-- lore/games/stoat/input.lua:409
+-- Captains outrank their adds — but only at range. Rule (house):
+-- clear an add already in your face (< 40 px), otherwise the boss
+-- IS the target.
 local SWARM2 <const> = 40 * 40
 ```
 
@@ -953,13 +974,14 @@ one wrapper around `Script.battleHook` that reads the bestiary, adds up
 the meal, and hands the outcome back:
 
 ```lua
--- lore/games/shrew/game.lua:164
-        local opts = boss and { music = Sfx.songs.boss,
-            fanfare = Sfx.songs.fanfare } or nil
-        G.bossFight = boss -- the autopilot opens bosses with Curl
+-- lore/games/shrew/game.lua:269
+        G.bossBattle = boss
         Turn.start(group, opts, function(outcome)
-            G.bossFight = false
-            if outcome == "win" then GS.addGrams(grams) end
+            G.bossBattle = nil
+            if outcome == "win" then
+                GS.eat(grams)
+                State.bump("winsTotal")
+            end
             done(outcome)
             if outcome == "lose" and not Script.active then
                 GS.deathFlow() -- scripts handle their own losses

@@ -195,7 +195,10 @@ end
 -- fold into the smoke heartbeat. init MUST push the first state.
 function Kit.run(opts)
     playdate.display.setRefreshRate(SMOKE_BUILD and 0 or 30)
-    math.randomseed(playdate.getSecondsSinceEpoch())
+    -- smoke runs are SEEDED (make <g>-smoke SEED=n): unpinned smoke
+    -- passes are not evidence — every run must replay identically
+    math.randomseed(SMOKE_BUILD and (SMOKE_SEED or 1)
+        or playdate.getSecondsSinceEpoch())
     if opts.init then opts.init() end
     assert(#Kit.stack > 0, "Kit.run: init must Kit.push a state")
     if Harness.enabled then

@@ -10,7 +10,9 @@
 -- the hook lscript's warp() fires on map changes (default: save).
 
 State = {
-    FILE = "save",
+    FILE = "save",  -- slot files are FILE .. slot ("save1".."save3")
+    SLOTS = 3,
+    slot = 1,       -- the active slot; save/load default to it
     flags = {},
     counters = {},
     party = {},     -- array of opaque member tables (wave-3 schema)
@@ -18,6 +20,8 @@ State = {
     gold = 0,
     openedSet = {}, -- "map:x:y" -> true
     quests = {},    -- quest id -> stage number
+    meta = {},      -- game-owned save-file card (place, chapter...);
+                    -- scalars only, shown by State.slotSummary
 }
 
 -- ---- flags ----------------------------------------------------------------
@@ -110,10 +114,18 @@ function State.stage(quest, set)
     return State.quests[quest] or 0
 end
 
--- ---- save / load ----------------------------------------------------------
+-- ---- save / load (slotted) ------------------------------------------------
 
+local function fname(slot)
+    return State.FILE .. (slot or State.slot)
+end
+
+-- save into a slot (default: the active one). Clock rides along via
+-- its counters seam so day/night survives a save.
 -- snip: state-save
-function State.save()
+function State.save(slot)
+    if slot then State.slot = slot end
+    if Clock and Clock.enabled then Clock.store() end
     playdate.datastore.write({
         v = 1,
         flags = State.flags,
@@ -123,14 +135,16 @@ function State.save()
         gold = State.gold,
         opened = State.openedSet,
         quests = State.quests,
-    }, State.FILE)
+        meta = State.meta,
+    }, fname(slot))
     Harness.count("saves")
 end
 
 -- replaces the live ledger from disk; false (untouched) if no/old save
-function State.load()
-    local env = playdate.datastore.read(State.FILE)
+function State.load(slot)
+    local env = playdate.datastore.read(fname(slot))
     if not env or env.v ~= 1 then return false end
+    if slot then State.slot = slot end
     State.flags = env.flags or {}
     State.counters = env.counters or {}
     State.party = env.party or {}
@@ -138,16 +152,48 @@ function State.load()
     State.gold = env.gold or 0
     State.openedSet = env.opened or {}
     State.quests = env.quests or {}
+    State.meta = env.meta or {}
+    if Clock then Clock.load() end
     return true
 end
 -- endsnip
 
-function State.hasSave()
-    return playdate.datastore.read(State.FILE) ~= nil
+-- with a slot: that slot; without: any slot (the title's Continue)
+function State.hasSave(slot)
+    if slot then
+        return playdate.datastore.read(fname(slot)) ~= nil
+    end
+    for s = 1, State.SLOTS do
+        if playdate.datastore.read(fname(s)) ~= nil then
+            return true
+        end
+    end
+    return false
 end
 
-function State.wipe()
-    playdate.datastore.delete(State.FILE)
+-- the save-file card for slot pickers: nil for an empty slot, else
+-- { name=, lvl=, gold=, meta= } (lead member's name/level)
+function State.slotSummary(slot)
+    local env = playdate.datastore.read(fname(slot))
+    if not env or env.v ~= 1 then return nil end
+    local lead = env.party and env.party[1]
+    return {
+        name = lead and lead.name or "-",
+        lvl = lead and lead.lvl or 1,
+        gold = env.gold or 0,
+        meta = env.meta or {},
+    }
+end
+
+-- with a slot: wipe that slot; without: wipe them all
+function State.wipe(slot)
+    if slot then
+        playdate.datastore.delete(fname(slot))
+        return
+    end
+    for s = 1, State.SLOTS do
+        playdate.datastore.delete(State.FILE .. s)
+    end
 end
 
 -- the map-change hook (lscript's warp calls it); games may override

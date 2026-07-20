@@ -26,7 +26,9 @@ function Waves.load(script)
     Waves.done = false
     Waves.hasBoss = false
     for _, w in ipairs(Waves.script) do
-        if w.boss then Waves.hasBoss = true end
+        -- a MID-boss ({ t=, boss=, mid = true }) gates the road, not
+        -- the ending: only a final boss owns the win condition
+        if w.boss and not w.mid then Waves.hasBoss = true end
     end
 end
 
@@ -43,7 +45,7 @@ function Waves.update(dt)
     while Waves.i <= #s and ready(s[Waves.i]) do
         local w = s[Waves.i]
         if w.boss then
-            Boss.arm(w.boss, w.x, w.y)
+            Boss.arm(w.boss, w.x, w.y, w.mid)
         else
             local n = w.n or 1
             local dx, dy = w.dx or 0, w.dy or 0

@@ -224,7 +224,7 @@ the right envelope:
   than the last, so the boom seems to collapse:
 
 ```lua
--- tiles/core/tsnd.lua:30-36 (rewrapped): descending noise sweep
+-- tiles/core/tsnd.lua:31-37 (rewrapped): descending noise sweep
 function Snd.boom(freq, n)
     for i = 0, (n or 3) - 1 do
         Util.after(i * 0.05, function()
@@ -392,7 +392,7 @@ half a second), the tiles engine allocates a small pool per wave
 and rotates through it:
 
 ```lua
--- tiles/core/tsnd.lua:17-27
+-- tiles/core/tsnd.lua:18-28
 function Snd.play(wave, freq, dur, vol)
     local pool = pools[wave]
     if not pool then

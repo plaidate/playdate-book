@@ -27,9 +27,23 @@
 -- group: a name registered via Turn.defineGroups, a bestiary id, or
 -- an array of ids. opts (falls back to game-set Turn.defaults):
 --   { music = battle stinger song, fanfare = victory song (played
---     once, then the interrupted field song resumes where it left) }
+--     once, then the interrupted field song resumes where it left),
+--     backdrop = fn(w, h) stage scenery drawn once per battle
+--       (forest boughs behind forest foes...),
+--     canRun = false for bosses ("No escape!"),
+--     onRound = fn(roundN) scripted mid-fight beats }
 -- Script.battleHook is wired here, so script battle(group) and all
 -- of lenc land in this scene. Counters: battles, battlesWon.
+--
+-- WAVE 4: both sides carry a status table, so buff/debuff skills
+-- (kind "buff"/"debuff" + buff = "atkup"|"defup"|"atkdown"|
+-- "defdown", rounds) scale the canonical math via Party.buffMult
+-- and tick down at round end; skills/items can revive ("revive")
+-- and restore mp ("ether"); heals can target the whole "party";
+-- foe skills can target = "all"; a bestiary aiFn(slot) overrides
+-- the stock brains; every foe met/beaten lands in the bestiary
+-- journal (Party.recordSeen/recordKill); acting foes lunge (a small
+-- slot-offset animation) so rounds read without sprite art.
 
 local gfx = playdate.graphics
 
@@ -63,7 +77,11 @@ local B = {
     nfoe = 0, msg = nil, waiting = false, memberI = 0,
     queue = {}, qn = 0, oi = 0,
     msgQ = {}, mqn = 0, mqi = 0,
+    round = 0,
 }
+
+local backImg = nil -- pooled stage-backdrop image (opts.backdrop)
+local hasBack = false
 
 local CMDROWS = { "Fight", "Skill", "Item", "Guard", "Run" }
 local tnames, tmap = {}, {} -- target window surface (reused)
@@ -224,10 +242,11 @@ local function openSkills(m)
     bwin("bskill", rows, 120, 64, 150, function(i)
         local sid = ids[i]
         local sk = Party.skills[sid]
-        if sk.kind == "dmg" and sk.target == "one"
-            and liveFoes() > 1 then
+        local foeAim = (sk.kind == "dmg" or sk.kind == "debuff")
+            and sk.target == "one"
+        if foeAim and liveFoes() > 1 then
             openTarget(m, "skill", sid)
-        elseif sk.kind == "dmg" and sk.target == "one" then
+        elseif foeAim then
             queueCmd(m, "skill", firstLive(), sid)
         else
             queueCmd(m, "skill", nil, sid)
@@ -241,7 +260,8 @@ local function openItems(m)
     local rows, ids = {}, {}
     for id in pairs(State.inv) do
         local it = Party.items[id]
-        if it and (it.kind == "heal" or it.kind == "cure") then
+        if it and (it.kind == "heal" or it.kind == "cure"
+            or it.kind == "ether" or it.kind == "revive") then
             ids[#ids + 1] = id
         end
     end
@@ -258,7 +278,7 @@ end
 
 openCmd = function(m)
     B.waiting = true
-    bwin("bcmd", CMDROWS, 12, 60, 100, function(i)
+    local st = bwin("bcmd", CMDROWS, 12, 60, 100, function(i)
         if i == 1 then -- Fight
             if liveFoes() > 1 then
                 openTarget(m, "fight")
@@ -275,6 +295,7 @@ openCmd = function(m)
             queueCmd(m, "run")
         end
     end)
+    st.who = m -- the commanding member (autopilot/HUD surface)
 end
 
 -- ---- round assembly -------------------------------------------------------
@@ -284,11 +305,22 @@ local function enemyDecide()
         local s = slots[i]
         if s.live then
             local acted = false
-            if s.ai == "sly" and s.hp < s.maxhp / 2
+            if s.aiFn then -- scripted boss brains outrank the stock ai
+                local what, sid = s.aiFn(s)
+                if what == "heal" then
+                    queueCmd(s, "foeheal")
+                    acted = true
+                elseif what == "skill" and sid then
+                    queueCmd(s, "foeskill", randMember(), sid)
+                    acted = true
+                end
+                -- "fight" (or nil) falls through to the basic swing
+            end
+            if not acted and s.ai == "sly" and s.hp < s.maxhp / 2
                 and s.healed < 2 then
                 queueCmd(s, "foeheal")
                 acted = true
-            elseif (s.ai == "caster" or (s.ai == "boss"
+            elseif not acted and (s.ai == "caster" or (s.ai == "boss"
                 and s.hp < s.maxhp / 2)) and s.skills then
                 -- "boss": basic until half hp, then a skill barrage
                 for j = 1, #s.skills do
@@ -327,6 +359,34 @@ local function beginRound()
     B.phase = "command"
     B.memberI, B.qn, B.oi = 0, 0, 0
     B.waiting = false
+    B.round = B.round + 1
+    if B.opts and B.opts.onRound then B.opts.onRound(B.round) end
+end
+
+-- tick down the timed buffs/debuffs on someone's status table
+local BUFFS = { "atkup", "atkdown", "defup", "defdown" }
+
+local function decayBuffs(who)
+    local st = who.status
+    if not st then return end
+    for i = 1, #BUFFS do
+        local k = BUFFS[i]
+        if st[k] then
+            st[k] = st[k] - 1
+            if st[k] <= 0 then st[k] = nil end
+        end
+    end
+end
+
+-- effective battle stats: base/derived x timed buffs (both sides)
+local function effAtk(who)
+    local base = who.foe and who.atk or Party.atkOf(who)
+    return math.floor(base * Party.buffMult(who, "atk"))
+end
+
+local function effDef(who)
+    local base = who.foe and who.def or Party.defOf(who)
+    return math.floor(base * Party.buffMult(who, "def"))
 end
 
 local function nextCommand()
@@ -411,6 +471,7 @@ local function hitFoe(s, dmg, crit)
     Snd.play("noise", 320, 0.07, 0.25)
     if s.hp <= 0 then
         s.live = false
+        Party.recordKill(s.id)
         Snd.boom(180, 2)
     end
 end
@@ -435,34 +496,77 @@ local function doAction(q)
             UI.popup(who.x + 16, FOE_Y + 8, "+" .. amt)
             return
         end
-        local guarded = m.status.guard ~= nil
-        local amt, crit, miss
+        who.aoff = 10 -- the act lunge (decays in update)
+        local function hitMember(t, amt)
+            local ti = memberIndex(t)
+            t.hp = math.max(0, t.hp - amt)
+            if t.status.sleep and math.random() < 0.5 then
+                t.status.sleep = nil
+            end
+            UI.popup(rowX(ti) + 24, 192, "-" .. amt)
+            if t.hp <= 0 then setMsg(t.name .. " falls!") end
+        end
         if q.kind == "foeskill" then
             local sk = Party.skills[q.skill]
             who.mp = who.mp - (sk.mp or 0)
-            amt = Party.skillPower(sk, nil)
-            if guarded then
-                amt = math.max(1, math.floor(amt / 2))
-            end
             setMsg("The " .. who.name .. " casts "
                 .. sk.name .. "!")
-        else
-            amt, crit, miss = Party.attack(who.atk, Party.defOf(m),
-                who.agi, Party.agiOf(m), guarded)
-            setMsg("The " .. who.name .. " attacks!")
+            if sk.kind == "buff" and sk.buff then
+                -- a foe buffing itself (boss brains)
+                who.status[sk.buff] = sk.rounds or 3
+                UI.popup(who.x + 16, FOE_Y + 8, "*+*")
+                return
+            end
+            if sk.kind == "debuff" and sk.buff then
+                -- a foe cursing the party (thorn tangles, chaff)
+                if sk.target == "all" then
+                    for i = 1, #State.party do
+                        local t = State.party[i]
+                        if t.hp > 0 then
+                            t.status[sk.buff] = sk.rounds or 3
+                            UI.popup(rowX(i) + 24, 192, "*-*")
+                        end
+                    end
+                else
+                    m.status[sk.buff] = sk.rounds or 3
+                    UI.popup(rowX(mi) + 24, 192, "*-*")
+                end
+                return
+            end
+            if sk.target == "all" then -- breath over the whole party
+                for i = 1, #State.party do
+                    local t = State.party[i]
+                    if t.hp > 0 then
+                        local amt = Party.skillPower(sk, nil)
+                        if t.status.guard then
+                            amt = math.max(1, math.floor(amt / 2))
+                        end
+                        hitMember(t, amt)
+                    end
+                end
+            else
+                local amt = Party.skillPower(sk, nil)
+                if m.status.guard then
+                    amt = math.max(1, math.floor(amt / 2))
+                end
+                hitMember(m, amt)
+            end
+            Kit.shake(0.2)
+            Snd.play("noise", 260, 0.07, 0.25)
+            checkEnd()
+            return
         end
+        local guarded = m.status.guard ~= nil
+        local amt, crit, miss = Party.attack(effAtk(who), effDef(m),
+            who.agi, Party.agiOf(m), guarded)
+        setMsg("The " .. who.name .. " attacks!")
         if miss then
             UI.popup(rowX(mi) + 24, 192, "miss")
             return
         end
-        m.hp = math.max(0, m.hp - amt)
-        if m.status.sleep and math.random() < 0.5 then
-            m.status.sleep = nil
-        end
-        UI.popup(rowX(mi) + 24, 192, "-" .. amt)
+        hitMember(m, amt)
         Kit.shake(0.15)
         Snd.play("noise", 260, 0.07, 0.25)
-        if m.hp <= 0 then setMsg(m.name .. " falls!") end
         checkEnd()
         return
     end
@@ -479,8 +583,8 @@ local function doAction(q)
             checkEnd()
             return
         end
-        local dmg, crit, miss = Party.attack(Party.atkOf(m), s.def,
-            Party.agiOf(m), s.agi, false)
+        local dmg, crit, miss = Party.attack(effAtk(m), effDef(s),
+            Party.agiOf(m), s.agi, false, Party.critBonus(m))
         setMsg(crit and "A telling blow!" or m.name .. " attacks!")
         if miss then
             UI.popup(s.x + 16, FOE_Y + 8, "miss")
@@ -500,12 +604,64 @@ local function doAction(q)
         m.mp = m.mp - (sk.mp or 0)
         setMsg(m.name .. " casts " .. sk.name .. "!")
         if sk.kind == "heal" then
-            local t = (sk.target == "self") and m or mostHurt()
-            if t then
-                local amt = Party.skillPower(sk, nil)
-                Party.heal(t, amt)
-                UI.popup(rowX(memberIndex(t)) + 24, 192,
-                    "+" .. amt)
+            if sk.target == "party" then
+                for i = 1, #State.party do
+                    local t = State.party[i]
+                    if t.hp > 0 then
+                        local amt = Party.skillPower(sk, nil)
+                        Party.heal(t, amt)
+                        UI.popup(rowX(i) + 24, 192, "+" .. amt)
+                    end
+                end
+            else
+                local t = (sk.target == "self") and m or mostHurt()
+                if t then
+                    local amt = Party.skillPower(sk, nil)
+                    Party.heal(t, amt)
+                    UI.popup(rowX(memberIndex(t)) + 24, 192,
+                        "+" .. amt)
+                end
+            end
+        elseif sk.kind == "revive" then
+            local done = false
+            for i = 1, #State.party do
+                local t = State.party[i]
+                if t.hp <= 0 then
+                    t.hp = math.max(1,
+                        math.floor(t.maxhp * (sk.power or 0.5)))
+                    UI.popup(rowX(i) + 24, 192, "+" .. t.hp)
+                    setMsg(t.name .. " rises again!")
+                    done = true
+                    break
+                end
+            end
+            if not done then setMsg("...but no one has fallen.") end
+        elseif sk.kind == "debuff" and sk.buff then
+            local hitOne = function(s)
+                s.status[sk.buff] = sk.rounds or 3
+                UI.popup(s.x + 16, FOE_Y + 8, "*-*")
+            end
+            if sk.target == "all" then
+                for i = 1, B.nfoe do
+                    if slots[i].live then hitOne(slots[i]) end
+                end
+            else
+                local s = q.target
+                if not s or not s.live then s = firstLive() end
+                if s then hitOne(s) end
+            end
+        elseif sk.kind == "buff" and sk.buff then
+            if sk.target == "party" then
+                for i = 1, #State.party do
+                    local t = State.party[i]
+                    if t.hp > 0 then
+                        t.status[sk.buff] = sk.rounds or 3
+                        UI.popup(rowX(i) + 24, 192, "*+*")
+                    end
+                end
+            else
+                m.status[sk.buff] = sk.rounds or 3
+                UI.popup(rowX(memberIndex(m)) + 24, 192, "*+*")
             end
         elseif sk.kind == "dmg" then
             if sk.target == "all" then
@@ -540,13 +696,42 @@ local function doAction(q)
     elseif q.kind == "item" then
         if State.take(q.item, 1) then
             local it = Party.items[q.item]
-            setMsg(m.name .. " uses a " .. q.item .. ".")
+            setMsg(m.name .. " uses a "
+                .. (it.name or q.item) .. ".")
             if it.kind == "heal" then
                 local t = mostHurt()
                 if t then
                     Party.heal(t, it.power or 10)
                     UI.popup(rowX(memberIndex(t)) + 24, 192,
                         "+" .. (it.power or 10))
+                end
+            elseif it.kind == "ether" then
+                local best
+                for i = 1, #State.party do
+                    local pm = State.party[i]
+                    if pm.hp > 0 and pm.maxmp > 0
+                        and pm.mp < pm.maxmp and (not best
+                        or pm.mp / pm.maxmp
+                            < best.mp / best.maxmp) then
+                        best = pm
+                    end
+                end
+                if best then
+                    best.mp = math.min(best.maxmp,
+                        best.mp + (it.power or 8))
+                    UI.popup(rowX(memberIndex(best)) + 24, 192,
+                        "+" .. (it.power or 8))
+                end
+            elseif it.kind == "revive" then
+                for i = 1, #State.party do
+                    local t = State.party[i]
+                    if t.hp <= 0 then
+                        t.hp = math.max(1, math.floor(
+                            t.maxhp * (it.power or 0.5)))
+                        UI.popup(rowX(i) + 24, 192, "+" .. t.hp)
+                        setMsg(t.name .. " rises again!")
+                        break
+                    end
                 end
             elseif it.kind == "cure" then
                 Party.cure(m, "poison")
@@ -558,6 +743,10 @@ local function doAction(q)
         m.status.guard = 1
         setMsg(m.name .. " guards.")
     elseif q.kind == "run" then
+        if B.opts and B.opts.canRun == false then
+            setMsg("No escape!")
+            return
+        end
         local pAgi, fAgi = 1, 1
         for i = 1, #State.party do
             local pm = State.party[i]
@@ -583,7 +772,7 @@ end
 
 local function stepAct()
     if B.oi > B.qn then
-        for i = 1, #State.party do -- poison round tick
+        for i = 1, #State.party do -- poison + buff round ticks
             local m = State.party[i]
             if m.hp > 0 and m.status.poison then
                 local d = Party.poisonTick(m)
@@ -591,6 +780,10 @@ local function stepAct()
                     UI.popup(rowX(i) + 24, 192, "-" .. d)
                 end
             end
+            decayBuffs(m)
+        end
+        for i = 1, B.nfoe do
+            if slots[i].live then decayBuffs(slots[i]) end
         end
         if not checkEnd() then beginRound() end
         return
@@ -652,6 +845,12 @@ end
 
 local function update(dt)
     B.t = B.t - dt
+    for i = 1, B.nfoe do -- the act-lunge offset eases back
+        local s = slots[i]
+        if s.aoff and s.aoff > 0 then
+            s.aoff = math.max(0, s.aoff - 60 * dt)
+        end
+    end
     if B.phase == "intro" then
         if B.t <= 0 then
             beginRound()
@@ -678,15 +877,17 @@ local function draw()
     gfx.setColor(gfx.kColorBlack)
     gfx.fillRect(-4, -4, 408, 248)
     Gfx.fill(8, STAGE_Y, 384, STAGE_H, 3)
+    if hasBack then backImg:draw(9, STAGE_Y + 1) end
     gfx.setColor(gfx.kColorWhite)
     gfx.drawRect(8, STAGE_Y, 384, STAGE_H)
     gfx.drawRect(4, 4, 392, 232)
     for i = 1, B.nfoe do
         local s = slots[i]
         if s.live then
-            s.img:draw(s.x, FOE_Y)
+            local y = FOE_Y + math.floor((s.aoff or 0) + 0.5)
+            s.img:draw(s.x, y)
             if s.hp < s.maxhp then
-                UI.hpBar(s.x, FOE_Y + 52, 48, s.hp, s.maxhp)
+                UI.hpBar(s.x, y + 52, 48, s.hp, s.maxhp)
             end
         end
     end
@@ -736,9 +937,12 @@ function Turn.start(group, opts, done)
         s.atk, s.def, s.agi = d.atk, d.def, d.agi
         s.mp = d.mp or 0
         s.skills, s.ai = d.skills, d.ai or "basic"
+        s.aiFn = d.aiFn
         s.xp, s.gold = d.xp or 0, d.gold or 0
         s.drop, s.elems = d.drop, d.elems
         s.live, s.foe, s.healed = true, true, 0
+        s.status, s.aoff = {}, 0
+        Party.recordSeen(ids[i])
         s.x = 200 - B.nfoe * 28 + (i - 1) * 56 + 4
         s.img:clear(gfx.kColorClear)
         if d.artFn then
@@ -750,6 +954,16 @@ function Turn.start(group, opts, done)
     B.opts, B.done = opts, done
     B.phase, B.t = "intro", 0.7
     B.mqn, B.mqi = 0, 0
+    B.round = 0
+    hasBack = false
+    if opts and opts.backdrop then -- stage scenery, rendered once
+        backImg = backImg or gfx.image.new(382, STAGE_H - 2)
+        backImg:clear(gfx.kColorClear)
+        gfx.pushContext(backImg)
+        opts.backdrop(382, STAGE_H - 2)
+        gfx.popContext()
+        hasBack = true
+    end
     if B.nfoe == 1 then
         setMsg("A " .. slots[1].name .. " draws near!")
     else

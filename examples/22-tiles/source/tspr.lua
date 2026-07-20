@@ -46,3 +46,21 @@ function Spr.draw(img, x, y, flip)
     img:draw(math.floor(x - img.width / 2 + 0.5),
         math.floor(y - img.height / 2 + 0.5), flip)
 end
+
+-- ---- flipbook animation (wave-2) ------------------------------------------
+-- an = Spr.anim({imgA, imgB, ...}, fps); Spr.tick(an, dt) advances,
+-- Spr.frame(an) is the current image. Walk cycles, torch flicker,
+-- boss idles — two lines per animated thing.
+
+function Spr.anim(frames, fps)
+    return { frames = frames, fps = fps or 6, t = 0 }
+end
+
+function Spr.tick(an, dt)
+    an.t = an.t + dt
+end
+
+function Spr.frame(an)
+    local i = math.floor(an.t * an.fps) % #an.frames + 1
+    return an.frames[i]
+end

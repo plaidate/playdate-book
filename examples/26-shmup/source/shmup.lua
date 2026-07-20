@@ -27,13 +27,26 @@ local gfx <const> = playdate.graphics
 
 Shmup = {}
 
+-- Wave 2 adds the campaign states. Autopilots key off these numbers
+-- (Harness "state"): 1 title, 2 play, 3 over, 4 win, 5 briefing
+-- (mash the start edge), 6 stage tally (auto), 7 initials entry
+-- (mash start for "AAA", or steer with the d-pad edges).
 local TITLE, PLAY, OVER, WIN = 1, 2, 3, 4
+local BRIEF, TALLY, ENTRY = 5, 6, 7
 local EXTEND_AT <const> = 20000
 local fuelRate = 3.4
 
 local state, score, booms, content
 local useTerrain, useFuel, scene
 local extended
+local stages, stageI = nil, 1
+local finalBossDown, lastDefeated = false, false
+local tallyT, tallyBonus = 0, 0
+local entry = nil     -- the initials widget when a score places
+local pendingRank = nil
+local afterBrief = nil
+local prev = { start = false, bomb = false, left = false,
+    right = false, up = false, down = false }
 
 -- Latches, not levels. The smoke test asks "did the bot ever WIN?", and the
 -- answer has to survive the bot pressing A on the victory screen and starting a
@@ -48,6 +61,8 @@ local function report()
     Harness.set("deaths", deaths)
     Harness.set("score", score)
     Harness.set("best", Kit.best)
+    Harness.set("stage", stageI)
+    Harness.set("bombs", Player.bombs or 0)
 end
 
 --------------------------------------------------------------------------------
@@ -190,13 +205,84 @@ local function collide()
 end
 
 -- snip: shmup-won
--- THE win condition. If the level has a boss, the boss IS the ending -- full
--- stop. Only a level with no boss falls back to "the spawn script ran out".
-local function won()
-    if Waves.hasBoss then return Boss.defeated end
+-- THE win condition, per stage. If the stage has a FINAL boss, that boss is
+-- the ending -- full stop (mid-bosses gate the road, not the stage). Only a
+-- stage with no final boss falls back to "the spawn script ran out".
+local function stageWon()
+    if Waves.hasBoss then return finalBossDown end
     return Waves.finished()
 end
 -- endsnip
+
+--------------------------------------------------------------------------------
+-- The campaign (wave 2). content.stages = { { name=, sub=, brief=,
+-- waves=, music=, terrain=, scene=, speed=, levelW= }, ... } -- plus
+-- content.brief (the opening briefing), content.ending (the closing
+-- one) and content.fanfare (stage-clear stinger). A game without
+-- .stages is wrapped into one stage and plays exactly as v1.0 did.
+
+local function loadStage(si)
+    stageI = si
+    local st = stages[si]
+    Frame.init {
+        mode = Frame.mode,
+        speed = st.speed or 0,
+        levelW = st.levelW,
+        top = content.top,
+        bottom = content.bottom,
+    }
+    if st.terrain then
+        useTerrain = true
+        Terrain.init(st.terrain)
+        Terrain.reset()
+    else
+        useTerrain = false
+        Terrain.active = false
+    end
+    scene = st.scene
+    Bullets.clear()
+    Enemies.clear()
+    Power.clear()
+    Boss.reset()
+    Fx.reset()
+    booms:clear()
+    finalBossDown, lastDefeated = false, false
+    if useFuel then Player.fuel = 100 end
+    Player.x, Player.y = Frame.spawnPoint()
+    if scene and scene.build then scene.build() end
+    Waves.load(st.waves)
+    if st.music or content.music then
+        Music.set(st.music or content.music)
+    end
+    state = PLAY
+end
+
+-- run a briefing (beats + an optional stage card), then thenFn
+local function briefInto(beats, card, thenFn)
+    local list = {}
+    if beats then
+        for i = 1, #beats do list[#list + 1] = beats[i] end
+    end
+    if card then list[#list + 1] = card end
+    if #list == 0 then
+        thenFn()
+        return
+    end
+    state = BRIEF
+    Story.play(list, thenFn)
+end
+
+local function stageCard(si)
+    local st = stages[si]
+    if #stages == 1 and not st.name then return nil end
+    return { card = true, title = st.name or ("STAGE " .. si),
+        sub = st.sub }
+end
+
+local function gotoStage(si, withIntro)
+    briefInto(withIntro and content.brief or stages[si].brief,
+        stageCard(si), function() loadStage(si) end)
+end
 
 --------------------------------------------------------------------------------
 function Shmup.new(c)
@@ -216,6 +302,13 @@ function Shmup.new(c)
     useFuel = c.fuel and true or false
     fuelRate = c.fuelRate or 3.4
     scene = c.scene
+
+    -- normalize: a stage-less game IS a one-stage campaign
+    stages = c.stages or { {
+        waves = c.waves, music = c.music, terrain = c.terrain,
+        scene = c.scene, speed = c.speed, levelW = c.levelW,
+    } }
+    stageI = 1
 
     Sprites.init()
     if c.sprites then c.sprites() end
@@ -242,35 +335,70 @@ local function startGame()
     score = 0
     extended = false
     Frame.reset()
-    Player.reset()
-    Bullets.clear()
-    Enemies.clear()
-    Power.clear()
-    Boss.reset()
-    Fx.reset()
-    booms:clear()
+    Player.reset(content.bombs)
     Stars.init()
-    if useTerrain then Terrain.reset() end
-    if scene and scene.build then scene.build() end
-    Waves.load(content.waves)
-    if content.music then Music.set(content.music) end
-    state = PLAY
+    pendingRank, entry = nil, nil
+    gotoStage(1, true)
 end
 
 function Shmup.update(dt)
     local input = readInput()
     Music.update(dt)
 
+    -- edges: humans give buttonJustPressed for start already; bots
+    -- hold fields, so every state below consumes EDGES, never levels
+    local startEdge = input.start and not prev.start
+    local fireEdge = input.fire and not prev.fire
+    local bombEdge = input.bomb and not prev.bomb
+    local eL = input.left and not prev.left
+    local eR = input.right and not prev.right
+    local eU = input.up and not prev.up
+    local eD = input.down and not prev.down
+    prev.start, prev.fire, prev.bomb = input.start, input.fire, input.bomb
+    prev.left, prev.right = input.left, input.right
+    prev.up, prev.down = input.up, input.down
+
     if state == TITLE then
         Stars.update(dt)
-        if input.start then startGame() end
+        if startEdge then startGame() end
+        report()
+        return
+    elseif state == BRIEF then
+        Stars.update(dt)
+        Story.update(dt, startEdge or fireEdge)
+        report()
+        return
+    elseif state == TALLY then
+        Stars.update(dt)
+        tallyT = tallyT - dt
+        if tallyT <= 0 or startEdge then
+            gotoStage(stageI + 1)
+        end
+        report()
+        return
+    elseif state == ENTRY then
+        Stars.update(dt)
+        entry:update(dt, (eR and 1 or 0) - (eL and 1 or 0),
+            (eD and 1 or 0) - (eU and 1 or 0), startEdge or fireEdge)
+        if entry.done then
+            entry = nil
+            pendingRank = nil
+            state = TITLE
+        end
         report()
         return
     elseif state == OVER or state == WIN then
         Stars.update(dt)
         updateBooms(dt)
         Fx.update(dt)
-        if input.start then state = TITLE end
+        if startEdge then
+            if pendingRank then
+                entry = Kit.entry(score, pendingRank)
+                state = ENTRY
+            else
+                state = TITLE
+            end
+        end
         report()
         return
     end
@@ -297,6 +425,32 @@ function Shmup.update(dt)
     collide()
     updateBooms(dt)
 
+    -- boss-kill edge: mid-bosses count, only a FINAL boss ends a stage
+    if Boss.defeated and not lastDefeated then
+        Harness.count("bossKills")
+        if not Boss.mid then finalBossDown = true end
+    end
+    lastDefeated = Boss.defeated
+
+    -- the smart bomb (B where there is no floor to drop bombs on):
+    -- clears every enemy bullet, sears the field, staggers the boss
+    if bombEdge and not Terrain.active and Player.alive
+        and Player.useBomb() then
+        Bullets.ep:each(function(b) b.dead = true end)
+        Enemies.pool:each(function(e)
+            if not e.dead then
+                e.hp = e.hp - 12
+                if e.hp <= 0 then killEnemy(e) end
+            end
+        end)
+        if Boss.active then Boss.damage(9) end
+        Fx.shake(8)
+        Shmup.boom(Player.x, Player.y - 24)
+        Shmup.boom(Player.x - 40, Player.y - 60)
+        Shmup.boom(Player.x + 40, Player.y - 60)
+        Snd.bomb()
+    end
+
     if useFuel and Player.alive then
         Player.fuel = Player.fuel - fuelRate * dt
         if Player.fuel <= 0 then
@@ -309,13 +463,34 @@ function Shmup.update(dt)
     if not Player.alive then
         state = OVER
         deaths = deaths + 1
-        Kit.saveBest(score)
+        pendingRank = Kit.submit(score)
         Music.stop()
-    elseif won() then
-        state = WIN
-        wins = wins + 1
-        Kit.saveBest(score)
-        Music.stop()
+    elseif stageWon() then
+        Harness.count("stagesCleared")
+        if stageI < #stages then
+            tallyBonus = Player.lives * 500 + (Player.bombs or 0) * 300
+            addScore(tallyBonus)
+            tallyT = 2.4
+            state = TALLY
+            if content.fanfare then
+                Music.stinger(content.fanfare, true)
+            end
+        else
+            -- the campaign is won HERE (the latch survives the
+            -- ending briefing and the score table)
+            wins = wins + 1
+            pendingRank = Kit.submit(score)
+            if content.fanfare then
+                Music.stinger(content.fanfare, true)
+            end
+            if content.ending then
+                briefInto(content.ending, nil,
+                    function() state = WIN end)
+            else
+                Music.stop()
+                state = WIN
+            end
+        end
     end
 
     Harness.set("lives", Player.lives)
@@ -353,6 +528,18 @@ local function drawHUD()
         end
     end
 
+    -- smart-bomb stock (only where B is the big one)
+    if not Terrain.active then
+        for i = 1, (Player.bombs or 0) do
+            gfx.fillCircleAtPoint(102 + i * 9, 8, 3)
+        end
+    end
+
+    -- the campaign readout
+    if #stages > 1 then
+        Kit.text("S" .. stageI .. "/" .. #stages, 300, 3)
+    end
+
     if useFuel then
         local w = 100
         local x = (SCREEN_W - w) // 2
@@ -381,6 +568,17 @@ function Shmup.draw()
             Kit.centered(string.format("BEST %06d", Kit.best), 122)
         end
         Kit.centered("PRESS A", 150)
+        return
+    elseif state == BRIEF then
+        Story.draw()
+        return
+    elseif state == TALLY then
+        Kit.centered("STAGE " .. stageI .. " CLEAR", 84)
+        Kit.centered(string.format("BONUS  %d", tallyBonus), 108)
+        Kit.centered(string.format("SCORE  %06d", score), 128)
+        return
+    elseif state == ENTRY then
+        if entry then entry:draw() end
         return
     end
 

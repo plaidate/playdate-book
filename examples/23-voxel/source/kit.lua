@@ -249,6 +249,80 @@ function Kit.setMode(m, bannerT)
     Kit.modeT = bannerT or 0
 end
 
+-- ---- transitions: dither fade + white flash (wave-4 kit) -------------------
+-- Kit.fadeTo(level01, cb) glides a black-speckle overlay 0 (clear) ..
+-- 1 (black); Kit.run ticks it and draws it AFTER Draw.frame. flash =
+-- the one-beat white flash. vstory's fadeTo/flash primitives ride
+-- these.
+
+local OVER = {} -- 16-number overlay patterns, clear -> black
+do
+    local src = {
+        { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+        { 0xFF, 0xDD, 0xFF, 0xFF, 0xFF, 0x77, 0xFF, 0xFF },
+        { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 },
+        { 0x11, 0x00, 0x44, 0x00, 0x11, 0x00, 0x44, 0x00 },
+        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    }
+    for k = 1, 5 do
+        local p = {}
+        for y = 1, 8 do
+            p[y] = 0x00
+            p[y + 8] = ~src[k][y] & 0xFF
+        end
+        OVER[k] = p
+    end
+end
+
+Kit.fadeLevel = 0
+local fadeTarget, fadeCb, fadeSpeed = 0, nil, 2.5
+local flashT = 0
+
+function Kit.fadeTo(t01, cb, speed)
+    fadeTarget = Util.clamp(t01, 0, 1)
+    fadeCb = cb
+    fadeSpeed = speed or 2.5
+end
+
+function Kit.fading()
+    return Kit.fadeLevel ~= fadeTarget
+end
+
+function Kit.flash(secs)
+    flashT = secs or 0.12
+end
+
+function Kit.updateFx(dt)
+    if flashT > 0 then flashT = flashT - dt end
+    local d = fadeTarget - Kit.fadeLevel
+    if d ~= 0 then
+        local step = fadeSpeed * dt
+        if math.abs(d) <= step then
+            Kit.fadeLevel = fadeTarget
+            local cb = fadeCb
+            fadeCb = nil
+            if cb then cb() end
+        else
+            Kit.fadeLevel = Kit.fadeLevel + (d > 0 and step or -step)
+        end
+    end
+end
+
+function Kit.drawFx()
+    if flashT > 0 then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(0, 0, 400, 240)
+        gfx.setColor(gfx.kColorBlack)
+    end
+    if Kit.fadeLevel > 0.05 then
+        local k = Util.clamp(math.floor(Kit.fadeLevel * 4 + 0.5) + 1,
+            1, 5)
+        gfx.setPattern(OVER[k])
+        gfx.fillRect(0, 0, 400, 240)
+        gfx.setColor(gfx.kColorBlack)
+    end
+end
+
 -- snip: kit-best
 -- ---- best-score persistence ------------------------------------------------
 -- Write-on-record: saveBest only touches the datastore when the score
@@ -279,7 +353,10 @@ end
 -- and folds updMs/drwMs EMAs into the smoke counters.
 function Kit.run(opts)
     playdate.display.setRefreshRate(SMOKE_BUILD and 0 or 30)
-    math.randomseed(playdate.getSecondsSinceEpoch())
+    -- smoke runs are SEEDED (make <g>-smoke SEED=n): unpinned smoke
+    -- passes are not evidence — every run must replay identically
+    math.randomseed(SMOKE_BUILD and (SMOKE_SEED or 1)
+        or playdate.getSecondsSinceEpoch())
     if opts.init then opts.init() end
     if Harness.enabled then
         Harness.extra = opts.extra
@@ -295,9 +372,12 @@ function Kit.run(opts)
         Kit.modeT = math.max(0, Kit.modeT - Config.DT)
         Game.update(Config.DT)
         Util.runPending(Config.DT)
+        Kit.updateFx(Config.DT)  -- transitions run under every mode
+        -- (music stays game-ticked: the house convention here)
         updMs = updMs * 0.95 + playdate.getElapsedTime() * 50
         playdate.resetElapsedTime()
         Draw.frame()
+        Kit.drawFx()
         drwMs = drwMs * 0.95 + playdate.getElapsedTime() * 50
         Harness.set("updMs", math.floor(updMs * 10) / 10)
         Harness.set("drwMs", math.floor(drwMs * 10) / 10)

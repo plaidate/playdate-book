@@ -12,7 +12,7 @@ local BOMB_CD <const> = 0.35
 local START_LIVES <const> = 3
 local FIRE_CD <const> = { 0.16, 0.13, 0.11 }  -- quicker as the weapon levels up
 
-function Player.reset()
+function Player.reset(bombs)
     Player.x, Player.y = Frame.spawnPoint()
     Player.facing = 1
     Player.lives = START_LIVES
@@ -23,6 +23,15 @@ function Player.reset()
     Player.fuel = 100
     Player.weapon = 1
     Player.shield = false
+    Player.bombs = bombs or 2 -- smart-bomb stock (non-terrain frames)
+end
+
+-- spend a smart bomb (the caller performs the screen-clear)
+function Player.useBomb()
+    if Player.bombs <= 0 then return false end
+    Player.bombs = Player.bombs - 1
+    Harness.count("bombsUsed")
+    return true
 end
 
 function Player.loseLife()

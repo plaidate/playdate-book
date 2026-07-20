@@ -3,6 +3,8 @@
 -- grown tracker arms, because RPGs need LONG songs. A SONG:
 --
 --   { tempo = 104,               -- bpm; steps are sixteenth notes
+--     len = 16,                  -- optional steps per pattern (32 =
+--                                -- two bars: longer phrases)
 --     voices = { bass = "tri" }, -- optional per-voice wave override
 --                                -- (square/tri/saw/sine/noise)
 --     patterns = {
@@ -101,11 +103,12 @@ function Music.update(dt)
     if not c then return end
     local song = c.song
     local stepDur = 60 / song.tempo / 4
+    local len = song.len or 16 -- steps per pattern (32 = two bars)
     c.clock = c.clock + dt
     while c.clock >= stepDur do
         c.clock = c.clock - stepDur
         c.stepI = c.stepI + 1
-        if c.stepI > 16 then
+        if c.stepI > len then
             c.stepI = 1
             c.orderI = c.orderI + 1
             if c.orderI > #song.order then

@@ -127,6 +127,112 @@ function Kit.doneShake()
     gfx.setDrawOffset(0, 0)
 end
 
+-- ---- transitions: dither fade + white flash (wave-2 arcade kit) -----------
+-- Kit.fadeTo(level01, cb): glide a black-speckle overlay 0 (clear) ..
+-- 1 (black); Kit.run ticks it and draws it AFTER Draw.frame, so games
+-- just call fadeTo (or the tscript fadeTo primitive). Kit.flash(secs)
+-- is the one-beat white flash (lightning, boss phase turns).
+
+local OVER = {} -- overlay patterns: 8 bitmap rows 0x00 + 8 alpha rows
+do
+    -- alpha = the inverse of the opaque fills' white bits, light->dark
+    local src = {
+        { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, -- clear
+        { 0xFF, 0xDD, 0xFF, 0xFF, 0xFF, 0x77, 0xFF, 0xFF },
+        { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 },
+        { 0x11, 0x00, 0x44, 0x00, 0x11, 0x00, 0x44, 0x00 },
+        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, -- black
+    }
+    for k = 1, 5 do
+        local p = {}
+        for y = 1, 8 do
+            p[y] = 0x00
+            p[y + 8] = ~src[k][y] & 0xFF
+        end
+        OVER[k] = p
+    end
+end
+
+Kit.fadeLevel = 0
+local fadeTarget, fadeCb, fadeSpeed = 0, nil, 2.5
+local flashT = 0
+
+function Kit.fadeTo(t01, cb, speed)
+    fadeTarget = Util.clamp(t01, 0, 1)
+    fadeCb = cb
+    fadeSpeed = speed or 2.5
+end
+
+function Kit.fading()
+    return Kit.fadeLevel ~= fadeTarget
+end
+
+function Kit.flash(secs)
+    flashT = secs or 0.12
+end
+
+function Kit.updateFx(dt)
+    if flashT > 0 then flashT = flashT - dt end
+    local d = fadeTarget - Kit.fadeLevel
+    if d ~= 0 then
+        local step = fadeSpeed * dt
+        if math.abs(d) <= step then
+            Kit.fadeLevel = fadeTarget
+            local cb = fadeCb
+            fadeCb = nil
+            if cb then cb() end
+        else
+            Kit.fadeLevel = Kit.fadeLevel + (d > 0 and step or -step)
+        end
+    end
+end
+
+function Kit.drawFx()
+    if flashT > 0 then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(0, 0, 400, 240)
+        gfx.setColor(gfx.kColorBlack)
+    end
+    if Kit.fadeLevel > 0.05 then
+        local k = Util.clamp(math.floor(Kit.fadeLevel * 4 + 0.5) + 1,
+            1, 5)
+        gfx.setPattern(OVER[k])
+        gfx.fillRect(0, 0, 400, 240)
+        gfx.setColor(gfx.kColorBlack)
+    end
+end
+
+-- ---- HUD helpers ----------------------------------------------------------
+
+-- a row of 8px hearts (filled/hollow) — the action-game HUD staple
+function Kit.hearts(x, y, hp, max)
+    for i = 1, max do
+        local hx = x + (i - 1) * 11
+        local filled = i <= hp
+        gfx.setColor(filled and gfx.kColorWhite or gfx.kColorBlack)
+        gfx.fillRect(hx + 1, y + 1, 3, 3)
+        gfx.fillRect(hx + 5, y + 1, 3, 3)
+        gfx.fillRect(hx, y + 3, 9, 3)
+        gfx.fillTriangle(hx + 1, y + 6, hx + 8, y + 6, hx + 4, y + 9)
+        gfx.setColor(gfx.kColorWhite)
+        if not filled then
+            gfx.drawRect(hx + 1, y + 2, 7, 4)
+        end
+    end
+    gfx.setColor(gfx.kColorBlack)
+end
+
+-- a bordered meter (charge, fuse, boss hp)
+function Kit.meter(x, y, w, cur, max)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillRect(x, y, w, 8)
+    gfx.setColor(gfx.kColorWhite)
+    gfx.drawRect(x, y, w, 8)
+    local fw = math.floor((w - 4) * Util.clamp(cur / max, 0, 1))
+    if fw > 0 then gfx.fillRect(x + 2, y + 2, fw, 4) end
+    gfx.setColor(gfx.kColorBlack)
+end
+
 -- bold player locator: bobbing black-outlined white chevron above (x, y),
 -- drawn after everything else so the player never vanishes into dither
 function Kit.marker(x, y, t)
@@ -161,7 +267,10 @@ end
 -- and folds updMs/drwMs EMAs into the smoke counters.
 function Kit.run(opts)
     playdate.display.setRefreshRate(SMOKE_BUILD and 0 or 30)
-    math.randomseed(playdate.getSecondsSinceEpoch())
+    -- smoke runs are SEEDED (make <g>-smoke SEED=n): unpinned smoke
+    -- passes are not evidence — every run must replay identically
+    math.randomseed(SMOKE_BUILD and (SMOKE_SEED or 1)
+        or playdate.getSecondsSinceEpoch())
     if opts.init then opts.init() end
     if Harness.enabled then
         Harness.extra = opts.extra
@@ -176,9 +285,13 @@ function Kit.run(opts)
         playdate.resetElapsedTime()
         Game.update(Config.DT)
         Util.runPending(Config.DT)
+        Music.update(Config.DT)  -- music + transitions run under
+        Kit.updateFx(Config.DT)  -- every game mode, engine-owned
+        Cam.update(Config.DT)
         updMs = updMs * 0.95 + playdate.getElapsedTime() * 50
         playdate.resetElapsedTime()
         Draw.frame()
+        Kit.drawFx()
         drwMs = drwMs * 0.95 + playdate.getElapsedTime() * 50
         Harness.set("updMs", math.floor(updMs * 10) / 10)
         Harness.set("drwMs", math.floor(drwMs * 10) / 10)

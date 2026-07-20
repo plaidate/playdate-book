@@ -177,11 +177,10 @@ because it states the *pattern* — diff, rewrite, repaint the
 strip:
 
 ```lua
--- voxel/games/summit/game.lua:129
--- shrink the lowest terrace and rewrite ONLY the columns whose terrace
--- level changed (the old box minus the new box; the whole old box when
--- the terrace collapses), then repaint the dirty strip — the old
--- full-world rebuild (Vox.clear + re-set + buildBG) was a frame spike.
+-- voxel/games/summit/mountains.lua:179
+-- shrink every box of the lowest live level by 2; a box dies when it
+-- gets slim or ends up fully inside a live higher box. Rewrites only
+-- the ring columns whose level changed, one repaint for the strip.
 ```
 
 ## Authoring a room
@@ -525,12 +524,13 @@ per-shot fields poked into a reused table, zero allocation per
 shot:
 
 ```lua
--- voxel/games/lob/game.lua:127
--- shared solver opts; err and wind are per-shot (the foe's err shrinks
--- every shot: classic bracketing). Muzzle matches launch() above.
+-- voxel/games/lob/game.lua:162
+-- shared solver opts; err and wind are per-shot (both sides bracket
+-- tighter every shot: classic bracketing). Muzzle matches launch() above.
 local solveOpts = {
     vmin = Config.VMIN, vmax = Config.VMAX,
     elevCos = Config.ELEV_COS, elevSin = Config.ELEV_SIN,
+    errV = 1.1, -- most misses should be sideways, not short/long
     muzzle = function(o, az)
         return o.x + math.cos(az) * 2, o.y + math.sin(az) * 2, o.z + 4.5
     end,
@@ -567,14 +567,19 @@ the fleet pattern in:
 {{< snip 23-voxel/source/kit.lua kit-run >}}
 
 The shape is Tiles' cabinet with this package's conventions —
-refresh rate honoring `SMOKE_BUILD`, clock seeding *before*
-`init` so generated terrain is seeded, harness wiring, the
-update/draw sandwich with EMA timing folded into every smoke
-heartbeat (@sec-harness, @sec-perf). Alongside it came the small
-machines every game had duplicated: `Kit.setMode`, a mode string
-plus a banner countdown that `Kit.run` ticks; `Kit.shake` (the
-@sec-juice screen shake, applied by offset bracket); and
-persistence with a policy:
+refresh rate honoring `SMOKE_BUILD`, the random seed set *before*
+`init` so generated terrain is seeded (a fixed `SMOKE_SEED` under
+smoke so every run replays identically, the wall clock in live
+play), harness wiring, and the update/draw sandwich with EMA
+timing folded into every smoke heartbeat (@sec-harness, @sec-perf).
+The sandwich gained one layer in the overhaul: `Kit.updateFx` and
+`Kit.drawFx` tick and paint a small transition module — the
+wave-4 kit's dither fade and one-beat white flash — after
+`Draw.frame`, so a mode change can wipe the screen under itself.
+Alongside it came the small machines every game had duplicated:
+`Kit.setMode`, a mode string plus a banner countdown that
+`Kit.run` ticks; `Kit.shake` (the @sec-juice screen shake, applied
+by offset bracket); and persistence with a policy:
 
 {{< snip 23-voxel/source/kit.lua kit-best >}}
 
@@ -584,7 +589,7 @@ record falls, not per game-over — and the `return true` is the
 re-derived at draw time (the same latch lesson Phosphor's cabinet
 learned).
 
-Sound arrived as two modules. `vsnd.lua` is a 36-line
+Sound arrived as two modules. `vsnd.lua` is a 37-line
 round-robin synth pool — three `playdate.sound.synth` voices per
 waveform so overlapping effects stop cutting each other dead, the
 exact compromise @sec-tiles sized for percussive effects, plus a
@@ -593,13 +598,18 @@ that finally gave the package music:
 
 {{< snip 23-voxel/source/vmusic.lua music-step >}}
 
-Sixteen sixteenth-note steps per bar, three fixed voices (triangle
-bass, quiet square lead, noise hat), notes as plain MIDI numbers
-in a table the game authors — the @sec-music clock-accumulator
-pattern in its smallest shipped form. The `while` loop is the
-zero-drift property: the clock accumulates real `dt` and fires as
-many steps as fit, so a dropped frame plays catch-up instead of
-sliding the groove. And the `Harness.count("musicBars")` at the
+Sixteen sixteenth-note steps per bar (a track may set `len` for
+longer bars), four fixed voices (triangle bass, quiet square lead,
+sine pad, noise hat), notes as plain MIDI numbers in named
+patterns the game strings into an `order` — the @sec-music
+clock-accumulator pattern grown the same tracker arms the sibling
+engines carry, because a campaign needs songs, not one loop (the
+original top-level bass/lead/hat form still plays verbatim, folded
+into a single-pattern track). The `while` loop is the zero-drift
+property: the clock accumulates real `dt` and fires as many steps
+as fit, so a dropped frame plays catch-up instead of sliding the
+groove, and a bar that runs past its last step advances `orderI`
+to the next pattern. And the `Harness.count("musicBars")` at the
 bar line is the audit culture showing through: music is a feature,
 features get counters, and a smoke run that reports
 `musicBars = 0` has found a regression no screenshot would.
@@ -626,7 +636,7 @@ Its trick is making destruction the *AI's* verb too — a grub that
 cannot path to you eats the wall in the way:
 
 ```lua
--- voxel/games/rubble/game.lua:235
+-- voxel/games/rubble/game.lua:285
         if not movedX and not movedY then
             e.chew = e.chew - dt
             if e.chew <= 0 then
@@ -653,7 +663,7 @@ chapter's physics lesson resurfacing as game design — crumbling
 must key off the column that actually *holds you up*:
 
 ```lua
--- voxel/games/crumble/game.lua:165
+-- voxel/games/crumble/game.lua:221
 -- the footprint cell actually holding the player up: the argmax column of
 -- VoxPhys.groundAt's stride-1 footprint sample (same iteration order, first
 -- max wins). Crumbling and slime contact key off THIS column — keying off
@@ -701,21 +711,25 @@ The AI is a local wall-follow with zero pathfinding, and its
 first line is the design in miniature:
 
 ```lua
--- voxel/games/herd/game.lua:150
--- goo ahead reads as a wall to a sheep
+-- voxel/games/herd/game.lua:273
+-- goo ahead reads as a wall to a sheep, and so does a killing drop:
+-- they bunch up at cliff lips until you dig the edge into a ramp
 local function walkable(c, nx, ny)
     if surfMat(math.floor(nx), math.floor(ny)) == GOO then return false end
+    if VoxPhys.groundAt(nx, ny, c.hw) < c.z - 3 then return false end
     return tryMove(c, nx, ny)
 end
 ```
 
-One material query folded into the walkability predicate turns
-hazard-avoidance into collision — sheep detour around goo pools
-exactly as they detour around ridges, by trying east, then a
+Two cheap queries folded into the walkability predicate turn
+hazard-avoidance into collision — a goo cell reads as a wall, and
+so does a killing drop (a next step whose ground falls more than
+three voxels), so sheep detour around pools and bunch at cliff
+lips exactly as they detour around ridges, by trying east, then a
 sideways slip, then reversing their preferred side. Carve the
-goo's surface off (`Vox.carve` again) and the pool drains: the
-predicate now passes and the flock pours straight through
-yesterday's wall.
+goo's surface off (`Vox.carve` again) and the pool drains, or dig
+a cliff edge down into a ramp: the predicate now passes and the
+flock pours straight through yesterday's wall.
 
 ### Excavate
 
@@ -727,12 +741,10 @@ onto you. Its overhaul fix is a burial-recovery search that
 respects the volumetric world instead of teleporting through it:
 
 ```lua
--- voxel/games/excavate/game.lua:263
-    -- buried by the collapse? Free the player into the nearest air
-    -- pocket ABOVE (first z with footprint headroom, standing on its
-    -- floor via supportAt), tunnels intact — never teleport through
-    -- solid rock to the column top. Only a fully packed column falls
-    -- back to the surface.
+-- voxel/games/excavate/game.lua:185
+-- buried by a collapse or a seep? Free the player into the nearest air
+-- pocket ABOVE (first z with footprint headroom), tunnels intact —
+-- never teleport through solid rock to the column top.
 ```
 
 The pre-fix version snapped a buried player to `groundAt` — the
@@ -749,7 +761,7 @@ entirely and integrates its own slope acceleration from the
 terrain, by central difference over `Vox.heightAt`:
 
 ```lua
--- voxel/games/marble/game.lua:178
+-- voxel/games/marble/game.lua:379
         local gx = (hAt(b.x + 1, b.y) - hAt(b.x - 1, b.y)) / 2
         local gy = (hAt(b.x, b.y + 1) - hAt(b.x, b.y - 1)) / 2
         b.vx = b.vx + (-gx * Config.SLOPE_K + inp.mx * Config.STEER) * dt
@@ -787,7 +799,7 @@ state like a key-unlocked one. Its overhaul fix is the one every
 save-system author eventually meets:
 
 ```lua
--- voxel/games/vault/game.lua:55
+-- voxel/games/vault/game.lua:56
 -- Room-state sets (rs.grubs / rs.pots) are keyed by STRING indices:
 -- datastore JSON turns sparse integer keys into strings (and contiguous
 -- ones into arrays), so integer-keyed writes silently vanished on
@@ -860,7 +872,7 @@ engine is *not* for is the cheapest feature it will ever have.
   integrator* — the fix for a systematic AI bias that a 4×-coarser
   private aim sim had hidden inside its own error smear.
 - The cabinet — `Kit.run`, modes, write-on-record best scores,
-  synth pools, the 16-step music sequencer — was ported from the
+  synth pools, the 16-step-bar music tracker — was ported from the
   sibling engines after an audit judged this one "an engine only
   below the waist"; a first-rate renderer does not ship a game,
   and ten hand-rolled main loops are ten places for the same bug.

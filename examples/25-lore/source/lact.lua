@@ -39,8 +39,16 @@ function Act.rig(fn16)
 end
 
 -- Act.new{ kind=, x=, y=, hw=, hh=, speed=, sprite=rig,
---          behavior = {kind="stand"|"wander"|"patrol"|"follow", ...},
+--          behavior = {kind="stand"|"wander"|"patrol"|"follow"
+--                      |"trail", ...},
 --          onTrigger = fn(id, tx, ty), swims = bool }
+--
+-- "trail" is the party caterpillar: the follower steps into the cell
+-- its target just LEFT (a.pcx/pcy, recorded on every cell change), so
+-- a chain of trail actors reproduces the leader's exact path — the
+-- classic walking-party look. Act.emote(a, "!") pops a speech bubble
+-- over an actor's head for a beat (cutscene seasoning; also the
+-- emote() script primitive).
 function Act.new(o)
     local a = o or {}
     a.kind = a.kind or "actor"
@@ -51,6 +59,7 @@ function Act.new(o)
     a.moving, a.stepping = false, false
     a.steps = 0
     a.cellX, a.cellY = Map.tileAt(a.x, a.y)
+    a.pcx, a.pcy = a.cellX, a.cellY -- last-left cell (trail target)
     if a.behavior and a.behavior.kind == "wander" then
         local b = a.behavior
         b.homeX, b.homeY = b.homeX or a.cellX, b.homeY or a.cellY
@@ -208,6 +217,22 @@ local function updBehavior(a, dt)
                 Act.stepTo(a, d2)
             end
         end
+    elseif b.kind == "trail" then
+        -- caterpillar: step into the target's last-left cell; match
+        -- the leader's pace so the chain never gaps or catches up
+        local t = b.target
+        a.speed = t.speed
+        if a.cellX ~= t.pcx or a.cellY ~= t.pcy then
+            local dx = math.abs(t.cellX - a.cellX)
+            local dy = math.abs(t.cellY - a.cellY)
+            if dx + dy > 0 then
+                local d1, d2 = Act.dirToward(a.cellX, a.cellY,
+                    t.pcx, t.pcy)
+                if d1 and not Act.stepTo(a, d1) and d2 then
+                    Act.stepTo(a, d2)
+                end
+            end
+        end
     end -- "stand": nothing
 end
 
@@ -233,8 +258,13 @@ function Act.update(a, dt)
     else
         a.frame, a.animT = 1, 0
     end
+    if a.emoteT then
+        a.emoteT = a.emoteT - dt
+        if a.emoteT <= 0 then a.emote, a.emoteT = nil, nil end
+    end
     local tx, ty = Map.tileAt(a.x, a.y)
     if tx ~= a.cellX or ty ~= a.cellY then
+        a.pcx, a.pcy = a.cellX, a.cellY
         a.cellX, a.cellY = tx, ty
         a.steps = a.steps + 1
         if a.onStep then a.onStep(a, tx, ty) end
@@ -242,6 +272,12 @@ function Act.update(a, dt)
         if id and a.onTrigger then a.onTrigger(id, tx, ty) end
     end
     a.moving = false
+end
+
+-- pop a speech bubble ("!", "?", "...") over an actor for a beat
+function Act.emote(a, sym, secs)
+    a.emote = sym
+    a.emoteT = secs or 1.1
 end
 
 function Act.updateAll(dt)
@@ -273,6 +309,20 @@ function Act.drawAll()
         elseif a.img then
             a.img:draw(math.floor(a.x - a.img.width / 2 + 0.5),
                 math.floor(a.y - a.img.height / 2 + 0.5))
+        end
+    end
+    -- emote bubbles ride above everything (a second cheap pass)
+    for i = 1, #list do
+        local a = list[i]
+        if a.emote then
+            local x = math.floor(a.x + 0.5)
+            local y = math.floor(a.y + a.hh - 20 + 0.5) - 12
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRoundRect(x - 7, y - 7, 14, 14, 4)
+            gfx.fillTriangle(x - 2, y + 6, x + 4, y + 6, x, y + 10)
+            gfx.setColor(gfx.kColorBlack)
+            gfx.drawRoundRect(x - 7, y - 7, 14, 14, 4)
+            gfx.drawText(a.emote, x - 4, y - 8)
         end
     end
 end

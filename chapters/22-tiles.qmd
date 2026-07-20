@@ -331,12 +331,12 @@ marks wrap around every wall.](../figures/22-tiles/bfs-field.png){#fig-bfs-field
 
 ## The fifty-line camera
 
-`tcam.lua` is 53 lines, and @sec-camera already taught its core —
-the `setDrawOffset` sandwich (`Cam.apply` … world drawing in world
-coordinates … `Cam.done` … HUD in screen space), exponential
-follow, and the round-at-the-boundary rule that keeps tile seams
-from shimmering. What this chapter adds is the two functions that
-chapter skipped, because they encode the house layout:
+`tcam.lua` runs to 77 lines now, but its scrolling core — the part
+@sec-camera already taught — is barely fifty: the `setDrawOffset`
+sandwich (`Cam.apply` … world drawing in world coordinates …
+`Cam.done` … HUD in screen space), exponential follow, and the
+round-at-the-boundary rule that keeps tile seams from shimmering.
+The two functions that chapter skipped encode the house layout:
 
 {{< snip 22-tiles/source/tcam.lua cam-clamp >}}
 
@@ -388,6 +388,16 @@ target-to-camera line stretches and the hero presses toward the
 screen edge — the map never scrolls past its own last
 column.](../figures/22-tiles/cam-clamp.png){#fig-cam-clamp}
 
+The follow has one guard the demo never trips but a bigger game
+leans on. `Cam.slideTo(wx, wy, speed)` starts a scripted glide —
+cutscene pans, Zelda-style room slides — that `Kit.run` advances
+through `Cam.update` each frame, and while it runs `Cam.follow`
+early-returns on a `sliding` flag, so a scripted camera and a
+following camera never fight over the same two numbers; when the
+glide arrives it clears the flag and follow resumes. A camera has
+exactly one owner at a time, and the cheapest way to enforce that
+is a boolean the other owner checks first.
+
 One more line of `Cam.apply` earns a note: the offset it sets is
 `Kit.sx - floor(Cam.x + 0.5)` — screen shake rides *into* the
 camera transform. Shake is a screen-space effect implemented as a
@@ -402,8 +412,8 @@ the miner."
 
 ## Sprites that read
 
-`tspr.lua` is the smallest module, 45 lines, and most of its value
-is a convention:
+`tspr.lua` is one of the smallest modules, 63 lines, and most of
+its value is a convention:
 
 {{< snip 22-tiles/source/tspr.lua spr-make >}}
 
@@ -482,6 +492,19 @@ the blend) written into every smoke heartbeat, so a perf
 regression shows up in a JSON file before anyone *feels* it
 (@sec-perf).
 
+The loop has taken on work since the extraction. Alongside the
+game update it now ticks the engine-owned subsystems a game must
+never forget — `Music.update`, `Kit.updateFx` (dither fades and
+flashes), and `Cam.update` (the scripted camera slides above) —
+and `Kit.drawFx` paints the transition overlay after `Draw.frame`,
+so a fading, shaking, scrolling world needs no bookkeeping in any
+game mode. The seed is now pinned under smoke
+(`SMOKE_BUILD and (SMOKE_SEED or 1)`), because an unseeded
+verification run replays differently and is not evidence. The tour
+vendors neither the song player nor `tmus.lua`, so — exactly as
+with the harness — it hands `Kit.run` a one-method `Music` no-op
+and lets the shared loop run unmodified.
+
 ::: {.callout-warning}
 ## The screenshots that never existed
 The review's headline find was not in the code the games run — it
@@ -522,7 +545,7 @@ does not move.](../figures/22-tiles/kit-burst.png){#fig-kit-burst}
 
 ## Sounds and schedules
 
-`tsnd.lua` is 36 lines because @sec-sfx already did the hard
+`tsnd.lua` is 37 lines because @sec-sfx already did the hard
 thinking: synth voices, not samples. Its one structural idea is
 the round-robin pool:
 
@@ -585,7 +608,7 @@ entombed on your own bomb; and "the player left the cell" must
 mean the player's **box**, not the player's center:
 
 ```lua
--- tiles/games/blast/game.lua:134
+-- tiles/games/blast/game.lua:238
         if b.walkable and p then
             -- harden once the player's box has cleared the bomb's cell
             local ov = math.abs(p.x - Map.cx(b.tx)) < 8 + p.hw
@@ -614,8 +637,8 @@ of a layer system: ponds are `solid` so nobody walks on water, but
 `shootthru`, so talismans and enemy shots sail over:
 
 ```lua
--- tiles/games/spirit/game.lua:14
--- bullets fly over ponds but stop on walls and lanterns
+-- tiles/games/spirit/game.lua:26
+-- bullets fly over ponds but stop on walls, lanterns, posts, braziers
 local function shotBlocked(x, y)
     local tx, ty = Map.tileAt(x, y)
     local d = Map.def(tx, ty)
@@ -649,7 +672,7 @@ die in the build, not on the device. Its hard-won runtime lesson
 lives in the autopilot's walk primitive:
 
 ```lua
--- tiles/games/relic/game.lua:516
+-- tiles/games/relic/autopilot.lua:237
     if ptx == tx and pty == ty then
         -- keep pressing toward the cell center: border cells flip the
         -- room before the center is ever reached, so stopping at the
@@ -674,9 +697,10 @@ rock at rest and a rock in motion, kept in a `falling` set from
 the previous tick:
 
 ```lua
--- tiles/games/burrow/game.lua:113
+-- tiles/games/burrow/game.lua:249
                 local onMiner = p.tx == x and p.ty == y + 1
-                if below == "." and (not onMiner or Game.falling[key(x, y)]) then
+                local isFalling = Game.falling[key(x, y)]
+                if below == "." and (not onMiner or isFalling) then
                     -- BD rule: the miner's cell counts as occupied, so a
                     -- resting rock sits on your helmet; only an object
                     -- that is already falling drops in and kills

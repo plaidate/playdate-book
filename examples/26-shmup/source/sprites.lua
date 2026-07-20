@@ -107,6 +107,10 @@ function Sprites.init()
         gfx.fillRect(w / 2 - 1, 4, 2, 6)              -- a cross: an extra ship
         gfx.fillRect(w / 2 - 3, 6, 6, 2)
     end))
+    Sprites.define("pow_bomb", 14, 14, capsule(function(w, h)
+        gfx.fillCircleAtPoint(w / 2, h / 2 + 1, 3)    -- a bomb: the big one
+        gfx.fillRect(w / 2 - 1, 3, 2, 2)
+    end))
 
     Sprites.boom = {}
     for i = 1, 4 do

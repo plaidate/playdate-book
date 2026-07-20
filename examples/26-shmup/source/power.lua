@@ -15,6 +15,7 @@ local KINDS <const> = {
     gun    = { sprite = "pow_gun" },
     shield = { sprite = "pow_shield" },
     life   = { sprite = "pow_life" },
+    bomb   = { sprite = "pow_bomb" },
 }
 
 local LIFETIME <const> = 9
@@ -74,6 +75,8 @@ function Power.collect()
                 Player.shield = true
             elseif p.kind == "life" then
                 Player.lives = math.min(9, Player.lives + 1)
+            elseif p.kind == "bomb" then
+                Player.bombs = math.min(5, (Player.bombs or 0) + 1)
             end
             Snd.powerup()
         end

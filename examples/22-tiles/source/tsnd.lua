@@ -9,6 +9,7 @@ local waves = {
     square = snd.kWaveSquare,
     tri = snd.kWaveTriangle,
     saw = snd.kWaveSawtooth,
+    sine = snd.kWaveSine,
     noise = snd.kWaveNoise,
 }
 

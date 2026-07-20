@@ -46,10 +46,11 @@ function Boss.reset()
     for k in pairs(Boss.data) do Boss.data[k] = nil end
 end
 
-function Boss.arm(name, x, y)
+function Boss.arm(name, x, y, mid)
     local sp = specs[name]
     if not sp then return end
     for k in pairs(Boss.data) do Boss.data[k] = nil end
+    Boss.mid = mid or false
     Boss.spec = sp
     Boss.maxHp = sp.hp or 40
     Boss.hp = Boss.maxHp

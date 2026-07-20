@@ -167,6 +167,7 @@ function Map.load(def)
         pool[i].key, pool[i].stamp = -1, 0
     end
     Map.builds, Map.tick, visN = 0, 0, 0
+    Map.clearMinimap()
 end
 
 -- snip: chunk-draw
@@ -272,6 +273,53 @@ end
 function Map.trigger(tx, ty)
     local d = Map.defAt(tx, ty)
     return d and d.trigger
+end
+
+-- ---- minimap ---------------------------------------------------------------
+-- 1 px per tile, built lazily once per Map.load. A tile's darkness:
+-- def.mini (0..7) if given, else solid = 7, water = 4, overhead = 6,
+-- speed-boosted paths = 0 white, everything else mid checker. The
+-- pause-menu Map window draws it with the player dot on top.
+
+local miniImg = nil
+
+function Map.clearMinimap()
+    miniImg = nil
+end
+
+function Map.minimap()
+    if miniImg then return miniImg end
+    miniImg = gfx.image.new(Map.W, Map.H, gfx.kColorWhite)
+    gfx.pushContext(miniImg)
+    gfx.setColor(gfx.kColorBlack)
+    for ty = 1, Map.H do
+        local row = Map.grid[ty]
+        for tx = 1, Map.W do
+            local d = Map.legend[row[tx]]
+            local k = 2
+            if d then
+                if d.mini then k = d.mini
+                elseif d.solid then k = 7
+                elseif d.overhead then k = 6
+                elseif d.water then k = 4
+                elseif (d.speed or 1) > 1 then k = 0
+                end
+            end
+            if k >= 6 then
+                gfx.drawPixel(tx - 1, ty - 1)
+            elseif k >= 4 then
+                if (tx + ty) % 2 == 0 then
+                    gfx.drawPixel(tx - 1, ty - 1)
+                end
+            elseif k >= 1 then
+                if (tx % 3 + ty % 3) == 0 then
+                    gfx.drawPixel(tx - 1, ty - 1)
+                end
+            end
+        end
+    end
+    gfx.popContext()
+    return miniImg
 end
 
 -- tile containing a world pixel
