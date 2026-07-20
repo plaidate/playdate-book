@@ -242,6 +242,72 @@ the offset resets. That the shake displaces markers and terrain
 in @fig-cam-shake while the black HUD strip holds still is the
 whole trick, visible in one frame.
 
+## A different goal: frame the whole cast
+
+Every camera so far chases *one* target and clamps to the map. Some
+games have no single target to chase — a fighting game must keep both
+fighters on screen, a party game all four players, a herding game the
+dog *and* every animal it is driving. The camera goal flips: instead of
+following a point, **fit a bounding box**, and pull the zoom out as the
+action spreads and back in as it bunches. Fighting games have done this
+since *Samurai Shodown*; *Flock*, a sheepdog trial where you drive a
+scattering flock toward a pen, needs exactly it — the sheep bolt for the
+field edges and the whole point is watching them do it.
+
+The catch on the Playdate: `setDrawOffset` translates but does not
+*scale*. There is no hardware zoom. So a zooming camera cannot ride the
+offset sandwich — it has to bake the scale into an explicit world→screen
+transform that every draw call routes through by hand:
+
+```lua
+-- flock/source/draw.lua:17
+function Draw.wx(x) return (x - G.cam.x) * G.cam.s + 200 end
+function Draw.wy(y) return (y - G.cam.y) * G.cam.s + C.HUD_H + VIEW_H / 2 end
+function Draw.ws(v) return v * G.cam.s end
+```
+
+`wx`/`wy` place a world point on screen at the current zoom `s`; `ws`
+scales a world *length* (a radius, a line width) the same way. That
+last one is the tax: with no draw offset doing the work, nothing can be
+drawn at a fixed pixel size and every sprite must be a shape the code
+can redraw at any scale. This is why *Flock*'s entire cast — dogs,
+sheep, geese, fences — is parametric 1-bit geometry with not one image
+asset: an image drawn at 0.45× is a mush of dropped rows, but a circle
+whose radius is `Draw.ws(a.r)` is crisp at every zoom.
+
+The zoom itself is the box-fit, run through the same lerp as the
+follow camera so it eases rather than pops:
+
+```lua
+-- flock/source/draw.lua:26
+-- bounding box of the actors that matter (dog + every unpenned animal)
+local bw = maxx - minx + 120   -- + margin so nothing hugs the edge
+local bh = maxy - miny + 120
+local ts = math.min(1, 400 / bw, VIEW_H / bh)  -- scale that fits the box
+ts = math.max(ts, MIN_ZOOM)                    -- but never zoom past 0.45x
+-- ... clamp the box centre so the view stays inside the fence ...
+G.cam.s = G.cam.s + (ts - G.cam.s) * math.min(1, 2 * dt)  -- ease the zoom
+```
+
+Two guards make it playable. The `math.min(1, ...)` caps the scale at
+1× so a lone sheep near the dog doesn't balloon the world to a
+telephoto close-up — you can zoom *out* to fit, never *in* past life
+size. The `MIN_ZOOM` floor is the harder trade: a flock scattered
+across a huge field would, fit exactly, shrink the sheep to
+unclickable specks, so past 0.45× the camera stops zooming and simply
+lets the stragglers fall off screen — the game would rather you lose
+sight of one runaway than lose sight of *all* of them. The same
+clamp-the-goal discipline from the follow camera applies to the box
+centre, so the frame never slides past the fence even when the box
+would push it there.
+
+The cost, honestly stated: a hand-rolled transform gives up the free
+HUD immunity and the free screen shake that the offset sandwich
+provided, and it forbids image sprites outright. Reach for it only when
+the game genuinely has no single thing to follow. When it does, the
+follow-and-clamp camera above is less code and lets you draw with
+bitmaps — take it every time.
+
 ## What you know now
 
 - `gfx.setDrawOffset(-camX, -camY)` translates *all* subsequent
@@ -260,6 +326,11 @@ whole trick, visible in one frame.
   globally animating terrain only.
 - Screen shake is a decaying random addend inside the same
   offset call — three lines, HUD immune by construction.
+- When there is no single target, fit a bounding box and *zoom*:
+  `scale = min(1, 400/boxW, viewH/boxH)` with a floor. The Playdate
+  has no hardware zoom, so this needs a hand-rolled world→screen
+  transform and forbids image sprites — pay it only when the cast
+  won't fit a follow camera (*Flock*, @sec-appendix-games).
 - The shipped version of this chapter is `tiles/core/tcam.lua`, the
   same follow-and-clamp camera bolted to a real tilemap engine and four
   games; @sec-tiles reads it end to end.

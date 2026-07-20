@@ -9,7 +9,7 @@ published games lives in the
 in the chapters carry `repo/path.lua:line` attributions so you can read
 every excerpt in context.
 
-The catalog is in two halves: fifteen standalone games, then the seven
+The catalog is in two halves: sixteen standalone games, then the seven
 *collections* — shared engines with a fleet of games on top, forty-nine
 games between them — plus one reusable module. Five of those
 collections get a whole chapter to themselves in Part VII. Screenshots
@@ -120,6 +120,26 @@ A tilt-controlled marble maze: the accelerometer rolls a steel
 bearing through a labyrinth, past holes, against the clock. **Cited
 in:** @sec-tilt — accelerometer smoothing from its `main.lua`, the
 difference between raw tilt (jittery) and playable tilt.
+
+### Flock
+
+A sheepdog trial: steer the dog with the crank, creep and bark to
+drive a mixed flock of sheep, goats, ducks and geese past rocks,
+walls and ponds through a funnel race into the pen before the clock
+runs out — four dog personas, eight boids-driven breeds, twelve
+trials.
+
+![Flock: the dog works a scattering flock down the funnel toward the
+pen, the camera zoomed out to hold them all.](../figures/case-studies/flock.png){#fig-cs-flock}
+
+**Cited in:** @sec-camera, as the book's one *zoom-to-fit* camera —
+the fighting-game / *Samurai Shodown* pattern that fits a bounding box
+of the whole cast (dog plus every unpenned animal) instead of chasing
+a single target. It is the chapter's witness for why a zooming camera
+on the Playdate cannot ride the `setDrawOffset` sandwich (no hardware
+scale), must bake the zoom into a hand-rolled world→screen transform,
+and therefore draws its entire cast as parametric 1-bit geometry that
+stays crisp at any scale.
 
 ### The supporting bestiary
 
