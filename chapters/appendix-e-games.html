@@ -413,7 +413,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#archers-zoomie-circuit" id="toc-archers-zoomie-circuit" class="nav-link" data-scroll-target="#archers-zoomie-circuit"><span class="header-section-number">E.1.6</span> Archer’s Zoomie Circuit</a></li>
   <li><a href="#bauble" id="toc-bauble" class="nav-link" data-scroll-target="#bauble"><span class="header-section-number">E.1.7</span> Bauble</a></li>
   <li><a href="#bearing" id="toc-bearing" class="nav-link" data-scroll-target="#bearing"><span class="header-section-number">E.1.8</span> Bearing</a></li>
-  <li><a href="#the-supporting-bestiary" id="toc-the-supporting-bestiary" class="nav-link" data-scroll-target="#the-supporting-bestiary"><span class="header-section-number">E.1.9</span> The supporting bestiary</a></li>
+  <li><a href="#flock" id="toc-flock" class="nav-link" data-scroll-target="#flock"><span class="header-section-number">E.1.9</span> Flock</a></li>
+  <li><a href="#the-supporting-bestiary" id="toc-the-supporting-bestiary" class="nav-link" data-scroll-target="#the-supporting-bestiary"><span class="header-section-number">E.1.10</span> The supporting bestiary</a></li>
   </ul></li>
   <li><a href="#the-collections" id="toc-the-collections" class="nav-link" data-scroll-target="#the-collections"><span class="header-section-number">E.2</span> The collections</a>
   <ul class="collapse">
@@ -456,7 +457,7 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>The code quoted in this book’s sidebars comes from real, shipped Playdate games — more than sixty of them, built by the author on the house style this book teaches. This appendix is the cast list: what each game is, and where and why the book quotes it. Source for the published games lives in the <a href="https://github.com/plaidate">github.com/plaidate</a> organization; quotes in the chapters carry <code>repo/path.lua:line</code> attributions so you can read every excerpt in context.</p>
-<p>The catalog is in two halves: fifteen standalone games, then the seven <em>collections</em> — shared engines with a fleet of games on top, forty-nine games between them — plus one reusable module. Five of those collections get a whole chapter to themselves in Part VII. Screenshots are the games’ own repository <code>screenshot.png</code> files, upscaled 2x nearest-neighbor like every other figure in the book.</p>
+<p>The catalog is in two halves: sixteen standalone games, then the seven <em>collections</em> — shared engines with a fleet of games on top, forty-nine games between them — plus one reusable module. Five of those collections get a whole chapter to themselves in Part VII. Screenshots are the games’ own repository <code>screenshot.png</code> files, upscaled 2x nearest-neighbor like every other figure in the book.</p>
 <section id="standalones" class="level2" data-number="E.1">
 <h2 data-number="E.1" class="anchored" data-anchor-id="standalones"><span class="header-section-number">E.1</span> Standalones</h2>
 <section id="molt" class="level3" data-number="E.1.1">
@@ -546,8 +547,23 @@ Figure&nbsp;E.5: Weasel War Dance: chart, dancer, and the beat clock.
 <h3 data-number="E.1.8" class="anchored" data-anchor-id="bearing"><span class="header-section-number">E.1.8</span> Bearing</h3>
 <p>A tilt-controlled marble maze: the accelerometer rolls a steel bearing through a labyrinth, past holes, against the clock. <strong>Cited in:</strong> <a href="11-tilt.html" class="quarto-xref"><span>Chapter 11</span></a> — accelerometer smoothing from its <code>main.lua</code>, the difference between raw tilt (jittery) and playable tilt.</p>
 </section>
-<section id="the-supporting-bestiary" class="level3" data-number="E.1.9">
-<h3 data-number="E.1.9" class="anchored" data-anchor-id="the-supporting-bestiary"><span class="header-section-number">E.1.9</span> The supporting bestiary</h3>
+<section id="flock" class="level3" data-number="E.1.9">
+<h3 data-number="E.1.9" class="anchored" data-anchor-id="flock"><span class="header-section-number">E.1.9</span> Flock</h3>
+<p>A sheepdog trial: steer the dog with the crank, creep and bark to drive a mixed flock of sheep, goats, ducks and geese past rocks, walls and ponds through a funnel race into the pen before the clock runs out — four dog personas, eight boids-driven breeds, twelve trials.</p>
+<div id="fig-cs-flock" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cs-flock-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../figures/case-studies/flock.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-flock-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;E.6: Flock: the dog works a scattering flock down the funnel toward the pen, the camera zoomed out to hold them all.
+</figcaption>
+</figure>
+</div>
+<p><strong>Cited in:</strong> <a href="07-camera.html" class="quarto-xref"><span>Chapter 7</span></a>, as the book’s one <em>zoom-to-fit</em> camera — the fighting-game / <em>Samurai Shodown</em> pattern that fits a bounding box of the whole cast (dog plus every unpenned animal) instead of chasing a single target. It is the chapter’s witness for why a zooming camera on the Playdate cannot ride the <code>setDrawOffset</code> sandwich (no hardware scale), must bake the zoom into a hand-rolled world→screen transform, and therefore draws its entire cast as parametric 1-bit geometry that stays crisp at any scale.</p>
+</section>
+<section id="the-supporting-bestiary" class="level3" data-number="E.1.10">
+<h3 data-number="E.1.10" class="anchored" data-anchor-id="the-supporting-bestiary"><span class="header-section-number">E.1.10</span> The supporting bestiary</h3>
 <p>Seven more standalones inform chapters without being quoted line by line; their lessons arrived as design rules rather than excerpts:</p>
 <ul>
 <li><strong>Squirl</strong> — a squirrel Metroidvania/parkour game; the Magic Acorn swaps you between six squirrel species, each a traversal key. Its full-game-beating autopilot (31 rooms, 6 bosses) is part of the evidence base for <a href="18-harness.html" class="quarto-xref"><span>Chapter 18</span></a>’s claim that autopilots scale to whole games.</li>
@@ -571,7 +587,7 @@ Figure&nbsp;E.5: Weasel War Dance: chart, dancer, and the beat clock.
 <img src="../figures/case-studies/gyre.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-gyre-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;E.6: Gyre, from the Phosphor collection: pure crank, pure vectors.
+Figure&nbsp;E.7: Gyre, from the Phosphor collection: pure crank, pure vectors.
 </figcaption>
 </figure>
 </div>
@@ -590,7 +606,7 @@ Figure&nbsp;E.6: Gyre, from the Phosphor collection: pure crank, pure vectors.
 <img src="../figures/case-studies/lob.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-lob-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;E.7: Lob, from the Voxel collection: wind the crank, release the shot.
+Figure&nbsp;E.8: Lob, from the Voxel collection: wind the crank, release the shot.
 </figcaption>
 </figure>
 </div>
@@ -605,7 +621,7 @@ Figure&nbsp;E.7: Lob, from the Voxel collection: wind the crank, release the sho
 <img src="../figures/case-studies/blast.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-blast-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;E.8: Blast, from the Tiles collection: a Bomberman on the 16px grid.
+Figure&nbsp;E.9: Blast, from the Tiles collection: a Bomberman on the 16px grid.
 </figcaption>
 </figure>
 </div>
@@ -620,7 +636,7 @@ Figure&nbsp;E.8: Blast, from the Tiles collection: a Bomberman on the 16px grid.
 <img src="../figures/case-studies/glim.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-glim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;E.9: Glim, from the Dither collection: the lantern is a light, the light is the game.
+Figure&nbsp;E.10: Glim, from the Dither collection: the lantern is a light, the light is the game.
 </figcaption>
 </figure>
 </div>
@@ -635,7 +651,7 @@ Figure&nbsp;E.9: Glim, from the Dither collection: the lantern is a light, the l
 <img src="../figures/case-studies/shrew.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cs-shrew-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;E.10: Shrew, from the Lore collection: the dawn meter, the chunked overworld, and twelve grams to eat.
+Figure&nbsp;E.11: Shrew, from the Lore collection: the dawn meter, the chunked overworld, and twelve grams to eat.
 </figcaption>
 </figure>
 </div>
