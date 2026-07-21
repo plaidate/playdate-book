@@ -1,8 +1,8 @@
--- The tour: four screens on the vendored Dither core, 120
+-- The tour: five screens on the vendored Dither core, 120
 -- frames each. The 17-level ramp chart, the 3-band light
 -- compositor with live Light.at probes, the Super Scaler pond,
--- and the Bayer transitions. Draw.frame (draw.lua) dispatches
--- to the screens.
+-- the Bayer transitions, and the cone-plus-occluder screen.
+-- Draw.frame (draw.lua) dispatches to the screens.
 
 local gfx = playdate.graphics
 local floor = math.floor
@@ -24,6 +24,16 @@ local function figure(x, y)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillCircleAtPoint(x, y - 13, 5)
     gfx.fillEllipseInRect(x - 5, y - 9, 10, 11)
+    gfx.setColor(gfx.kColorBlack)
+end
+
+-- a lantern glyph: white glass in a dark case, sitting where a
+-- cone light's apex is
+local function lamp(x, y)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillCircleAtPoint(x, y, 7)
+    gfx.setColor(gfx.kColorWhite)
+    gfx.fillCircleAtPoint(x, y, 5)
     gfx.setColor(gfx.kColorBlack)
 end
 
@@ -69,14 +79,18 @@ local function probe(name, x, y)
         or "DARK"
     local s = string.format("%s %.1f %s", name, v, tag)
     local w, h = gfx.getTextSize(s)
+    -- the label sits right of the crosshair, or left of it when that
+    -- would run off the screen: a probe is only useful if you can
+    -- read what it says
+    local lx = (x + 11 + w <= 400) and (x + 9) or (x - 9 - w)
     gfx.setColor(gfx.kColorBlack)
     gfx.fillRect(x - 5, y - 2, 10, 4)
     gfx.fillRect(x - 2, y - 5, 4, 10)
-    gfx.fillRect(x + 7, y - 9, w + 4, h)
+    gfx.fillRect(lx - 2, y - 9, w + 4, h)
     gfx.setColor(gfx.kColorWhite)
     gfx.drawLine(x - 4, y, x + 4, y)
     gfx.drawLine(x, y - 4, x, y + 4)
-    Kit.text(s, x + 9, y - 9)
+    Kit.text(s, lx, y - 9)
     gfx.setColor(gfx.kColorBlack)
 end
 -- endsnip
@@ -255,6 +269,49 @@ Game.screens[4] = {
         end
         -- endsnip
         Draw.hud("FADE: IRIS IN, DISSOLVE OUT", "T " .. t)
+    end,
+}
+
+-- ------------------------------------------- screen 5: occluders
+local oc = {}
+local WX, WY0, WY1 = 180, 70, 160            -- the wall segment
+local CR = { x = 250, y = 185, w = 46, h = 34 }  -- the crate
+
+Game.screens[5] = {
+    enter = function()
+        oc.lx, oc.ly = 50, 210 -- where the lantern stands
+        oc.dir = -0.35
+    end,
+    update = function(s, dt)
+        -- snip: demo-cone
+        -- One sweeping wedge, one wall, one crate. Occluders are
+        -- registered BEFORE the light whose shadows the player
+        -- reads -- light.lua carves each light's shadows right
+        -- after its own shape, so that light wants to be last.
+        oc.dir = -0.35 + 0.22 * sin(Game.t * 0.045)
+        Light.begin(C.AMBIENT)
+        Light.wall(WX, WY0, WX, WY1)
+        Light.box(CR.x, CR.y, CR.w, CR.h)
+        Light.cone(oc.lx, oc.ly, 320, oc.dir, 1.0, 0.55)
+        -- endsnip
+    end,
+    draw = function()
+        Shade.fill(0, 16, 400, 224, 5, "noise")
+        Shade.disc(120, 118, 26, 7, "noise")
+        gfx.setColor(gfx.kColorBlack)
+        gfx.fillRect(WX - 2, WY0, 5, WY1 - WY0)
+        gfx.fillRect(CR.x, CR.y, CR.w, CR.h)
+        gfx.setColor(gfx.kColorWhite)
+        gfx.drawRect(WX - 2, WY0, 5, WY1 - WY0)
+        gfx.drawRect(CR.x, CR.y, CR.w, CR.h)
+        gfx.setColor(gfx.kColorBlack)
+        figure(255, 124) -- standing in the wall's shadow
+        lamp(oc.lx, oc.ly)
+        Light.finish()
+        probe("A", 250, 60)  -- shadowed: inside the beam, unlit
+        probe("B", 190, 185) -- lit core, past the wall's end
+        Draw.hud("LIGHT: A CONE AND TWO OCCLUDERS",
+            "WALLS " .. Light.stats().walls)
     end,
 }
 

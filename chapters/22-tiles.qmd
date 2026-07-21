@@ -363,7 +363,7 @@ $e$ settles where the camera's per-frame gain $e \cdot k$ equals
 the target's per-frame travel $v\,\Delta t$:
 
 $$
-e^\* = \frac{v\,\Delta t}{k} = \frac{v}{\mathrm{rate}}
+e^{*} = \frac{v\,\Delta t}{k} = \frac{v}{\mathrm{rate}}
 \qquad\text{(for } k = \mathrm{rate}\cdot\Delta t < 1\text{)}.
 $$
 

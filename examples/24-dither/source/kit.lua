@@ -197,6 +197,70 @@ function Kit.saveBest(score)
     return false
 end
 
+-- ---- HUD furniture ----------------------------------------------------
+-- A dithered bar is the fleet's resource readout: wick, fuel, oxygen,
+-- alarm. frac 0..1; the fill uses the Shade ramp so a half-empty bar
+-- reads as gray, not as a lie about a 1-bit screen.
+function Kit.meter(x, y, w, h, frac, level)
+    frac = Util.clamp(frac or 0, 0, 1)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillRect(x - 1, y - 1, w + 2, h + 2)
+    gfx.setColor(gfx.kColorWhite)
+    gfx.drawRect(x - 1, y - 1, w + 2, h + 2)
+    local fw = math.floor(w * frac + 0.5)
+    if fw > 0 then
+        Shade.set(level or 0) -- 0 = solid white fill
+        gfx.fillRect(x, y, fw, h)
+        gfx.setColor(gfx.kColorBlack)
+    end
+end
+
+-- vertical menu: rows is an array of strings (or {label=, sub=}),
+-- sel is 1-based. Returns the panel height so callers can centre it.
+function Kit.list(title, rows, sel, x, y, w)
+    local rh = 20
+    local h = 30 + #rows * rh + 6
+    Kit.panel(x, y, w, h)
+    Kit.text(title, x + 10, y + 6)
+    for i = 1, #rows do
+        local r = rows[i]
+        local label = type(r) == "table" and r.label or r
+        local ry = y + 28 + (i - 1) * rh
+        if i == sel then
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(x + 6, ry - 2, w - 12, rh - 2)
+            gfx.setImageDrawMode(gfx.kDrawModeCopy)
+            gfx.drawText(label, x + 14, ry)
+            if type(r) == "table" and r.sub then
+                local sw = gfx.getTextSize(r.sub)
+                gfx.drawText(r.sub, x + w - 14 - sw, ry)
+            end
+        else
+            Kit.text(label, x + 14, ry)
+            if type(r) == "table" and r.sub then
+                local sw = gfx.getTextSize(r.sub)
+                Kit.text(r.sub, x + w - 14 - sw, ry)
+            end
+        end
+    end
+    return h
+end
+
+-- the three save cards, drawn from Save.summary — the shared
+-- Continue/New Game screen. sel 1..Save.SLOTS.
+function Kit.slots(sel, x, y, w)
+    local rows = {}
+    for s = 1, Save.SLOTS do
+        local m = Save.summary(s)
+        rows[s] = {
+            label = "Slot " .. s,
+            sub = m and ((m.place or "-") .. "  " .. (m.pct or 0) .. "%")
+                or "empty",
+        }
+    end
+    return Kit.list("SELECT SLOT", rows, sel, x or 110, y or 60, w or 180)
+end
+
 -- ---- the cabinet ---------------------------------------------------------
 -- Kit.run{ init=, extra=, shotPath= }: the shared main loop. Owns the
 -- refresh rate, the random seed, the Harness wiring and the frame
@@ -205,9 +269,19 @@ end
 -- smoke counters. Note: in dither the Makefile already injects
 -- SMOKE_SHOT_PATH via smokeflag.lua and harness.lua picks it up, so
 -- opts.shotPath is an optional override, not a requirement.
+--
+-- Seeding: smoke builds seed from SMOKE_SEED (the Makefile writes it
+-- from `make <g>-smoke SEED=n`), so a smoke run is REPRODUCIBLE — an
+-- autopilot that passes at seed 1 and fails at seed 4 is a real bug,
+-- not weather. Release builds seed from the clock as before.
 function Kit.run(opts)
     playdate.display.setRefreshRate(SMOKE_BUILD and 0 or 30)
-    math.randomseed(playdate.getSecondsSinceEpoch())
+    if SMOKE_BUILD and SMOKE_SEED then
+        math.randomseed(SMOKE_SEED)
+        Harness.set("seed", SMOKE_SEED)
+    else
+        math.randomseed(playdate.getSecondsSinceEpoch())
+    end
     if opts.init then opts.init() end
     if Harness.enabled then
         Harness.extra = opts.extra

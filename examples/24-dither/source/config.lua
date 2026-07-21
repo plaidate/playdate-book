@@ -1,5 +1,5 @@
 -- Tour tunables. Kit.run feeds C.DT to Game.update every frame,
--- exactly as in the three shipped games.
+-- exactly as in the shipped games.
 C = {
     DT = 1 / 30,
     SCREEN = 120,   -- frames per tour screen

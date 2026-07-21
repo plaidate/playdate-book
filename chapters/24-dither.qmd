@@ -31,21 +31,30 @@ admission test:
 > light, or make distance readable by tone. A game that only wants
 > sprites on a screen belongs in classics. — `dither/DESIGN.md`
 
-What came out of the overhaul is a core of twelve files and 1,246
+What came out of the overhaul was a core of twelve files and 1,246
 lines — `shade`, `light`, `cast`, `fade`, `para`, `scaler`, plus the
 cabinet (`kit`, `dsnd`, `dmusic`) and the original thin trio — and
 three proof games: *Sprint*, the pre-existing racer retrofitted with
 day/dusk/night headlight racing; *Glim*, a firefly-keeper built so
 that darkness is mechanics, not paint; and *Skimmer*, a Space
-Harrier-lineage dragonfly on the super-scaler. The example,
-`24-dither`, is an engine tour in the sibling chapters' format:
-eight core modules vendored verbatim (one-line provenance headers,
-otherwise untouched) under four scripted screens — the 17-level ramp
-chart, the three-band light compositor with live `Light.at` probes,
-the super-scaler pond, and the Bayer transitions. Every core listing
-below is extracted from the vendored files.
+Harrier-lineage dragonfly on the super-scaler. A second wave has
+since doubled it, and its commit message states the gap in two
+sentences worth stealing: *"Dither's lighting could light things. It
+could not hide them."* Occluders and cones went into `light.lua`,
+campaign saves (`dsave`) and coroutine cutscenes (`dstory`) joined
+the cabinet, and four ten-stage campaigns — *Prowl*, *Beacon*,
+*Echo*, *Delve* — arrived to prove the new geometry. The core is now
+fourteen files and 2,028 lines; the catalog is seven games.
 
-## One ramp, three cartridges
+The example, `24-dither`, is an engine tour in the sibling chapters'
+format: eight core modules vendored verbatim (one-line provenance
+headers, otherwise untouched) under five scripted screens — the
+17-level ramp chart, the three-band light compositor with live
+`Light.at` probes, the super-scaler pond, the Bayer transitions, and
+a sweeping cone light whose wall and crate throw real shadows. Every
+core listing below is extracted from the vendored files.
+
+## One ramp, seven cartridges
 
 The house pattern is the siblings': the Makefile stages `core/*.lua`
 beside `games/<name>/*` into one flat directory, `pdc` compiles it,
@@ -66,6 +75,20 @@ because nothing in the book harness reads them, but they are
 exactly the kind of thing to check before declaring two
 implementations compatible at a named global: the surface is every
 field touched, not just every function called.
+
+Wave 2 widened that surface again, in the other direction. `Kit.run`
+now *reads* two globals as well: in a smoke build it seeds the RNG
+from `SMOKE_SEED` (which the engine's Makefile writes, so
+`make glim-smoke SEED=4` is reproducible and a bot that passes at
+seed 1 but fails at seed 4 has a real bug rather than bad weather).
+The book's build defines `SMOKE_BUILD` but never `SMOKE_SEED`, so
+the vendored cabinet falls through to clock seeding — which is
+precisely why `main.lua` re-seeds from `Shots.seed` immediately
+afterwards. The same wave gave `Kit.slots` a reference to `Save`, a
+module this tour does not vendor at all; Lua resolves globals at
+call time, so the file compiles and the tour never calls it.
+Vendoring a moving engine means re-reading its globals, not just
+its functions, every time you re-vendor.
 
 {{< snip 24-dither/source/main.lua tour-run >}}
 
@@ -172,9 +195,15 @@ set a pattern and fill.
 ## Light: the flagship
 
 `light.lua` is the module the thesis was written for: dynamic light
-sources — headlights, lanterns, a flare — that darken the scene
-*and* answer questions. It is also the package's best example of
-verifying the SDK before architecting on it. `DESIGN.md` explicitly
+sources — headlights, lanterns, a flare, a lighthouse beam — that
+darken the scene *and* answer questions. Everything it does is
+governed by one promise, printed in its own header: `Light.at(x, y)`
+answers "is this point lit" from **the same disc, wedge and occluder
+math the compositor draws, so pixels and logic agree**. Hold onto
+that sentence; two of the three hardest bugs in this chapter are
+violations of it, and the module's whole shape is an argument for
+why it must hold. It is also the package's best example of verifying
+the SDK before architecting on it. `DESIGN.md` explicitly
 ordered the check ("verify `gfx.setStencilImage` / stencil-pattern
 semantics against Inside Playdate before building") and specified a
 fallback compositor in case stencils could not gate pattern fills.
@@ -186,11 +215,14 @@ because the next maintainer will have the same doubts:
 The verified facts, in brief: while a stencil image is set, **all**
 drawing — pattern fills included — lands only where the stencil is
 white; `gfx.clearStencil()` clears it; the 8-byte `setPattern` form
-fills opaquely and the 16-byte form adds the alpha mask; and
-`setDitherPattern`'s white-color inversion bug is real and avoided.
-Stencil-gated pattern fills work, so the clip-rect-union fallback
-died unbuilt. The compositor that survives is worth deriving
-carefully, because it is the chapter's central machine.
+fills opaquely and the 16-byte form adds the alpha mask;
+`gfx.fillPolygon` takes bare coordinates, so a wedge or a shadow
+quad can be unpacked from a pooled array instead of allocating a
+polygon object per frame; and `setDitherPattern`'s white-color
+inversion bug is real and avoided. Stencil-gated pattern fills work,
+so the clip-rect-union fallback died unbuilt. The compositor that
+survives is worth deriving carefully, because it is the chapter's
+central machine.
 
 The design decision first: light is **quantized to K = 3 levels** —
 dark, dim, lit. The alternative, continuous radial falloff, is a
@@ -224,8 +256,97 @@ render), and a game that never calls `Light.begin` at all pays
 nothing either. Each light is a position, a radius `r` it dims out
 to, and a falloff fraction: fully lit inside `r * falloff`, dim
 out to `r`, dark beyond. The pool entries are reused across frames
-— zero allocation, the discipline every module here inherits from
+— `newLight` hands back the next slot and only allocates the first
+time a frame asks for that many lights — zero steady-state
+allocation, the discipline every module here inherits from
 @sec-phosphor.
+
+### Wedges and walls
+
+That was the whole API for one release, and it was enough for
+headlights and lanterns but not for a game about *hiding*. A disc
+light has no direction and nothing stops it: it lights the far side
+of a crate exactly as brightly as the near side. Wave 2 added the
+two things a stealth game needs — a light that aims, and geometry
+that blocks:
+
+{{< snip 24-dither/source/light.lua light-cone >}}
+
+`Light.cone` is the same light record with a heading and a half-
+angle, drawn as a filled wedge instead of a blitted disc: a
+`fillPolygon` over a `FAN + 1`-point arc unpacked from one pooled
+array, so a cone allocates nothing either. `Light.wall` registers a
+shadow-casting segment *for this frame only* — the pool resets in
+`Light.begin`, like the lights — and `Light.box` is four walls
+around a rectangle. Occluders are frame-scoped on purpose: a game
+that scrolls a world registers only the segments near the player,
+and nothing has to be unregistered when they scroll away.
+
+Two numbers bound the feature. `MAXW = 64` caps the segments per
+frame, and each wall inside a light's reach costs one polygon fill
+*per darkness band* — so occluders are a visible budget, not a free
+effect. *Prowl* registers only the crates within 152 pixels of the
+cat, capped at thirteen boxes, and the invariant that makes the
+cull safe is worth copying: the cull radius is larger than the
+guards' sight range, so every occluder that could break a line of
+sight is always registered. Shadows further away simply are not
+drawn, and nobody is looking at them.
+
+### Shadows, and the two bugs about one promise
+
+A shadow is a quad: take the segment, project both endpoints away
+from the light past its reach, fill the trapezoid between them.
+That is four lines of geometry. Everything interesting is in when
+the module *decides to bother*, and in what colour it paints. Both
+of those got a bug, and both bugs are the same bug — a place where
+the pixels and `Light.at` stopped agreeing.
+
+The first is the reach test:
+
+{{< snip 24-dither/source/light.lua light-reach >}}
+
+The obvious cheap reject is "does either endpoint fall inside the
+light?" It is wrong, and *Delve* found out how. Its floor slabs are
+side-view mine galleries registered as long horizontal walls — the
+thing that hides the drop below your boots — and a 376-pixel floor
+edge crossing a helmet cone that reaches 98 pixels has **both**
+endpoints far outside it. Under the endpoint test that wall cast
+no shadow at all, while `Light.at` and `Light.blocked`, which do
+honest segment geometry, went on believing in it: creatures crept
+up through a gallery the compositor had painted lit. The fix is
+`segDist2`, a point-to-segment distance — the reach test now asks
+"does this light touch the *segment*", which is the same question
+the queries ask. (*Delve* still chunks its floor edges into
+52-pixel pieces, but now for budget reasons rather than
+correctness: registering a whole depth's floors is the easy way to
+blow the 64-wall cap.)
+
+The second bug is about colour:
+
+{{< snip 24-dither/source/light.lua light-shadow >}}
+
+`paintShadows` takes the colour to paint in, and the module's own
+comment states the rule it must obey: a shadow's colour in the mask
+is **always the opposite of the light shape it follows**, because a
+shadowed pixel is one this light does not reach. Whatever the shape
+asserts about a pixel, the shadow asserts the negation — in the
+same mask, in the same pass. Get that wrong in one of the two
+passes and you get the second shipped bug: a shadow falling inside
+a light's own disc was carved out of the dark band *and* excluded
+from the dim band, so it received no darkening fill from either —
+the one region on screen that should have been blackest rendered
+fully lit, a bright wedge sitting behind the crate that was
+supposed to cast it. `Light.at`, of course, reported the truth the
+whole time.
+
+The structural half of the fix is `paintLight`, and it is the part
+worth copying. It is the only caller of `drawShape` and the only
+caller of `paintShadows`, and `Light.finish` is its only caller in
+turn — so a light's shape and its shadows are always painted
+together, by one function that owns the relationship between their
+colours. When two passes must always *disagree* about the same
+pixel, give one function both of them; a rule expressed once cannot
+drift, and a rule re-derived at four call sites will.
 
 Then the composite:
 
@@ -235,47 +356,86 @@ Read it as set algebra. For each darkness band $q$ from the ambient
 level up to dim, the code rebuilds one reusable 400×240 mask image
 (two exist, allocated once at import): the *base* band starts as
 all white — ambient darkness covers everything — while higher bands
-start black and receive a white disc per light at the radius that
-still reaches that band. Then, for every band, each light's
-*brighter* region (its radius for band $q{+}1$) is carved back out
-in black. Stencil the mask, lay one full-screen `Shade.over` fill
-at that band's level (12 for dark, 6 for dim — tunable), clear the
-stencil. Because bands run dark-to-lit and every brighter core is
-carved from every darker mask, a lit core ends up carved from
+start black and receive one white shape per light at the radius
+that still reaches that band, each followed immediately by that
+light's shadows in black. Then, for every band, each light's
+*brighter* region (its shape at the radius for band $q{+}1$) is
+carved back out in black — with its shadows painted alongside,
+because a shadow inside a lit core is *not* brighter than this band
+and has to keep this band's darkening fill. That is the second
+bug's fix in situ, and it is why the carve loop calls `paintLight`
+rather than reaching for `drawShape` directly. Stencil the mask,
+lay one full-screen `Shade.over` fill at that band's level (12 for
+dark, 6 for dim — tunable), clear the stencil. Because bands run
+dark-to-lit and every brighter core
+is carved from every darker mask, a lit core ends up carved from
 *everything* and receives no fill at all: full-lit pixels are the
 ones the compositor never touches.
 
-The cost model is honest and countable straight off the code. At
-night with $L$ lights: two mask clears, $3L$ disc blits (one carve
-per light in the base band; one disc plus one carve in the dim
-band), and two stenciled full-screen pattern fills. The blits come
-from four precomputed white disc images (radii 16–128) scale-drawn
-to size — solid discs scale cleanly, only the edge aliases. The
-header comment's measurements: roughly 2–4 ms on device at $L \le
-4$, ~0.5 ms in the Simulator; dusk about half; ambient 1, zero.
-And the budget is *visible*: `Light.stats()` reports lights, blits,
-fills, and milliseconds, and all three games fold it into their
-smoke heartbeats (@sec-harness) so a lighting regression shows up
-as a number before it shows up as a frame hitch.
+::: {.callout-warning}
+## An approximation, documented instead of discovered
+Because each light's shadows are carved right after its own shape,
+a light added *later* correctly re-lights an earlier light's
+shadow wherever it genuinely reaches — but an earlier light's
+contribution *inside* a later light's shadow is lost. The error
+only exists where two lights overlap and the later one is occluded
+there, and it always errs dark; `Light.at` resolves each light
+independently, so the logic is never darker than the pixels. The
+engine writes this in the module header and tells you the
+workaround — add the shadow-casting light last — and *Prowl* obeys
+it: occluders first, street lamps next, guard cones last, because
+the guards' shadows are the ones the player is reading. An
+approximation you have written down is a design; the same
+approximation undocumented is a bug report waiting three months.
+:::
 
-Now the query, and the reason this module is the flagship rather
-than a screen effect:
+The cost model is honest and countable straight off the code. At
+night with $L$ lights and no occluders: two mask clears, $3L$ disc
+blits (one carve per light in the base band; one shape plus one
+carve in the dim band), and two stenciled full-screen pattern
+fills. The blits come from four precomputed white disc images
+(radii 16–128) scale-drawn to size — solid discs scale cleanly,
+only the edge aliases. Each wall within a light's reach adds one
+polygon fill per band on top. The header comment's measurements:
+roughly 2–4 ms on device at $L \le 4$, ~0.5 ms in the Simulator;
+dusk about half; ambient 1, zero. And the budget is *visible*:
+`Light.stats()` reports lights, walls, blits, fills, and
+milliseconds, and every game in the package folds it into its smoke
+heartbeat (@sec-harness) so a lighting regression shows up as a
+number before it shows up as a frame hitch.
+
+### The query
+
+Now the two functions that make this module the flagship rather
+than a screen effect. First, line of sight over the same occluders:
+
+{{< snip 24-dither/source/light.lua light-blocked >}}
+
+A textbook segment/segment intersection, run against the walls the
+compositor just carved shadows from. One geometry, two consumers:
+the player sees a shadow behind a crate, and the guard's
+"can I see the cat" test fails in exactly that region. Then the
+level query itself:
 
 {{< snip 24-dither/source/light.lua light-at >}}
 
-`Light.at(x, y)` computes from the **same radii the masks blit** —
-inside any lit core returns 1, inside any dim radius returns 0.5,
-otherwise the ambient floor. There is no second lighting model, no
-"gameplay approximation" of the visuals: what you see is what the
-logic gets. The payoff lands in *Glim*, where this one function
-*is* the enemy AI gate — a moth outside every light literally does
-not think — and the chapter gets there shortly. The demo's second
-screen stages the guarantee directly: three lights orbit a dark
-garden, and two probe points print their live `Light.at` readouts
-beside crosshairs you can check against the pixels
-(@fig-light-bands). The figure script then walks probe A out of a
-lit core, across the dim band, and into the open dark
-(@fig-light-probe):
+`Light.at(x, y)` computes from the **same radii the masks blit**,
+the same half-angle the wedge is filled with, and the same walls —
+inside any unblocked lit core it returns 1, inside any unblocked
+dim radius 0.5, otherwise the ambient floor. There is no second
+lighting model, no "gameplay approximation" of the visuals: what
+you see is what the logic gets. The payoff lands in *Glim*, where
+this one function *is* the enemy AI gate — a moth outside every
+light literally does not think — and in *Prowl*, where
+`Light.at(cat) > 0 and not Light.blocked(guard, cat)` *is* the
+detection rule. The chapter gets to both shortly.
+
+The demo's second screen stages the guarantee in its simplest
+form: three discs orbit a dark garden, and two probe points print
+their live `Light.at` readouts beside crosshairs you can check
+against the pixels (@fig-light-bands). The figure script then walks
+probe A out of a lit core, across the dim band, and into the open
+dark (@fig-light-probe):
 
 {{< snip 24-dither/source/game.lua demo-probe >}}
 
@@ -289,6 +449,33 @@ blit.](../figures/24-dither/light-bands.png){#fig-light-bands}
 of every light's reach and its readout has fallen to DARK — the
 label can never disagree with the pixels, because there is only
 one set of disc radii.](../figures/24-dither/light-probe.png){#fig-light-probe}
+
+The tour's fifth screen is the wave-2 version of the same
+demonstration, and the lighting for the whole scene is four calls
+(@fig-light-occluder):
+
+{{< snip 24-dither/source/game.lua demo-cone >}}
+
+![Screen five at frame 540: a lantern in the lower left throws a
+sweeping `Light.cone` up and to the right; the vertical bar in the
+middle of the screen is a `Light.wall` and the box below right of
+it is a `Light.box`, and each throws a shadow wedge away from the
+lantern. Those wedges are not merely dimmer than the beam: they are
+as dark as the unlit ground outside it, which is the whole point —
+a shadow is painted in the opposite colour to the shape casting it,
+so standing in one is exactly as good as standing in the night.
+Probe A sits inside the wedge but behind the wall and reads 0.0
+DARK; probe B, just past the wall's lower end, is in the lit core
+and reads 1.0 LIT. The HUD counts five registered segments — one
+wall plus the crate's four
+sides.](../figures/24-dither/light-occluder.png){#fig-light-occluder}
+
+Note where the lights are cast: in `update`, before anything draws.
+Both screens do it, and it is the pattern every shipped game
+follows, because `Light.at` and `Light.blocked` have to answer from
+*this* frame's geometry when the AI runs — and the AI runs before
+the frame is painted. Light is not a post-process here; it is state
+the update step publishes and the draw step consumes.
 
 ::: {.callout-note}
 ## Verify, then architect
@@ -632,10 +819,43 @@ Lines, grid, volume, shade: four engines, one cabinet pattern, and
 a game moving between packages finds `Kit.run`, `Kit.best`, and
 `Music.set` waiting in all of them.
 
+What wave 2 added to the cabinet is what four *campaigns* need that
+three arcade cartridges did not. `Kit.meter` is the dithered
+resource bar — wick, oil, breath, alarm — drawn through the ramp so
+that a half-empty bar reads as gray instead of lying about a 1-bit
+screen; `Kit.list` is the vertical menu; and `Kit.slots` draws the
+three save cards. Behind those cards, `dsave.lua` (`Save`) is
+three-slot campaign progress: `Save.use(n)`, a game-owned
+`Save.data` table, a `Save.meta` card of scalars (name, place,
+percent, epoch seconds), and one datastore write (@sec-save) per
+`Save.commit`. Its header is a list of JSON round-trip rules
+learned the hard way
+in another package and reproduced by a headless test runner —
+integer table keys come back as strings, arrays with holes come
+back as dicts, functions and NaN do not survive at all — which is
+the kind of thing you want written above the function rather than
+rediscovered in a bug report about a lost campaign.
+
+`dstory.lua` (`Story`) is the other new cabinet drawer: cutscenes
+as coroutine screenplays — the pattern the RPG engine of @sec-lore
+is built on, ported here. A scene is a plain function full of
+blocking calls — `say`, `wait`, `beat`, `act`, `fade`, `iris` —
+installed as globals while it runs, so a script reads like a
+screenplay and a coroutine resumes it one frame at a time. The
+integration rule is the interesting part and it is pure Dither:
+`Story.update` runs *before* the game's own update (which is
+skipped while a scene is active), and `Story.draw` runs last,
+**after** the light pass, because the veil, the letterbox bars and
+the dialogue box are screen furniture rather than things in the
+world. Get that order wrong and your cutscene text obediently
+darkens in the dark.
+
 ## The proof games
 
-Three cartridges, one per claim: shade retrofits onto an existing
-game, shade *is* a game, and the scaler carries a game.
+Seven cartridges now. Three came with the thesis — shade retrofits
+onto an existing game, shade *is* a game, the scaler carries a game
+— and four campaigns arrived with the wave that taught the light to
+be blocked.
 
 ### Sprint: the retrofit
 
@@ -800,6 +1020,75 @@ small glow (`Light.add`, one light, one band), the sun drops to the
 treeline, and at DAY the whole light pass no-ops — the ambient-1
 contract again, this time as a difficulty-neutral aesthetic toggle.
 
+### Four campaigns on one function
+
+The wave-2 games are an order of magnitude bigger — ten stages,
+cutscenes, saves and songs apiece, between two and three thousand
+lines each — and
+what makes them worth reading together is how little of that is
+lighting code. Each takes the *same* query and reads it differently.
+
+*Prowl* is a cat burgling a sleeping town, ten heists in one night,
+and its thesis is that **darkness is the floor you walk on**.
+Guards carry `Light.cone` lanterns; every crate, cell divider and
+tomb is a `Light.wall` occluder that throws a real shadow *and* is
+the rectangle you collide with, so cover and collision are one
+list. Detection is one predicate over the geometry the player is
+already looking at:
+
+```lua
+-- dither/games/prowl/game.lua:312
+-- "would standing here cost me?" -- the query the whole game, the HUD
+-- and the autopilot all ask, answered from the frame's real geometry
+function Game.exposed(x, y)
+    local lit = Light.at(x, y)
+    if lit <= 0 then return false end
+    for i = 1, #G.guards do
+        if seesAt(G.guards[i], x, y, lit) > 0 then return true end
+    end
+    return false
+end
+```
+
+The shadow you can see behind a crate is exactly the shadow the
+guard cannot see into, because there is one set of segments and
+`seesAt` ends with `Light.blocked`. Written from scratch, that game
+is a shadow-casting compositor *and* a separate visibility oracle,
+plus the week you spend reconciling them whenever one changes.
+
+*Beacon* inverts the relationship: **you own the only light**, and
+the light is a rudder. The crank swings a long `Light.cone` over a
+black bay, and every hull steers on `Light.at(ship)` — dark holds
+her course onto the reef, the beam's dim fringe turns her slowly,
+the lit core turns her at once. Its best detail is a consequence
+nobody had to implement: the lantern room's glazing bars are two
+real `Light.wall` segments twelve pixels from the filament, so they
+carve two fixed blind wedges out of the bay that cannot be lit at
+all. Those sectors are not drawn and then *also* hard-coded as a
+rule — they are one geometry, so learning where they are is
+learning the pixels.
+
+*Echo* runs at **ambient 0**. Not dim: zero, no floor at all. The
+only light in the game is the bat's own call — a growing `Light.add`
+plus a reveal front racing down the tunnel — and what the cave
+carries afterwards is a memory that rots, blended with
+`Scaler.linearHaze` so that one number answers both "have I heard
+this" and "how far away is it". The finale is the thesis with the
+safety off: the owl closes faster while `Light.at` says the bat is
+lit, so to see is to be seen.
+
+*Delve* makes light **a consumable you place**. The helmet lamp is
+a `Light.cone` burning oil; a flare is a `Light.add` that lands,
+burns for nine seconds and goes out; the creatures advance only
+where `Light.at` reads dark and back out of anything that touches
+them — glim's moths exactly inverted. So a burning flare is a wall
+you built out of light and a spent flare is a wall that falls down,
+and the floor slab under your boots is a `Light.wall` that hides
+the gallery below: the only way to read the drop is to spend a
+flare through the hole. That slab is also the game that found the
+endpoint-reach bug, which is the honest summary of what a proof
+game is *for*.
+
 ## What you know now
 
 - Dither is the fleet's fourth engine and the proof that a package
@@ -814,13 +1103,30 @@ contract again, this time as a difficulty-neutral aesthetic toggle.
   engine never touches `setDitherPattern`, so @sec-dither's
   inversion trap cannot fire.
 - Light is quantized to three bands and composited as set algebra:
-  reusable masks stamped with per-light discs, carved by
-  brighter-band discs, each gating one full-screen overlay fill
-  through a stencil (verified: stencils gate pattern fills; white
-  passes). Cost at night is $3L$ blits and two fills, reported by
-  `Light.stats()`; ambient 1 is an exact no-op — and `Light.at`
-  answers from the same discs, so pixels and gameplay can never
-  disagree.
+  reusable masks stamped with per-light shapes — `Light.add` discs
+  and `Light.cone` wedges — carved by brighter-band shapes, each
+  gating one full-screen overlay fill through a stencil (verified:
+  stencils gate pattern fills; white passes). Cost at night is
+  $3L$ blits and two fills plus one polygon per wall per band,
+  reported by `Light.stats()`; ambient 1 is an exact no-op.
+- Occluders are frame-scoped geometry, not an effect:
+  `Light.wall` / `Light.box` register segments, each light projects
+  them into shadow quads, and `Light.blocked` hands the *same*
+  segments to AI as a line-of-sight test. Budget them — 64 segments
+  a frame, one polygon fill per band each — and cull them by a
+  radius larger than any sight range so the cull can never remove a
+  wall that mattered.
+- "Pixels and logic agree" is the invariant the whole module is
+  shaped around, and both of its bugs were violations: a reach test
+  on wall *endpoints* skipped the shadow of a long wall crossing a
+  small light while `Light.at` still honoured it (fixed with a
+  point-to-segment distance), and a shadow inside a light's own
+  disc was carved from one band and missing from the other, so it
+  rendered fully lit (fixed by giving one function both a light's
+  shape and its shadows, in opposite colours). When one number drives
+  both the picture and the rules, a divergence is always a bug in
+  the picture — and neither of these was visible to a headless
+  test.
 - Shadows anchor (`Cast.blob` is how *Skimmer* reads altitude),
   silhouettes stencil through ramp entry $16-k$, and every
   transition — dissolve, iris, wipe — rides the same seventeen
@@ -842,10 +1148,15 @@ contract again, this time as a difficulty-neutral aesthetic toggle.
 - The cabinet is the fleet pattern's fourth port — `Kit.run`,
   modes, write-on-record bests, shake, particles, the synth pool,
   the 16-step sequencer — unchanged because it is a pattern, which
-  is what makes it one.
+  is what makes it one. Campaigns then asked it for three more
+  drawers: `Kit.meter`/`list`/`slots`, `dsave`'s three-slot
+  progress with its JSON round-trip rules, and `dstory`'s coroutine
+  screenplays, drawn *after* the light pass because dialogue is
+  furniture, not scenery.
 
-The complete engine and all three games are MIT-licensed at
+The complete engine and all seven games are MIT-licensed at
 [github.com/plaidate/dither](https://github.com/plaidate/dither) —
 read `core/shade.lua` first, then `light.lua` against its own
-header, then *Glim* to watch one function gate an ecosystem. Then
-go hide something in the dark.
+header, then *Glim* to watch one function gate an ecosystem and
+*Prowl* to watch the same function, plus a wall, become a stealth
+game. Then go hide something in the dark.
